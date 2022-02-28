@@ -6,7 +6,7 @@ Artus 技术规范用于描述如何构建一个用于 Web、RPC、Serverless �
 
 The specification will write by Chinese and will not translate to another language yet.
 
-技术规范文档将使用中文书写，并不会在近期被翻译为其他语言。
+技术规范文档将使用中文书写，暂时不需要被翻译为其他语言。
 
 ## 文档目录 Documentation Catalog
 
