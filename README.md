@@ -10,14 +10,14 @@ The specification will write by Chinese and will not translate to another langua
 
 ## 文档目录 Documentation Catalog
 
-- [格式约定](./documentation/convention.md)
+- [格式约定](./docs/convention.md)
 - Core Specification
-  - [1. 架构介绍](./documentation/core/1.introduction.md)
-  - [2. 加载机制](./documentation/core/2.loader.md)
-  - [3. 插件](./documentation/core/3.plugin.md)
-  - [4. 框架](./documentation/core/4.framework.md)
-  - [5. 请求处理模型](./documentation/core/5.trigger.md)
-  - [6. 异常处理](./documentation/core/6.exception.md)
+  - [1. 架构介绍](./docs/core/1.introduction.md)
+  - [2. 加载机制](./docs/core/2.loader.md)
+  - [3. 插件](./docs/core/3.plugin.md)
+  - [4. 框架](./docs/core/4.framework.md)
+  - [5. 请求处理模型](./docs/core/5.trigger.md)
+  - [6. 异常处理](./docs/core/6.exception.md)
 
 ## 讨论机制 Discussion
 
