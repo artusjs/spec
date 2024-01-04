@@ -135,3 +135,11 @@
 .DocSearch {
   --docsearch-primary-color: var(--vp-c-brand-1) !important;
 }
+
+.medium-zoom-overlay {
+  z-index: 40;
+}
+
+.medium-zoom-image {
+  z-index: 41;
+}

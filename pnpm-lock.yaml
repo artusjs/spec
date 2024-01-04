@@ -11,6 +11,9 @@ devDependencies:
   lint-staged:
     specifier: ^15.1.0
     version: 15.1.0
+  medium-zoom:
+    specifier: ^1.1.0
+    version: 1.1.0
   prettier:
     specifier: 3.1.0
     version: 3.1.0
@@ -1539,6 +1542,13 @@ packages:
       trim-lines: 3.0.1
       unist-util-position: 5.0.0
       unist-util-visit: 5.0.0
+    dev: true
+
+  /medium-zoom@1.1.0:
+    resolution:
+      {
+        integrity: sha512-ewyDsp7k4InCUp3jRmwHBRFGyjBimKps/AJLjRSox+2q/2H4p/PNpQf+pwONWlJiOudkBXtbdmVbFjqyybfTmQ==,
+      }
     dev: true
 
   /merge-stream@2.0.0:
