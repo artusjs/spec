@@ -5,12 +5,12 @@ const sidebars = (): DefaultTheme.SidebarItem[] => [
   {
     text: 'Core',
     items: [
-      { text: 'Introduction', link: '/docs/core/1.introduction' },
-      { text: 'Loader', link: '/docs/core/2.loader' },
-      { text: 'Plugin', link: '/docs/core/3.plugin' },
-      { text: 'Framework', link: '/docs/core/4.framework' },
-      { text: 'Trigger', link: '/docs/core/5.trigger' },
-      { text: 'Exception', link: '/docs/core/6.exception' },
+      { text: 'Introduction', link: '/docs/core/1.introduction.md' },
+      { text: 'Loader', link: '/docs/core/2.loader.md' },
+      { text: 'Plugin', link: '/docs/core/3.plugin.md' },
+      { text: 'Framework', link: '/docs/core/4.framework.md' },
+      { text: 'Trigger', link: '/docs/core/5.trigger.md' },
+      { text: 'Exception', link: '/docs/core/6.exception.md' },
     ],
   },
   {
@@ -18,11 +18,11 @@ const sidebars = (): DefaultTheme.SidebarItem[] => [
     items: [
       {
         text: 'Quickstart',
-        link: '/docs/tutorials/1.quickstart',
+        link: '/docs/tutorials/1.quickstart.md',
       },
       {
         text: 'Command Line Interface',
-        link: '/docs/tutorials/2.cli',
+        link: '/docs/tutorials/2.cli.md',
       },
     ],
   },
@@ -31,19 +31,19 @@ const sidebars = (): DefaultTheme.SidebarItem[] => [
     items: [
       {
         text: 'Convention',
-        link: '/docs/convention',
+        link: '/docs/convention.md',
       },
       {
         text: 'Common Error-Code List',
-        link: '/docs/appendix/1.error_code',
+        link: '/docs/appendix/1.error_code.md',
       },
       {
         text: 'Official Package List',
-        link: '/docs/appendix/2.package',
+        link: '/docs/appendix/2.package.md',
       },
       {
         text: 'Fundamental List',
-        link: '/docs/appendix/3.fundamental',
+        link: '/docs/appendix/3.fundamental.md',
       },
     ],
   },
@@ -56,7 +56,7 @@ export default defineConfig({
   description: 'Artus - enterprise Node.js Framework for Web, RPC, Serverless, etc.',
   lastUpdated: true,
   ignoreDeadLinks: true,
-  cleanUrls: true,
+  // cleanUrls: true,
 
   // markdown
   markdown: {
@@ -87,9 +87,9 @@ export default defineConfig({
 
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Core', link: '/docs/core/1.introduction' },
-      { text: 'Tutorials', link: '/docs/tutorials/1.quickstart' },
-      { text: 'Community', link: '/docs/convention' },
+      { text: 'Core', link: '/docs/core/1.introduction.md' },
+      { text: 'Tutorials', link: '/docs/tutorials/1.quickstart.md' },
+      { text: 'Community', link: '/docs/convention.md' },
     ],
 
     sidebar: sidebars(),
