@@ -14,8 +14,25 @@ const sidebars = (): DefaultTheme.SidebarItem[] => [
     ],
   },
   {
-    text: 'Appendix',
+    text: 'Tutorials',
     items: [
+      {
+        text: 'Quickstart',
+        link: '/docs/tutorials/1.quickstart',
+      },
+      {
+        text: 'Command Line Interface',
+        link: '/docs/tutorials/2.cli',
+      },
+    ],
+  },
+  {
+    text: 'Community',
+    items: [
+      {
+        text: 'Convention',
+        link: '/docs/convention',
+      },
       {
         text: 'Common Error-Code List',
         link: '/docs/appendix/1.error_code',
@@ -29,10 +46,6 @@ const sidebars = (): DefaultTheme.SidebarItem[] => [
         link: '/docs/appendix/3.fundamental',
       },
     ],
-  },
-  {
-    text: 'Convention',
-    link: '/docs/convention',
   },
 ];
 
@@ -75,8 +88,8 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Core', link: '/docs/core/1.introduction' },
-      { text: 'Appendix', link: '/docs/appendix/1.error_code' },
-      { text: 'Convention', link: '/docs/convention' },
+      { text: 'Tutorials', link: '/docs/tutorials/1.quickstart' },
+      { text: 'Community', link: '/docs/convention' },
     ],
 
     sidebar: sidebars(),
