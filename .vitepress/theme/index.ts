@@ -3,7 +3,9 @@ import { h, nextTick, watch } from 'vue';
 import { inBrowser, useRoute } from 'vitepress';
 import mediumZoom from 'medium-zoom';
 import DefaultTheme from 'vitepress/theme';
+
 import type { Theme } from 'vitepress';
+
 import './style.css';
 
 export default {
