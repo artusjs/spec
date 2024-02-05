@@ -4,6 +4,7 @@ import type { DefaultTheme } from 'vitepress';
 const sidebars = (): DefaultTheme.SidebarItem[] => [
   {
     text: 'Core',
+    collapsed: true,
     items: [
       { text: 'Introduction', link: '/docs/core/1.introduction.md' },
       { text: 'Loader', link: '/docs/core/2.loader.md' },
@@ -15,6 +16,7 @@ const sidebars = (): DefaultTheme.SidebarItem[] => [
   },
   {
     text: 'Tutorials',
+    collapsed: true,
     items: [
       {
         text: 'Quickstart',
@@ -27,7 +29,47 @@ const sidebars = (): DefaultTheme.SidebarItem[] => [
     ],
   },
   {
+    text: 'Ecosystem',
+    collapsed: true,
+    items: [
+      {
+        text: 'Artusx',
+        collapsed: true,
+        items: [
+          { text: 'Introduction', link: '/docs/ecosystem/artusx/1.introduction.md' },
+          {
+            text: 'Libs',
+            collapsed: true,
+            items: [
+              { text: '@artusx/core', link: '/docs/ecosystem/artusx/libs/1.artusx_core.md' },
+              { text: '@artusx/utils', link: '/docs/ecosystem/artusx/libs/2.artusx_utils.md' },
+            ],
+          },
+          {
+            text: 'Plugins',
+            collapsed: true,
+            items: [
+              {
+                text: '@artusx/plugin-koa',
+                link: '/docs/ecosystem/artusx/plugins/1.artusx_plugin_koa.md',
+              },
+              {
+                text: '@artusx/plugin-log4js',
+                link: '/docs/ecosystem/artusx/plugins/2.artusx_plugin_log4js.md',
+              },
+              {
+                text: '@artusx/plugin-xtransit',
+                link: '/docs/ecosystem/artusx/plugins/3.artusx_plugin_xtransit.md',
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
     text: 'Community',
+    collapsed: true,
     items: [
       {
         text: 'Convention',
