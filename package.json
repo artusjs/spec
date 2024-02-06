@@ -5,16 +5,20 @@
     "build": "vitepress build",
     "preview": "vitepress preview",
     "prepare": "husky install",
-    "prettier": "pnpm exec prettier . --write"
+    "prettier": "pnpm exec prettier . --write",
+    "lint:md": "markdownlint -c .markdownlint.json docs"
   },
   "devDependencies": {
     "husky": "^8.0.3",
     "lint-staged": "^15.1.0",
+    "markdownlint": "^0.33.0",
+    "markdownlint-cli": "^0.39.0",
     "medium-zoom": "^1.1.0",
     "prettier": "3.1.0",
     "vitepress": "1.0.0-rc.41"
   },
   "lint-staged": {
-    "**/*": "prettier --write --ignore-unknown"
+    "*": "prettier --write --ignore-unknown",
+    "docs/**/*.md": "markdownlint -c .markdownlint.json"
   }
 }
