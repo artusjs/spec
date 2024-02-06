@@ -143,3 +143,8 @@
 .medium-zoom-image {
   z-index: 41;
 }
+
+.vp-doc table {
+  width: 100%;
+  display: table;
+}
