@@ -12,7 +12,7 @@
 
 框架不限定目录结构，可选用 `MVC（Model - View - Controller` 方式组织代码，也可以参考 `module-api`，使用 Module 的方式组织代码。
 
-```bash
+```bash filename="iTerm"
 .
 ├── bootstrap.ts
 ├── config
@@ -32,11 +32,9 @@
 
 ## 核心代码
 
-`bootstrap.ts`
-
 启动文件，配置启动参数。
 
-```ts
+```ts filename="bootstrap.ts" copy
 import path from 'path';
 import { Application } from '@artusx/utils';
 
@@ -50,11 +48,9 @@ import { Application } from '@artusx/utils';
 })();
 ```
 
-`config/plugin.ts`
-
 插件配置，由于 `@artusx/core` 默认集成了部分插件，可通过该配置文件选择性开启或者关闭。
 
-```ts
+```ts filename="config/plugin.ts" copy
 export default {
   artusx: {
     enable: true,
@@ -68,11 +64,9 @@ export default {
 };
 ```
 
-`middleware/LimitRate.ts`
-
 类中间件，全局开启
 
-```ts
+```ts filename="middleware/LimitRate.ts" copy
 import { ArtusInjectEnum, Inject } from '@artus/core';
 import { ArtusxContext, ArtusxNext, Middleware } from '@artusx/core';
 
@@ -113,11 +107,9 @@ export default class LimitRateMiddleware {
 }
 ```
 
-`middleware/traceTime.ts`
-
 函数中间件，在 route 中使用。
 
-```ts
+```ts filename="middleware/traceTime.ts" copy
 import { ArtusInjectEnum, Inject } from '@artus/core';
 import { ArtusxContext, ArtusxNext, Middleware } from '@artusx/core';
 
@@ -140,11 +132,9 @@ export default class TraceTimeMiddleware {
 }
 ```
 
-`controller/home.ts`
-
 插件已导出 koa 相关注解与类型，在 controller 中 import 即可。
 
-```ts
+```ts filename="controller/home.ts" copy
 import { Controller, GET, POST, MW } from '@artusx/core';
 import type { ArtusxContext } from '@artusx/core';
 import traceTime from '../middleware/traceTime';
@@ -164,17 +154,13 @@ export default class HomeController {
 
 开发环境，可使用 nodemon 启动，文件变更自动重启应用。
 
-```bash
-npx nodemon src/index.ts
-```
-
-```bash
+```bash filename="iTerm"
 npx nodemon src/index.ts
 ```
 
 生产环境，通过 tsc 编译后，用 nodejs 启动即可。
 
-```bash
+```bash filename="iTerm"
 tsc
 node dist/index.js
 ```

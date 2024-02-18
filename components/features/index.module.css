@@ -1,0 +1,42 @@
+.features_container {
+  margin: 8rem 0 0;
+  padding: 4rem 0 8rem 0;
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+:global(.dark) .features_container {
+  background-color: #000;
+  border-bottom: 1px solid rgb(38, 38, 38);
+}
+
+.card {
+  position: relative;
+  padding: 1.5rem 1.75rem;
+  color: #000;
+  background-color: #fff;
+  overflow: hidden;
+  border-radius: 1.78em;
+}
+
+:global(.dark) .card {
+  color: #fff;
+  background-color: #202020;
+}
+
+.features {
+  font-size: 2.5rem;
+  font-size: min(2.5rem, max(8vw, 2.5rem));
+  font-weight: 700;
+  margin: 2rem 0;
+}
+
+.title {
+  position: relative;
+  font-size: 32px;
+  font-size: min(32px, max(4vw, 24px));
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02rem;
+  z-index: 2;
+}
