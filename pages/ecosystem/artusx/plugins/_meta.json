@@ -1,0 +1,6 @@
+{
+  "1.artusx_plugin_koa": "koa",
+  "2.artusx_plugin_log4js": "log4js",
+  "3.artusx_plugin_xtransit": "xtransit",
+  "4.artusx_plugin_nunjucks": "nunjucks"
+}

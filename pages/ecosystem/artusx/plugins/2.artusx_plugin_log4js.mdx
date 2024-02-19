@@ -1,6 +1,6 @@
 # @artusx/plugin-log4js
 
-> <https://github.com/log4js-node/log4js-node>
+> [https://github.com/log4js-node/log4js-node](https://github.com/log4js-node/log4js-node)
 
 插件基于 log4js 封装，用于替代框架内置的 logger （仅只是 console / stdout）。
 
@@ -8,13 +8,13 @@
 
 配置完全兼容 log4js，详细配置请参考官网文档。
 
-### `config.default.ts`
+### 配置插件
 
 #### 默认配置
 
 默认配置仅输出日志到控制台。
 
-```ts
+```ts filename="config.default.ts"
 export default {
   log4js: {
     appenders: {
@@ -31,7 +31,7 @@ export default {
 
 可通过自定义配置，开启 file 类型的 appender，并输出到临时目录。
 
-```ts
+```ts filename="config.default.ts"
 import os from 'os';
 import path from 'path';
 import fs from 'fs-extra';
@@ -77,14 +77,15 @@ export default () => {
 
     // log4js
     log4js,
+  };
 };
 ```
 
-### `plugin.ts`
+### 启用插件
 
 core 插件已默认集成，无需单独配置；如需单独使用，可通过如下方式开启插件。
 
-```ts
+```ts filename="plugin.ts"
 export default {
   log4js: {
     enable: true,
@@ -97,7 +98,7 @@ export default {
 
 在服务中，可使用 ArtusXInjectEnum 或者 Log4jsClient 注入 Log4jsClient 对象，并通过 `getLogger` 方法获取对应的 logger。
 
-```ts
+```ts filename="controller/home.ts"
 import { Inject } from '@artus/core';
 import { Controller, GET, POST } from '@artusx/core';
 import { ArtusXInjectEnum } from '@artusx/utils';

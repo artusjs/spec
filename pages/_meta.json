@@ -1,0 +1,26 @@
+{
+  "index": {
+    "title": "Home",
+    "type": "page",
+    "display": "hidden",
+    "theme": {
+      "layout": "raw"
+    }
+  },
+  "core": {
+    "title": "Core",
+    "type": "page"
+  },
+  "tutorials": {
+    "title": "Tutorials",
+    "type": "page"
+  },
+  "ecosystem": {
+    "title": "Ecosystem",
+    "type": "page"
+  },
+  "community": {
+    "title": "Community",
+    "type": "page"
+  }
+}

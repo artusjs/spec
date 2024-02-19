@@ -1,0 +1,90 @@
+# @artusx/plugin-nunjucks
+
+> [https://mozilla.github.io/nunjucks/](https://mozilla.github.io/nunjucks/)
+
+插件基于 nunjucks 封装，支持模板渲染能力；对外暴露 `compile` / `render` / `renderString` 方法简化使用。
+
+## 配置
+
+配置完全兼容 nunjucks，详细配置请参考官网文档。
+
+### 配置插件
+
+```ts filename="config.default.ts"
+import os from 'os';
+import path from 'path';
+import { LoggerOptions, LoggerLevel, NunjucksConfigureOptions } from '@artus/core';
+import { Log4jsConfiguration } from '@artusx/core';
+
+const viewDir = path.resolve(__dirname, '../view');
+
+export default () => {
+  const nunjucks: NunjucksConfigureOptions = {
+    path: viewDir,
+    options: {
+      autoescape: true,
+      noCache: true,
+    },
+  };
+
+  return {
+    nunjucks,
+  };
+};
+```
+
+### 启用插件
+
+core 插件已默认集成，无需单独配置；如需单独使用，可通过如下方式开启插件。
+
+```ts filename="plugin.ts"
+export default {
+  log4js: {
+    enable: true,
+    package: '@artusx/plugin-nunjucks',
+  },
+};
+```
+
+## 使用
+
+在服务中，可使用 ArtusXInjectEnum 或者 NunjucksClient 注入 NunjucksClient 对象。
+
+### 模版
+
+```html filename="view/index.html"
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{title}}</title>
+  </head>
+  <body>
+    <div style="margin: 2em 4em">
+      <h1>{{title}}</h1>
+      <p>{{message}}</p>
+    </div>
+  </body>
+</html>
+```
+
+### 渲染
+
+```ts filename="controller/home.ts"
+import { Inject, Controller, GET, POST } from '@artusx/core';
+import { ArtusXInjectEnum } from '@artusx/utils';
+import type { ArtusxContext, NunjucksClient } from '@artusx/core';
+
+@Controller()
+export default class HomeController {
+  @Inject(ArtusXInjectEnum.Nunjucks)
+  nunjucks: NunjucksClient;
+
+  @GET('/')
+  @POST('/')
+  async home(ctx: ArtusxContext) {
+    ctx.body = this.nunjucks.render('index.html', { title: 'ArtusX', message: 'Hello ArtusX!' });
+  }
+}
+```

@@ -1,6 +1,8 @@
+import { Callout } from 'nextra/components';
+
 # @artusx/plugin-koa
 
-> <https://github.com/koajs/koa>
+> [https://github.com/koajs/koa](https://github.com/koajs/koa)
 
 插件基于 koa 封装，默认集成 koa-router，并添加 controller / middleware / http method 等注解能力，完全兼容 koa 生态。
 
@@ -21,29 +23,33 @@
 
 ## 配置
 
-### `config.default.ts`
+### 配置插件
 
 keys 通过 `KOA_KEYS` 环境变量传入。
 
-```ts
+```ts filename="iTerm"
 const key_keys = process.env.KOA_KEYS?.split(',') ?? ['artusx'];
 ```
 
 port 默认配置为 7001，可通过 config 修改。
 
-```ts
+```ts filename="config.default.ts"
 export default {
   koa: {
     port: 7001,
   },
+  artusx: {
+    // 类中间件支持顺序加载，不配置则按 loader 加载顺序依次执行。
+    // middlewares: [],
+  },
 };
 ```
 
-### `plugin.ts`
+### 启用插件
 
 core 插件已默认集成，无需单独配置；如需单独使用，可通过如下方式开启插件。
 
-```ts
+```ts filename="plugin.ts"
 export default {
   koa: {
     enable: true,
@@ -54,13 +60,15 @@ export default {
 
 ## 内置注解
 
-### `@Middleware(params: { enable: boolean; })`
+### @Middleware
 
-类中间件
+#### 类中间件
 
-> TODO: 类中间件支持顺序加载
+<Callout type='info' emoji='ℹ️'>
+  类中间件为全局中间件，可通过 `config.artusx.middlewares` 控制执行顺序，否则根据加载顺序执行。
+</Callout>
 
-```ts
+```ts filename="middleware/limitRate.ts"
 import { ArtusInjectEnum, Inject } from '@artus/core';
 import { ArtusxContext, ArtusxNext, Middleware } from '@artusx/plugin-koa';
 
@@ -101,9 +109,9 @@ export default class LimitRateMiddleware {
 }
 ```
 
-函数中间件
+#### 函数中间件
 
-```ts
+```ts filename="middleware/traceTime.ts"
 import { ArtusxContext, ArtusxNext } from '@artusx/plugin-koa';
 
 export default async function traceTime(_ctx: ArtusxContext, next: ArtusxNext): Promise<void> {
@@ -113,7 +121,7 @@ export default async function traceTime(_ctx: ArtusxContext, next: ArtusxNext): 
 }
 ```
 
-### `@Controller(prefix?: string)`
+### @Controller
 
 此外插件提供了 web服务的常用注解：
 
@@ -126,7 +134,7 @@ export default async function traceTime(_ctx: ArtusxContext, next: ArtusxNext): 
 - `@OPTIONS: (path: string)`
 - `@MW: (middlewares: ArtusxHandler[])`
 
-```ts
+```ts filename="controller/home.ts"
 import { Controller, GET, POST, MW } from '@artusx/plugin-koa';
 import type { ArtusxContext } from '@artusx/plugin-koa';
 import traceTime from '../middleware/traceTime';
@@ -144,11 +152,11 @@ export default class HomeController {
 
 ## 进阶使用
 
-### `lifecycle.ts`
+### 自定义 lifecycle.ts
 
 如内置 koa 无法满足需求，可通过自定义 LifecycleHook ，在应用启动前，对 koa 进行拓展。
 
-```ts
+```ts filename="lifecycle.ts"
 import {
   Inject,
   ArtusInjectEnum,

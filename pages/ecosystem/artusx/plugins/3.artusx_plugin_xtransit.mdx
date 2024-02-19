@@ -1,6 +1,6 @@
 # @artusx/plugin-xtransit
 
-> <https://github.com/X-Profiler>
+> [https://github.com/X-Profiler](https://github.com/X-Profiler)
 
 插件基于 X-Profiler 封装，用于 Node.js 性能监控，已在 core 中默认集成，但并未开启。
 
@@ -12,7 +12,7 @@
 
 默认配置仅作为示例使用。
 
-```ts
+```ts filename="config.default.ts"
 export default () => {
   return {
     xprofiler: {
@@ -50,7 +50,7 @@ export default () => {
 
 插件需要配置 logger 插件使用，日志上报能力等依赖日志输出，此处演示如何配置 log4js 使用。
 
-```ts
+```ts filename="config.prod.ts"
 import os from 'os';
 import path from 'path';
 import fs from 'fs-extra';
@@ -121,11 +121,11 @@ export default () => {
 };
 ```
 
-## 插件
+## 启用插件
 
 core 插件已默认集成，配置开启即可。
 
-```ts
+```ts filename="plugin.ts"
 export default {
   log4js: {
     enable: true,
@@ -135,7 +135,7 @@ export default {
 
 如需单独使用，可通过如下方式开启插件。
 
-```ts
+```ts filename="plugin.ts"
 export default {
   log4js: {
     enable: true,

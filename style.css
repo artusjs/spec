@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-feature-settings:
+    'rlig' 1,
+    'calt' 1;
+}
+
+.home-content p {
+  margin-top: 1.5em;
+  line-height: 1.75em;
+}
+
+.home-content a {
+  --tw-ring-color: hsl(var(--nextra-primary-hue) var(--nextra-primary-saturation) 50%/0.3);
+  --tw-text-opacity: 1;
+  text-underline-position: under;
+  text-decoration-line: underline;
+  text-decoration-thickness: from-font;
+  color: hsl(
+    var(--nextra-primary-hue) var(--nextra-primary-saturation) 50% / var(--tw-text-opacity)
+  );
+}
+
+.home-content > .content-container {
+  margin-top: 2rem;
+}
+
+.content-container {
+  max-width: 90rem;
+  padding-left: max(env(safe-area-inset-left), 1.5rem);
+  padding-right: max(env(safe-area-inset-right), 1.5rem);
+  margin: 0 auto;
+}
+
+@media screen and (max-width: 1200px) {
+  .home-content .hide-medium {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .home-content p {
+    font-size: 0.9rem;
+  }
+  .home-content .hide-small {
+    display: none;
+  }
+}
