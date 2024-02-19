@@ -1,3 +1,5 @@
+import { Callout } from 'nextra/components';
+
 # @artusx/plugin-koa
 
 > [https://github.com/koajs/koa](https://github.com/koajs/koa)
@@ -36,6 +38,10 @@ export default {
   koa: {
     port: 7001,
   },
+  artusx: {
+    // 类中间件支持顺序加载，不配置则按 loader 加载顺序依次执行。
+    // middlewares: [],
+  },
 };
 ```
 
@@ -56,9 +62,11 @@ export default {
 
 ### @Middleware
 
-类中间件
+#### 类中间件
 
-> TODO: 类中间件支持顺序加载
+<Callout type='info' emoji='ℹ️'>
+  类中间件为全局中间件，可通过 `config.artusx.middlewares` 控制执行顺序，否则根据加载顺序执行。
+</Callout>
 
 ```ts filename="middleware/limitRate.ts"
 import { ArtusInjectEnum, Inject } from '@artus/core';
@@ -101,7 +109,7 @@ export default class LimitRateMiddleware {
 }
 ```
 
-函数中间件
+#### 函数中间件
 
 ```ts filename="middleware/traceTime.ts"
 import { ArtusxContext, ArtusxNext } from '@artusx/plugin-koa';
