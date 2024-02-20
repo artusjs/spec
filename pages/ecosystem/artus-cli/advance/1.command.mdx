@@ -1,0 +1,103 @@
+# 指令
+
+指令除了前面说的常规用法之外，还有一些高级技巧。
+
+## 元数据继承
+
+指令在使用 OO 的方式继承其他指令的时候，也会继承其他指令的所有配置信息（ 包括 `Option`、`Middleware` ），这个跟一般 IoC 的类设计不太一致（ 大部分是不会做继承元数据这么个操作的 ），指令之所以这样做，主要是因为指令的 Option 配置会比较多，如果不支持继承重复写的成本很高。
+
+所以 artus-cli 默认开启了指令元数据继承的功能，如果不想使用元数据继承，也可以通过 `inheritMetadata` 配置关闭：
+
+```ts filename="config/config.default.ts"
+export default {
+  inheritMetadata: false,
+};
+```
+
+也可以只对指定的指令关闭
+
+```ts filename="VSCode"
+import { DefineCommand, Command, Utils } from '@artus-cli/artus-cli';
+
+// test command
+@DefineCommand(
+  {
+    command: 'test',
+  },
+  { inheritMetadata: false }
+)
+export class TestCommand extends Command {
+  async run() {
+    console.info('test');
+  }
+}
+```
+
+## 指令重定向
+
+存在一种场景需要对指令做重定向（ 即更改执行指令 ），框架提供了 `Utils` 类（ 下文有详细介绍 ），其中具备一些实用的工具函数。
+
+比如上面的注入指令的例子，可以直接用重定向的方式
+
+```ts filename="VSCode"
+import { DefineCommand, Command, Utils } from '@artus-cli/artus-cli';
+
+// test command
+@DefineCommand({
+  command: 'test',
+})
+export class TestCommand extends Command {
+  async run() {
+    console.info('test');
+  }
+}
+
+// coverage command
+@DefineCommand({
+  command: 'cov',
+})
+export class CovCommand extends Command {
+  @Inject()
+  utils: Utils;
+
+  async run() {
+    console.info('coverage');
+
+    // 参数格式跟 process.argv 一致，也可以写 flags
+    return this.utils.redirect(['test']);
+  }
+}
+```
+
+## 指令冲突与覆盖
+
+如果两个指令的 command 除了 arugments 之外是一样的，为了避免开发时不小心写了同样的 command 导致难以快速排查出原因，框架目前针对同样的 command 会报错提醒指令冲突。
+
+如果开发者确认就是需要覆盖指令，可以在 `DefineCommand` 的参数中传入 `overrideCommand` 参数来强制覆盖。
+
+```ts filename="VSCode"
+import { DefineCommand, Command } from '@artus-cli/artus-cli';
+
+// test command
+@DefineCommand({
+  command: 'test',
+})
+export class TestCommand extends Command {
+  async run() {
+    console.info('test');
+  }
+}
+
+// new test command
+@DefineCommand(
+  {
+    command: 'test',
+  },
+  { overrideCommand: true }
+) // 标识强制覆盖
+export class NewTestCommand extends Command {
+  async run() {
+    console.info('new test');
+  }
+}
+```

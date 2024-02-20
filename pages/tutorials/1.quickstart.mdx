@@ -39,7 +39,7 @@ Artus 中的 Core 实现底层基于 IoC（控制反转，Inversion of Control�
 
 此处我们提供一个基于 koa 实现的 http-server 的简单示例，可点击链接查看完整代码。
 
-> <https://github.com/artusjs/artusx/tree/main/packages/apps/artusx-koa>
+> [https://github.com/artusjs/artusx/tree/main/packages/apps/artusx-koa](https://github.com/artusjs/artusx/tree/main/packages/apps/artusx-koa)
 
 ### Service
 
@@ -51,7 +51,7 @@ Artus 中的 Core 实现底层基于 IoC（控制反转，Inversion of Control�
 - Execution（执行生命周期，每次执行时实例化）
 - Transient（临时生命周期，每次使用时实例化）
 
-```ts
+```ts filename="service/api.ts"
 import { Inject, Injectable, ArtusInjectEnum, ArtusApplication } from '@artus/core';
 
 @Injectable()
@@ -75,7 +75,7 @@ export default class APIService {
 
 Inject 支持通过 string 以及 clazz 方式在容器中查找依赖，可参考示例中的 config / service 的使用。
 
-```ts
+```ts filename="controller/api.ts"
 import { ArtusInjectEnum, Inject } from '@artus/core';
 import { GET, HTTPController } from '../types';
 import type { ArtusxContext } from '../types';

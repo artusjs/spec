@@ -1,0 +1,7 @@
+{
+  "1.command": "指令",
+  "2.env": "多环境",
+  "3.plugin": "插件机制",
+  "4.framework": "框架继承",
+  "5.program_util": "Program & Util"
+}
