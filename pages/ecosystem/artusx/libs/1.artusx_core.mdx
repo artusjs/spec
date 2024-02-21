@@ -225,3 +225,133 @@ export default class HomeController {
   }
 }
 ```
+
+### @ContentType
+
+设置 ContentType，传参为 `string`，通过 `mine.lookup` 匹配正确类型。
+
+> [https://www.npmjs.com/package/mime-types](https://www.npmjs.com/package/mime-types)
+
+```ts filename="controller/api.ts"
+import { ArtusInjectEnum, Inject, GET, Controller, ContentType } from '@artusx/core';
+import type { ArtusxContext } from '@artusx/core';
+import APIService from './api.service';
+
+@Controller('/api')
+export default class APIController {
+  @Inject(ArtusInjectEnum.Config)
+  config: Record<string, string | number>;
+
+  @Inject(APIService)
+  apiService: APIService;
+
+  @GET('/')
+  async home(ctx: ArtusxContext) {
+    ctx.body = 'api';
+  }
+
+  @GET('/mockApi')
+  @ContentType('application/json; charset=utf-8')
+  async getInfo(ctx: ArtusxContext) {
+    ctx.body = await this.apiService.mockApi();
+  }
+}
+```
+
+### @Query / @Params / @Body
+
+在业务开发中，通常需要对请求参数进行验证，此处使用 json-schema 定义参数类型，并使用 ajv 进行校验，校验结果存放在 `ctx.context.output.data` 中。
+
+> [https://json-schema.org/specification](https://json-schema.org/specification)
+
+定义数据类型
+
+```ts filename="validator.validator.ts"
+import { JSONSchemaType } from '@artusx/core';
+
+export interface QueryTypes {
+  foo: string;
+  bar?: string;
+}
+
+export const QueryScheme: JSONSchemaType<QueryTypes> = {
+  type: 'object',
+  properties: {
+    foo: { type: 'string' },
+    bar: { type: 'string', nullable: true },
+  },
+  required: ['foo'],
+  additionalProperties: false,
+};
+
+export interface ParamsTypes {
+  uuid: string;
+}
+
+export const ParamsScheme: JSONSchemaType<ParamsTypes> = {
+  type: 'object',
+  properties: {
+    uuid: { type: 'string', nullable: false },
+  },
+  required: ['uuid'],
+  additionalProperties: false,
+};
+
+export interface BodyTypes {
+  key: number;
+}
+
+export const BodyScheme: JSONSchemaType<BodyTypes> = {
+  type: 'object',
+  properties: {
+    key: { type: 'integer', nullable: false },
+  },
+  required: ['key'],
+  additionalProperties: false,
+};
+```
+
+调用示例
+
+```ts filename="validator.controller.ts"
+import { Controller, StatusCode, GET, Query, Params, Body, POST } from '@artusx/core';
+import type { ArtusxContext } from '@artusx/core';
+
+import {
+  QueryTypes,
+  QueryScheme,
+  BodyTypes,
+  BodyScheme,
+  ParamsTypes,
+  ParamsScheme,
+} from './validator.validator';
+
+@Controller('/validator')
+export default class ValidatorController {
+  @GET('/:uuid')
+  @POST('/:uuid')
+
+  /**
+   * validator.index.handler
+   * @description validate query / params / body
+   * @example:
+   *   - url: /validator/e8b847b9-cb23-4fbf-8e7c-0c4ba72b9629?foo=foo&bar=bar
+   *   - body: { "key": 123456 }
+   */
+  @Query<QueryTypes>(QueryScheme)
+  @Body<BodyTypes>(BodyScheme)
+  @Params<ParamsTypes>(ParamsScheme)
+  @StatusCode(200)
+  async index(ctx: ArtusxContext): Promise<Object> {
+    const query = ctx.context.output.data.query;
+    const params = ctx.context.output.data.params;
+    const body = ctx.context.output.data.body;
+
+    return {
+      query,
+      body,
+      params,
+    };
+  }
+}
+```
