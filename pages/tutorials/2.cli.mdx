@@ -6,7 +6,7 @@ artus 并不限定于具体的应用场景（如 web），故而可以基于该�
 
 ## 特性
 
-> <https://github.com/artus-cli/artus-cli>
+> [https://github.com/artus-cli/artus-cli](https://github.com/artus-cli/artus-cli)
 
 基于 Artus 的 pipeline 流水线设计，将指令输入作为协议，将指令执行通过中间件模式串联，支持指令重定向。
 用户编程风格方面，采用 IoC 的方式来定义指令、参数配置、中间件。
@@ -15,7 +15,7 @@ artus 并不限定于具体的应用场景（如 web），故而可以基于该�
 
 ## 示例
 
-```bash
+```bash filename="iTerm"
 .
 ├── node_modules
 ├── package.json
@@ -30,9 +30,9 @@ artus 并不限定于具体的应用场景（如 web），故而可以基于该�
 
 ### 配置
 
-**_tsconfig.json_**
+#### TypeScript Config
 
-```json
+```json filename="tsconfig.json"
 {
   "extends": "@artus/tsconfig",
   "compilerOptions": {
@@ -44,9 +44,9 @@ artus 并不限定于具体的应用场景（如 web），故而可以基于该�
 }
 ```
 
-**_package.json_**
+#### NPM Config
 
-```json
+```json filename="package.json"
 {
   "name": "@artusx/cmd",
   "version": "1.0.1-dev.1",
@@ -73,9 +73,9 @@ artus 并不限定于具体的应用场景（如 web），故而可以基于该�
 }
 ```
 
-**_meta.json_**
+#### Artus Plugin Config
 
-```json
+```json filename="meta.json"
 {
   "name": "cmd"
 }
@@ -83,9 +83,9 @@ artus 并不限定于具体的应用场景（如 web），故而可以基于该�
 
 ### 逻辑
 
-**_src/bin/cli.ts_**
+#### cli
 
-```ts
+```ts filename="src/bin/cli.ts"
 #!/usr/bin/env node
 
 import path from 'path';
@@ -96,9 +96,9 @@ start({
 });
 ```
 
-**_src/cmd/main.ts_**
+#### main
 
-```ts
+```ts filename="src/cmd/main.ts"
 import { DefineCommand, Command, Option } from '@artus-cli/artus-cli';
 
 @DefineCommand({
@@ -121,7 +121,7 @@ export class MainCommand extends Command {
 
 ### 运行
 
-```bash
+```bash filename="iTerm"
 $ ts-node src/bin/cli.ts -h
 
 Usage: @artusx/cmd <cmd>

@@ -1,0 +1,10 @@
+{
+  "1.quickstart": "Quickstart",
+  "2.introduction": "Introduction",
+  "advance": "Advance",
+  "plugins": "Plugins",
+  "github_link": {
+    "title": "Changelog",
+    "href": "https://github.com/artus-cli/artus-cli/blob/master/CHANGELOG.md"
+  }
+}

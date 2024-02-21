@@ -1,5 +1,9 @@
 {
   "1.introduction": "Introduction",
   "libs": "Libs",
-  "plugins": "Plugins"
+  "plugins": "Plugins",
+  "github_link": {
+    "title": "Changelog",
+    "href": "https://github.com/artusjs/artusx/blob/main/CHANGELOG.md"
+  }
 }

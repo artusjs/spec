@@ -9,7 +9,7 @@
 | @artusx/plugin-nunjucks | [![NPM version](https://img.shields.io/npm/v/@artusx/plugin-nunjucks.svg?style=flat-square)](https://npmjs.org/package/@artusx/plugin-nunjucks) |
 | @artusx/plugin-xtransit | [![NPM version](https://img.shields.io/npm/v/@artusx/plugin-xtransit.svg?style=flat-square)](https://npmjs.org/package/@artusx/plugin-xtransit) |
 
-## 目录结构
+## 概览
 
 框架不限定目录结构，可选用 `MVC（Model - View - Controller` 方式组织代码，也可以参考 `module-api`，使用 Module 的方式组织代码。
 
@@ -31,7 +31,7 @@
 └── index.ts
 ```
 
-## 核心代码
+## 示例
 
 启动文件，配置启动参数。
 
@@ -151,7 +151,7 @@ export default class HomeController {
 }
 ```
 
-## 项目运行
+## 运行
 
 开发环境，可使用 nodemon 启动，文件变更自动重启应用。
 
@@ -164,4 +164,194 @@ npx nodemon src/index.ts
 ```bash filename="iTerm"
 tsc
 node dist/index.js
+```
+
+## 注解
+
+core 内置部分注解，简化业务使用
+
+### @Headers
+
+```ts filename="controller/home.ts"
+import { Controller, GET, Headers } from '@artusx/core';
+import type { ArtusxContext } from '@artusx/core';
+
+@Controller()
+export default class HomeController {
+  @GET('/')
+  @Headers({
+    'x-method': 'home-controller',
+  })
+  async home(ctx: ArtusxContext) {
+    ctx.body = 'Hello ArtusX!';
+  }
+}
+```
+
+### @StatusCode
+
+使用该注解时候，请勿直接通过 `ctx.body = 'Hello ArtusX!';` 赋值，请直接 `return` 想要返回的数据。
+
+```ts filename="controller/home.ts"
+import { ArtusXInjectEnum, ArtusXErrorEnum } from '@artusx/utils';
+import {
+  ArtusInjectEnum,
+  ArtusApplication,
+  Inject,
+  Controller,
+  GET,
+  StatusCode,
+} from '@artusx/core';
+import type { ArtusxContext, NunjucksClient } from '@artusx/core';
+
+@Controller()
+export default class HomeController {
+  @Inject(ArtusInjectEnum.Application)
+  app: ArtusApplication;
+
+  @Inject(ArtusXInjectEnum.Nunjucks)
+  nunjucks: NunjucksClient;
+
+  @GET('/')
+  @StatusCode(209)
+  async home(ctx: ArtusxContext) {
+    const mockError = ctx.query.error;
+
+    if (mockError) {
+      this.app.throwException(ArtusXErrorEnum.UNKNOWN_ERROR);
+    }
+
+    return this.nunjucks.render('index.html', { title: 'ArtusX', message: 'Hello ArtusX!' });
+  }
+}
+```
+
+### @ContentType
+
+设置 ContentType，传参为 `string`，通过 `mine.lookup` 匹配正确类型。
+
+> [https://www.npmjs.com/package/mime-types](https://www.npmjs.com/package/mime-types)
+
+```ts filename="controller/api.ts"
+import { ArtusInjectEnum, Inject, GET, Controller, ContentType } from '@artusx/core';
+import type { ArtusxContext } from '@artusx/core';
+import APIService from './api.service';
+
+@Controller('/api')
+export default class APIController {
+  @Inject(ArtusInjectEnum.Config)
+  config: Record<string, string | number>;
+
+  @Inject(APIService)
+  apiService: APIService;
+
+  @GET('/')
+  async home(ctx: ArtusxContext) {
+    ctx.body = 'api';
+  }
+
+  @GET('/mockApi')
+  @ContentType('application/json; charset=utf-8')
+  async getInfo(ctx: ArtusxContext) {
+    ctx.body = await this.apiService.mockApi();
+  }
+}
+```
+
+### @Query / @Params / @Body
+
+在业务开发中，通常需要对请求参数进行验证，此处使用 json-schema 定义参数类型，并使用 ajv 进行校验，校验结果存放在 `ctx.context.output.data` 中。
+
+> [https://json-schema.org/specification](https://json-schema.org/specification)
+
+定义数据类型
+
+```ts filename="validator.validator.ts"
+import { JSONSchemaType } from '@artusx/core';
+
+export interface QueryTypes {
+  foo: string;
+  bar?: string;
+}
+
+export const QueryScheme: JSONSchemaType<QueryTypes> = {
+  type: 'object',
+  properties: {
+    foo: { type: 'string' },
+    bar: { type: 'string', nullable: true },
+  },
+  required: ['foo'],
+  additionalProperties: false,
+};
+
+export interface ParamsTypes {
+  uuid: string;
+}
+
+export const ParamsScheme: JSONSchemaType<ParamsTypes> = {
+  type: 'object',
+  properties: {
+    uuid: { type: 'string', nullable: false },
+  },
+  required: ['uuid'],
+  additionalProperties: false,
+};
+
+export interface BodyTypes {
+  key: number;
+}
+
+export const BodyScheme: JSONSchemaType<BodyTypes> = {
+  type: 'object',
+  properties: {
+    key: { type: 'integer', nullable: false },
+  },
+  required: ['key'],
+  additionalProperties: false,
+};
+```
+
+调用示例
+
+```ts filename="validator.controller.ts"
+import { Controller, StatusCode, GET, Query, Params, Body, POST } from '@artusx/core';
+import type { ArtusxContext } from '@artusx/core';
+
+import {
+  QueryTypes,
+  QueryScheme,
+  BodyTypes,
+  BodyScheme,
+  ParamsTypes,
+  ParamsScheme,
+} from './validator.validator';
+
+@Controller('/validator')
+export default class ValidatorController {
+  @GET('/:uuid')
+  @POST('/:uuid')
+
+  /**
+   * validator.index.handler
+   * @description validate query / params / body
+   * @example:
+   *   - url: /validator/e8b847b9-cb23-4fbf-8e7c-0c4ba72b9629?foo=foo&bar=bar
+   *   - body: { "key": 123456 }
+   */
+  @Query<QueryTypes>(QueryScheme)
+  @Body<BodyTypes>(BodyScheme)
+  @Params<ParamsTypes>(ParamsScheme)
+  @StatusCode(200)
+  async index(ctx: ArtusxContext): Promise<Object> {
+    const query = ctx.context.output.data.query;
+    const params = ctx.context.output.data.params;
+    const body = ctx.context.output.data.body;
+
+    return {
+      query,
+      body,
+      params,
+    };
+  }
+}
 ```
