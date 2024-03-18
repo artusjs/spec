@@ -1,0 +1,38 @@
+# @artusx/plugin-schedule
+
+插件基于 cron 封装，支持 crontab 表达式
+
+- [https://crontab.cronhub.io/](https://crontab.cronhub.io/)
+
+## 配置
+
+core 插件已默认集成，无需单独配置；如需单独使用，可通过如下方式开启插件。
+
+```ts filename="plugin.ts"
+export default {
+  schedule: {
+    enable: true,
+    package: '@artusx/plugin-schedule',
+  },
+};
+```
+
+## 使用
+
+通过 enable 控制启用，支持 cron 语法，通过 runOnInit 配置是否在初始化阶段运行。
+
+```ts filename="shedule/notify.ts"
+import { Schedule } from '@artusx/core';
+import type { ArtusxSchedule } from '@artusx/core';
+
+@Schedule({
+  enable: true,
+  cron: '30 * * * * *',
+  runOnInit: true,
+})
+export default class NotifySchedule implements ArtusxSchedule {
+  async run() {
+    console.log('ScheduleTaskClass.run', Date.now());
+  }
+}
+```

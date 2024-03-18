@@ -1,0 +1,479 @@
+# 快速开始
+
+本文将从开发者角度，详解如何搭建一个 Artusx 应用。
+
+## 环境
+
+- 操作系统：支持 macOS、Linux、Windows（未验证）
+- 运行环境：建议选择 LTS 版本，最低要求 18.x
+
+## 初始化
+
+我们推荐直接使用脚手架。只需几条简单指令，即可快速生成项目
+
+```bash
+# install init tool
+npm i -g @artusx/init
+
+# create app
+artusx-init --name webapp --type apps
+```
+
+启动项目：
+
+```bash
+cd webapp
+
+# install deps
+pnpm i
+
+# run the app
+pnpm run dev
+```
+
+## 使用
+
+### 目录结构
+
+在 Artusx 中，除 `config` 外，不对目录进行限定，为了更好的协作，建议通过 `MVC` 或者 `Module` 方式组织代码。
+
+#### Module（推荐使用）
+
+通过 module 方式组织代码，可避免在 import 是出现形如 `../../../service/api` 代码，便于快速找到所需文件
+
+```bash
+.
+├── package.json
+├── README.md
+├── src
+│   ├── bootstrap.ts
+│   ├── config
+│   ├── index.ts
+│   ├── module-api
+│   │   ├── api.controller.ts
+│   │   ├── api.schedule.ts
+│   │   ├── api.middleware.ts
+│   │   └── api.service.ts
+│   └── view
+└── tsconfig.json
+```
+
+#### Model-View-Controller
+
+此处参考 Egg.js 中常用的目录结构来组织代码，历史项目可通过该方式迁移。
+
+```bash
+.
+├── package.json
+├── src
+│   ├── bootstrap.ts
+│   ├── config
+│   ├── index.ts
+│   ├── controller
+│   │   └── home.ts
+│   ├── model
+│   │   └── user.ts
+│   ├── service
+│   │   └── user.ts
+│   ├── schedule
+│   │   └── user.ts
+│   └── view
+└── tsconfig.json
+```
+
+### 插件策略
+
+通过插件配置，可指定插件是否启用，也可使用本地插件。
+
+```bash
+├── plugin.development.ts
+└── plugin.ts
+```
+
+默认配置
+
+```ts filename="config/plugin.ts" {8-9}
+export default {
+  artusx: {
+    enable: true,
+    package: '@artusx/core',
+  },
+  redis: {
+    enable: false,
+    package: '@artusx/plugin-redis',
+    // path: '../../plugins/plugin-redis'
+  },
+};
+```
+
+### 应用配置
+
+可通过运行时指定 `ARTUS_SERVER_ENV=development` 来启用不同的配置文件。
+
+```bash
+├── config.default.ts
+├── config.development.ts
+└── config.production.ts
+```
+
+默认配置
+
+```ts filename="config/config.default.ts"
+import path from 'path';
+import { ArtusxConfig } from '@artusx/core';
+
+export default () => {
+  const artusx: ArtusxConfig = {
+    port: 7001,
+    static: {
+      prefix: '/public/',
+      dir: path.resolve(__dirname, '../public'),
+      dynamic: true,
+      preload: false,
+      buffer: false,
+      maxFiles: 1000,
+    },
+  };
+
+  return {
+    artusx,
+  };
+};
+```
+
+### Controller
+
+`@arutsx/core` 默认集成了 web 常用插件，并提供了常用注解，方便用户快速增加添加处理逻辑。
+
+#### @Controller
+
+```ts filename="controller/home.ts" {5}
+import { ArtusXInjectEnum } from '@artusx/utils';
+import { Controller, GET, POST, Inject } from '@artusx/core';
+import type { ArtusxContext, NunjucksClient } from '@artusx/core';
+
+@Controller()
+export default class HomeController {
+  @Inject(ArtusXInjectEnum.Nunjucks)
+  nunjucks: NunjucksClient;
+
+  @GET('/')
+  @POST('/')
+  async home(ctx: ArtusxContext) {
+    ctx.body = this.nunjucks.render('index.html', { title: 'ArtusX', message: 'Hello ArtusX!' });
+  }
+}
+```
+
+#### @Headers
+
+```ts filename="controller/home.ts" {7-9}
+import { Controller, GET, Headers } from '@artusx/core';
+import type { ArtusxContext } from '@artusx/core';
+
+@Controller()
+export default class HomeController {
+  @GET('/')
+  @Headers({
+    'x-method': 'home-controller',
+  })
+  async home(ctx: ArtusxContext) {
+    ctx.body = 'Hello ArtusX!';
+  }
+}
+```
+
+#### @StatusCode
+
+使用该注解时候，请勿直接通过 `ctx.body = 'Hello ArtusX!';` 赋值，请直接 `return` 想要返回的数据。
+
+```ts filename="controller/home.ts" {8,21}
+import { ArtusXInjectEnum, ArtusXErrorEnum } from '@artusx/utils';
+import {
+  ArtusInjectEnum,
+  ArtusApplication,
+  Inject,
+  Controller,
+  GET,
+  StatusCode,
+} from '@artusx/core';
+import type { ArtusxContext, NunjucksClient } from '@artusx/core';
+
+@Controller()
+export default class HomeController {
+  @Inject(ArtusInjectEnum.Application)
+  app: ArtusApplication;
+
+  @Inject(ArtusXInjectEnum.Nunjucks)
+  nunjucks: NunjucksClient;
+
+  @GET('/')
+  @StatusCode(209)
+  async home(ctx: ArtusxContext) {
+    return this.nunjucks.render('index.html', { title: 'ArtusX', message: 'Hello ArtusX!' });
+  }
+}
+```
+
+#### @ContentType
+
+设置 ContentType，传参为 `string`，通过 `mine.lookup` 匹配正确类型。
+
+> [https://www.npmjs.com/package/mime-types](https://www.npmjs.com/package/mime-types)
+
+```ts filename="controller/api.ts" {11}
+import { Inject, GET, Controller, ContentType } from '@artusx/core';
+import type { ArtusxContext } from '@artusx/core';
+import APIService from './api.service';
+
+@Controller('/api')
+export default class APIController {
+  @Inject(APIService)
+  apiService: APIService;
+
+  @GET('/mockApi')
+  @ContentType('application/json; charset=utf-8')
+  async getInfo(ctx: ArtusxContext) {
+    ctx.body = await this.apiService.mockApi();
+  }
+}
+```
+
+#### @Query / @Params / @Body
+
+在业务开发中，通常需要对请求参数进行验证，此处使用 json-schema 定义参数类型，并使用 ajv 进行校验，校验结果存放在 `ctx.context.output.data` 中。
+
+> [https://json-schema.org/specification](https://json-schema.org/specification)
+
+定义数据类型
+
+```ts filename="validator.validator.ts"
+import { JSONSchemaType } from '@artusx/core';
+
+export interface QueryTypes {
+  foo: string;
+  bar?: string;
+}
+
+export const QueryScheme: JSONSchemaType<QueryTypes> = {
+  type: 'object',
+  properties: {
+    foo: { type: 'string' },
+    bar: { type: 'string', nullable: true },
+  },
+  required: ['foo'],
+  additionalProperties: false,
+};
+
+export interface ParamsTypes {
+  uuid: string;
+}
+
+export const ParamsScheme: JSONSchemaType<ParamsTypes> = {
+  type: 'object',
+  properties: {
+    uuid: { type: 'string', nullable: false },
+  },
+  required: ['uuid'],
+  additionalProperties: false,
+};
+
+export interface BodyTypes {
+  key: number;
+}
+
+export const BodyScheme: JSONSchemaType<BodyTypes> = {
+  type: 'object',
+  properties: {
+    key: { type: 'integer', nullable: false },
+  },
+  required: ['key'],
+  additionalProperties: false,
+};
+```
+
+调用示例
+
+```ts filename="validator.controller.ts" {25-27}
+import { Controller, StatusCode, GET, Query, Params, Body, POST } from '@artusx/core';
+import type { ArtusxContext } from '@artusx/core';
+
+import {
+  QueryTypes,
+  QueryScheme,
+  BodyTypes,
+  BodyScheme,
+  ParamsTypes,
+  ParamsScheme,
+} from './validator.validator';
+
+@Controller('/validator')
+export default class ValidatorController {
+  @GET('/:uuid')
+  @POST('/:uuid')
+
+  /**
+   * validator.index.handler
+   * @description validate query / params / body
+   * @example:
+   *   - url: /validator/e8b847b9-cb23-4fbf-8e7c-0c4ba72b9629?foo=foo&bar=bar
+   *   - body: { "key": 123456 }
+   */
+  @Query<QueryTypes>(QueryScheme)
+  @Body<BodyTypes>(BodyScheme)
+  @Params<ParamsTypes>(ParamsScheme)
+  @StatusCode(200)
+  async index(ctx: ArtusxContext): Promise<Object> {
+    const query = ctx.context.output.data.query;
+    const params = ctx.context.output.data.params;
+    const body = ctx.context.output.data.body;
+
+    return {
+      query,
+      body,
+      params,
+    };
+  }
+}
+```
+
+### Service
+
+业务逻辑，添加 `@Injectable` 注解即可，可在其中通过 `@Inject` 注入其他对象使用。
+
+```ts filename="module-api/api.service.ts" {3}
+import { Inject, Injectable, ArtusInjectEnum, ArtusApplication } from '@artusx/core';
+
+@Injectable()
+export default class APIService {
+  @Inject(ArtusInjectEnum.Application)
+  app: ArtusApplication;
+
+  async mockApi() {
+    return {
+      data: {
+        name: 'artusx',
+      },
+    };
+  }
+}
+```
+
+如何通过 controller 调用？
+
+```ts filename="module-api/api.contoller.ts" {7-8,13}
+import { Inject, GET, Controller, ContentType } from '@artusx/core';
+import type { ArtusxContext } from '@artusx/core';
+import APIService from './api.service';
+
+@Controller('/api')
+export default class APIController {
+  @Inject(APIService)
+  apiService: APIService;
+
+  @GET('/mockApi')
+  @ContentType('application/json; charset=utf-8')
+  async getInfo(ctx: ArtusxContext) {
+    ctx.body = await this.apiService.mockApi();
+  }
+}
+```
+
+### Middleware
+
+#### 类中间件
+
+类中间件为全局中间件，可通过 `config.artusx.middlewares` 控制执行顺序，否则根据加载顺序执行。
+
+```ts filename="middleware/LimitRate.ts" copy
+import { ArtusInjectEnum, Inject } from '@artus/core';
+import { ArtusxContext, ArtusxNext, Middleware } from '@artusx/core';
+
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+
+const rateLimiterOptions = {
+  points: 6,
+  duration: 1,
+};
+
+@Middleware({
+  enable: true,
+})
+export default class LimitRateMiddleware {
+  @Inject(ArtusInjectEnum.Config)
+  config: Record<string, string | number>;
+
+  private rateLimiter: RateLimiterMemory;
+
+  constructor() {
+    this.rateLimiter = new RateLimiterMemory(rateLimiterOptions);
+  }
+
+  async use(ctx: ArtusxContext, next: ArtusxNext): Promise<void> {
+    try {
+      const rateLimiterRes = await this.rateLimiter.consume(ctx.ip);
+      ctx.set('Retry-After', `${rateLimiterRes.msBeforeNext / 1000}`);
+      ctx.set('X-RateLimit-Limit', `${rateLimiterOptions.points}`);
+      ctx.set('X-RateLimit-Remaining', `${rateLimiterRes.remainingPoints}`);
+      ctx.set('X-RateLimit-Reset', `${new Date(Date.now() + rateLimiterRes.msBeforeNext)}`);
+    } catch (rejRes) {
+      ctx.status = 429;
+      ctx.body = 'Too Many Requests';
+      return;
+    }
+    await next();
+  }
+}
+```
+
+#### 函数中间件
+
+```ts filename="middleware/traceTime.ts" copy
+import { ArtusxContext, ArtusxNext } from '@artusx/core';
+
+export default async function traceTime(_ctx: ArtusxContext, next: ArtusxNext): Promise<void> {
+  console.time('TraceTime');
+  await next();
+  console.timeEnd('TraceTime');
+}
+```
+
+函数中间件在 route 中通过 `@MV()` 使用
+
+```ts filename="controller/home.ts" copy {7}
+import { Controller, GET, POST, MW } from '@artusx/core';
+import type { ArtusxContext } from '@artusx/core';
+import traceTime from '../middleware/traceTime';
+
+@Controller()
+export default class HomeController {
+  @MW([traceTime])
+  @GET('/can-be-get')
+  @POST('/post')
+  async home(ctx: ArtusxContext) {
+    ctx.body = 'Hello World';
+  }
+}
+```
+
+### Schedule
+
+定时器支持 `cron` 语法，并可指定是否启动时运行，通过 `enable` 控制启用。
+
+- [https://crontab.cronhub.io/](https://crontab.cronhub.io/)
+
+```ts filename="shedule/notify.ts" {4-8}
+import { Schedule } from '@artusx/core';
+import type { ArtusxSchedule } from '@artusx/core';
+
+@Schedule({
+  enable: true,
+  cron: '30 * * * * *',
+  runOnInit: true,
+})
+export default class NotifySchedule implements ArtusxSchedule {
+  async run() {
+    console.log('ScheduleTaskClass.run', Date.now());
+  }
+}
+```
