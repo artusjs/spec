@@ -1,5 +1,6 @@
 {
-  "1.introduction": "Introduction",
+  "1.quickstart": "Quickstart",
+  "2.introduction": "Introduction",
   "libs": "Libs",
   "plugins": "Plugins",
   "github_link": {
