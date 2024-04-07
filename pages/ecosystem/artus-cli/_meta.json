@@ -3,6 +3,9 @@
   "2.introduction": "Introduction",
   "advance": "Advance",
   "plugins": "Plugins",
+  "---": {
+    "type": "separator"
+  },
   "github_link": {
     "title": "Changelog",
     "href": "https://github.com/artus-cli/artus-cli/blob/master/CHANGELOG.md"

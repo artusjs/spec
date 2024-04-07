@@ -4,8 +4,17 @@
   "3.exception": "Exception",
   "libs": "Libs",
   "plugins": "Plugins",
+  "---": {
+    "type": "separator"
+  },
+  "typedoc": {
+    "title": "API",
+    "href": "https://artusx-api.artusjs.org/",
+    "newWindow": true
+  },
   "github_link": {
     "title": "Changelog",
-    "href": "https://github.com/artusjs/artusx/blob/main/CHANGELOG.md"
+    "href": "https://github.com/artusjs/artusx/blob/main/CHANGELOG.md",
+    "newWindow": true
   }
 }

@@ -27,23 +27,36 @@ ArtusX 提供了标准化异常处理能力，同时支持业务自定义。
 
 ### 错误码
 
-根据 HTTP Status Code，ArtusX 已内置部分 code，可通过 `ArtusXErrorEnum` 快速使用。
+`@artusx/core` 已内置部分 code，可通过 `HTTPErrorEnum` 与 `ArtusXErrorEnum` 使用。
 
 ```ts filename="src/constants.ts"
-export enum ArtusXErrorEnum {
-  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
-  HTTP_BAD_REQUEST = 'HTTP:BAD_REQUEST',
-  HTTP_UNAUTHORIZED = 'HTTP:UNAUTHORIZED',
-  HTTP_FORBIDDEN = 'HTTP:FORBIDDEN',
-  HTTP_NOT_FODUND = 'HTTP:NOT_FODUND',
-  HTTP_METHOD_NOT_ALLOWED = 'HTTP:METHOD_NOT_ALLOWED',
-  HTTP_INTERNAL_SERVER_ERROR = 'HTTP:INTERNAL_SERVER_ERROR',
-  HTTP_NOT_IMPLEMENTED = 'HTTP:NOT_IMPLEMENTED',
-  HTTP_BAD_GATEWAY = 'HTTP:BAD_GATEWAY',
-  HTTP_SERVICE_UNAVAILABLE = 'HTTP:SERVICE_UNAVAILABLE',
-  HTTP_GATEWAY_TIMEOUT = 'HTTP:GATEWAY_TIMEOUT',
+// https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
 
-  // artusx
+export enum HTTPErrorEnum {
+  // Status_Code = 400
+  HTTP_BAD_REQUEST = 'HTTP:BAD_REQUEST',
+  // Status_Code = 401
+  HTTP_UNAUTHORIZED = 'HTTP:UNAUTHORIZED',
+  // Status_Code = 403
+  HTTP_FORBIDDEN = 'HTTP:FORBIDDEN',
+  // Status_Code = 404
+  HTTP_NOT_FODUND = 'HTTP:NOT_FODUND',
+  // Status_Code = 405
+  HTTP_METHOD_NOT_ALLOWED = 'HTTP:METHOD_NOT_ALLOWED',
+  // Status_Code = 500
+  HTTP_INTERNAL_SERVER_ERROR = 'HTTP:INTERNAL_SERVER_ERROR',
+  // Status_Code = 501
+  HTTP_NOT_IMPLEMENTED = 'HTTP:NOT_IMPLEMENTED',
+  // Status_Code = 502
+  HTTP_BAD_GATEWAY = 'HTTP:BAD_GATEWAY',
+  // Status_Code = 503
+  HTTP_SERVICE_UNAVAILABLE = 'HTTP:SERVICE_UNAVAILABLE',
+  // Status_Code = 504
+  HTTP_GATEWAY_TIMEOUT = 'HTTP:GATEWAY_TIMEOUT',
+}
+
+export enum ArtusXErrorEnum {
+  // Status_Code = 500
   ARTUSX_UNKNOWN_ERROR = 'ARTUSX:UNKNOWN_ERROR',
 }
 ```
@@ -312,4 +325,17 @@ export default () => {
     },
   };
 };
+```
+
+## 异常列表
+
+### UNKNOWN_ERROR
+
+未知错误，通常用于系统异常，返回 `500` 状态码。
+
+```json
+{
+  "desc": "500",
+  "detailUrl": "https://artusjs.org/ecosystem/artusx/3.exception#unknown-error"
+}
 ```
