@@ -1,0 +1,315 @@
+import { Callout } from 'nextra/components';
+
+# Exception
+
+<Callout type='info' emoji='ℹ️'>
+  依赖版本：@artusx/core >= 1.1.0
+</Callout>
+
+ArtusX 提供了标准化异常处理能力，同时支持业务自定义。
+
+## 框架规范
+
+根据日常开发使用，对于异常返回的状态码，通常有两种处理方式:
+
+1. 根据标准规范，返回 `status_code = 400 | 403 | 500`，以及错误信息
+2. 根据业务规范，返回 `status_code = 200`，并在错误信息中，返回自定义错误码
+
+框架中内置了三种 自定义异常 供业务使用：
+
+- ArtusXStdError 标准异常，根据公共规范，返回状态码
+- ArtusXBizError 业务异常，`status_code = 200`，在 `{ data, code }` 中返回业务状态码
+- ArtusXCustomError 自定义异常，`status_code` 以及业务状态码，均由业务自行处理
+
+## 异常定义
+
+通过错误码，可用于规范团队 or 业务错误定义，在业务中通过 `app.throwException(${CODE})` 方式使用。
+
+### 错误码
+
+根据 HTTP Status Code，ArtusX 已内置部分 code，可通过 `ArtusXErrorEnum` 快速使用。
+
+```ts filename="src/constants.ts"
+export enum ArtusXErrorEnum {
+  // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+  HTTP_BAD_REQUEST = 'HTTP:BAD_REQUEST',
+  HTTP_UNAUTHORIZED = 'HTTP:UNAUTHORIZED',
+  HTTP_FORBIDDEN = 'HTTP:FORBIDDEN',
+  HTTP_NOT_FODUND = 'HTTP:NOT_FODUND',
+  HTTP_METHOD_NOT_ALLOWED = 'HTTP:METHOD_NOT_ALLOWED',
+  HTTP_INTERNAL_SERVER_ERROR = 'HTTP:INTERNAL_SERVER_ERROR',
+  HTTP_NOT_IMPLEMENTED = 'HTTP:NOT_IMPLEMENTED',
+  HTTP_BAD_GATEWAY = 'HTTP:BAD_GATEWAY',
+  HTTP_SERVICE_UNAVAILABLE = 'HTTP:SERVICE_UNAVAILABLE',
+  HTTP_GATEWAY_TIMEOUT = 'HTTP:GATEWAY_TIMEOUT',
+
+  // artusx
+  ARTUSX_UNKNOWN_ERROR = 'ARTUSX:UNKNOWN_ERROR',
+}
+```
+
+```json filename="src/exception.json"
+{
+  "HTTP:BAD_REQUEST": {
+    "desc": "400",
+    "detailUrl": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
+  },
+  "HTTP:UNAUTHORIZED": {
+    "desc": "401",
+    "detailUrl": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
+  },
+  "HTTP:FORBIDDEN": {
+    "desc": "403",
+    "detailUrl": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
+  },
+  "HTTP:NOT_FODUND": {
+    "desc": "404",
+    "detailUrl": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
+  },
+  "HTTP:METHOD_NOT_ALLOWED": {
+    "desc": "405",
+    "detailUrl": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
+  },
+  "HTTP:INTERNAL_SERVER_ERROR": {
+    "desc": "500",
+    "detailUrl": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
+  },
+  "HTTP:NOT_IMPLEMENTED": {
+    "desc": "501",
+    "detailUrl": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
+  },
+  "HTTP:BAD_GATEWAY": {
+    "desc": "502",
+    "detailUrl": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
+  },
+  "HTTP:SERVICE_UNAVAILABLE": {
+    "desc": "503",
+    "detailUrl": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
+  },
+  "HTTP:GATEWAY_TIMEOUT": {
+    "desc": "504",
+    "detailUrl": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
+  },
+  "ARTUSX:UNKNOWN_ERROR": {
+    "desc": "500",
+    "detailUrl": "https://github.com/artusjs/artusx"
+  }
+}
+```
+
+### 内置 Error
+
+```ts filename="src/error.ts"
+export class ArtusXStdError extends Error {
+  name = 'ARTUSX_STD_ERROR';
+  data: any;
+  status: number;
+
+  constructor(status: number, message: string, data?: any) {
+    super(message);
+    this.data = data;
+    this.status = status;
+  }
+}
+
+export class ArtusXBizError extends Error {
+  name = 'ARTUSX_BIZ_ERROR';
+  data: any;
+  status: number; // 200
+
+  constructor(message: string, code: number, data?: any) {
+    super(message);
+    this.data = {
+      code,
+      data,
+    };
+    this.status = 200;
+  }
+}
+
+export class ArtusXCustomError extends Error {
+  name = 'ARTUSX_CUSTOM_ERROR';
+  data: any;
+  status: number;
+
+  constructor(status: number, message: string, code: number, data?: any) {
+    super(message);
+
+    this.data = {
+      code,
+      data,
+    };
+
+    this.status = status;
+  }
+}
+```
+
+### 自定义 Error
+
+```ts filename="src/error.ts"
+import { ArtusStdError } from '@artusx/core';
+
+// 拓展错误码
+export class ArtusXWrappedError extends ArtusStdError {
+  static code = 'ARTUSX:WRAPPED_ERROR';
+  name = 'ArtusXWrappedError';
+
+  constructor() {
+    super(ArtusXWrappedError.code);
+  }
+}
+
+// 自定义错误
+export class BizCustomError extends Error {
+  name = 'BizCustomError';
+}
+```
+
+## 异常捕获
+
+### 捕获
+
+exception filter 支持注解能力，可对捕获的错误进行统一的上报、记录等处理，支持如下异常捕获：
+
+- 通用 Error
+- 自定义 Error
+- 框架 Error 拓展
+- 错误码（框架内置）
+- 自定义错误码（业务配置）
+
+```ts filename="src/filter.ts"
+import { Catch, ArtusStdError, ArtusXExceptionFilterType, ArtusXContext } from '@artusx/core';
+import { ArtusXWrappedError, BizCustomError } from './error';
+
+@Catch()
+export class DefaultExceptionHandler implements ArtusXExceptionFilterType {
+  async catch(_err: Error, _ctx: ArtusXContext) {
+    console.log('error:name', _err.name);
+  }
+}
+
+@Catch('BIZ:COMMON_ERROR')
+export class AppCodeExceptionHandler implements ArtusXExceptionFilterType {
+  async catch(_err: ArtusStdError) {
+    console.log('error:code', _err.code);
+  }
+}
+
+@Catch(ArtusXWrappedError)
+export class ArtusXWrapperExceptionHandler implements ArtusXExceptionFilterType {
+  async catch(_err: ArtusXWrappedError) {
+    console.log('error:code', _err.code);
+  }
+}
+
+@Catch(BizCustomError)
+export class BizCustomExceptionHandler implements ArtusXExceptionFilterType {
+  async catch(_err: BizCustomError) {
+    console.log('error:name', _err.name);
+  }
+}
+```
+
+### 抛出
+
+示例演示了如何通过多种方式抛出异常。
+
+```ts filename="src/exception-module/exception.controller.ts"
+import {
+  ArtusInjectEnum,
+  Inject,
+  GET,
+  Controller,
+  ArtusApplication,
+  ArtusXStdError,
+} from '@artusx/core';
+import type { ArtusXContext } from '@artusx/core';
+import { ArtusXWrappedError, BizCustomError } from '../error';
+
+@Controller('/exception')
+export default class ExceptionController {
+  @Inject(ArtusInjectEnum.Application)
+  app: ArtusApplication;
+
+  @GET('/system_error')
+  async systemError(ctx: ArtusXContext) {
+    const passed = ctx.request.query?.passed;
+    if (!passed) {
+      this.app.throwException('ARTUSX:UNKNOWN_ERROR');
+    }
+    ctx.body = 'system_error';
+  }
+
+  @GET('/default_error')
+  async defaultError(ctx: ArtusXContext) {
+    const err = new Error('default error message');
+    err.name = 'default error';
+
+    if (err) {
+      throw err;
+    }
+    ctx.body = 'default_error';
+  }
+
+  @GET('/wrapper_error')
+  async wrapperError(ctx: ArtusXContext) {
+    const err = new ArtusXWrappedError();
+    if (err) {
+      throw err;
+    }
+    ctx.body = 'wrapper_error';
+  }
+
+  @GET('/std_error')
+  async stdError(ctx: ArtusXContext) {
+    const err = new ArtusXStdError(400, 'artusx std error', {
+      data: {},
+    });
+
+    if (err) {
+      throw err;
+    }
+    ctx.body = 'biz_custom_error';
+  }
+
+  @GET('/biz_common_error')
+  async commonError(ctx: ArtusXContext) {
+    const passed = ctx.request.query?.passed;
+    if (!passed) {
+      this.app.throwException('BIZ:COMMON_ERROR');
+    }
+    ctx.body = 'biz_common_error';
+  }
+
+  @GET('/biz_custom_error')
+  async customError(ctx: ArtusXContext) {
+    const err = new BizCustomError('biz custom error message');
+    if (err) {
+      throw err;
+    }
+    ctx.body = 'biz_custom_error';
+  }
+}
+```
+
+### 配置
+
+为了支持业务的自定义异常处理能力，框架支持通过配置方式，传递 `ctx / error`，进而由业务自行进行异常上报，以及返回值配置。
+
+```ts filename="src/config/config.default.ts"
+export default () => {
+  const artusx: ArtusXConfig = {
+    keys: 'artusx-koa',
+    port: 7001,
+    onError: async (ctx: ArtusXContext, error: ArtusXStdError) => {
+      // ctx.throw(error?.status || 500, error);
+      ctx.body = {
+        code: error.status || 500,
+        message: error.message,
+      };
+      ctx.status = 200;
+    },
+  };
+};
+```
