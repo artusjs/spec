@@ -2,6 +2,19 @@
 
 utils 插件是 aruts 工具集合，对 Application / Scanner 等进行封装，简化研发使用。
 
+## Bootstrap
+
+基于 Application 配置，默认支持 dotenv，传入启动目录即可。
+
+```ts filename="index.ts"
+import path from 'path';
+import { bootstrap } from '@artusx/utils';
+
+const ROOT_DIR = path.resolve(__dirname);
+
+bootstrap({ root: ROOT_DIR });
+```
+
 ## Application
 
 基于 ArtusApplication 拓展，配置了 Scanner 扫描规则以及 env 变量的默认处理。
@@ -27,3 +40,16 @@ import { Application } from '@artusx/utils';
 ```ts filename="index.ts"
 import { ArtusXInjectEnum } from '@artusx/utils';
 ```
+
+## Utils
+
+提供常用工具即可，简化日常使用。
+
+- `md5()`
+- `hmac()`
+- `slat()`
+- `avatar()`
+- `getBooleanFromEnv()`
+- `getEnv()`
+- `getApiId()`
+- `getProxy()`
