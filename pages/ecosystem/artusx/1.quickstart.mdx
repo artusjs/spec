@@ -188,9 +188,10 @@ export default class HomeController {
 使用该注解时候，请勿直接通过 `ctx.body = 'Hello ArtusX!';` 赋值，请直接 `return` 想要返回的数据。
 
 ```ts filename="controller/home.ts" {8,21}
-import { ArtusXInjectEnum, ArtusXErrorEnum } from '@artusx/utils';
+import { ArtusXInjectEnum } from '@artusx/utils';
 import {
   ArtusInjectEnum,
+  ArtusXErrorEnum,
   ArtusApplication,
   Inject,
   Controller,

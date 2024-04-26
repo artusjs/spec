@@ -194,9 +194,10 @@ export default class HomeController {
 使用该注解时候，请勿直接通过 `ctx.body = 'Hello ArtusX!';` 赋值，请直接 `return` 想要返回的数据。
 
 ```ts filename="controller/home.ts"
-import { ArtusXInjectEnum, ArtusXErrorEnum } from '@artusx/utils';
+import { ArtusXInjectEnum } from '@artusx/utils';
 import {
   ArtusInjectEnum,
+  ArtusXErrorEnum,
   ArtusApplication,
   Inject,
   Controller,
@@ -219,7 +220,7 @@ export default class HomeController {
     const mockError = ctx.query.error;
 
     if (mockError) {
-      this.app.throwException(ArtusXErrorEnum.UNKNOWN_ERROR);
+      this.app.throwException(ArtusXErrorEnum.ARTUSX_UNKNOWN_ERROR);
     }
 
     return this.nunjucks.render('index.html', { title: 'ArtusX', message: 'Hello ArtusX!' });
