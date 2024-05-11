@@ -102,7 +102,7 @@ export default {
 import { Inject } from '@artus/core';
 import { Controller, GET, POST } from '@artusx/core';
 import { ArtusXInjectEnum } from '@artusx/utils';
-import type { ArtusxContext, Log4jsClient } from '@artusx/core';
+import type { ArtusXContext, Log4jsClient } from '@artusx/core';
 
 @Controller()
 export default class HomeController {
@@ -111,7 +111,7 @@ export default class HomeController {
 
   @GET('/')
   @POST('/')
-  async home(ctx: ArtusxContext) {
+  async home(ctx: ArtusXContext) {
     const logger = this.log4js.getLogger('default');
     const errorLogger = this.log4js.getLogger('error');
 

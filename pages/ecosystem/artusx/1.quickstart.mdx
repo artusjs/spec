@@ -1,6 +1,6 @@
 # 快速开始
 
-本文将从开发者角度，详解如何搭建一个 Artusx 应用。
+本文将从开发者角度，详解如何搭建一个 ArtusX 应用。
 
 ## 环境
 
@@ -35,7 +35,7 @@ pnpm run dev
 
 ### 目录结构
 
-在 Artusx 中，除 `config` 外，不对目录进行限定，为了更好的协作，建议通过 `MVC` 或者 `Module` 方式组织代码。
+在 ArtusX 中，除 `config` 外，不对目录进行限定，为了更好的协作，建议通过 `MVC` 或者 `Module` 方式组织代码。
 
 #### Module（推荐使用）
 
@@ -120,10 +120,10 @@ export default {
 
 ```ts filename="config/config.default.ts"
 import path from 'path';
-import { ArtusxConfig } from '@artusx/core';
+import { ArtusXConfig } from '@artusx/core';
 
 export default () => {
-  const artusx: ArtusxConfig = {
+  const artusx: ArtusXConfig = {
     port: 7001,
     static: {
       prefix: '/public/',
@@ -150,7 +150,7 @@ export default () => {
 ```ts filename="controller/home.ts" {5}
 import { ArtusXInjectEnum } from '@artusx/utils';
 import { Controller, GET, POST, Inject } from '@artusx/core';
-import type { ArtusxContext, NunjucksClient } from '@artusx/core';
+import type { ArtusXContext, NunjucksClient } from '@artusx/core';
 
 @Controller()
 export default class HomeController {
@@ -159,7 +159,7 @@ export default class HomeController {
 
   @GET('/')
   @POST('/')
-  async home(ctx: ArtusxContext) {
+  async home(ctx: ArtusXContext) {
     ctx.body = this.nunjucks.render('index.html', { title: 'ArtusX', message: 'Hello ArtusX!' });
   }
 }
@@ -169,7 +169,7 @@ export default class HomeController {
 
 ```ts filename="controller/home.ts" {7-9}
 import { Controller, GET, Headers } from '@artusx/core';
-import type { ArtusxContext } from '@artusx/core';
+import type { ArtusXContext } from '@artusx/core';
 
 @Controller()
 export default class HomeController {
@@ -177,7 +177,7 @@ export default class HomeController {
   @Headers({
     'x-method': 'home-controller',
   })
-  async home(ctx: ArtusxContext) {
+  async home(ctx: ArtusXContext) {
     ctx.body = 'Hello ArtusX!';
   }
 }
@@ -198,7 +198,7 @@ import {
   GET,
   StatusCode,
 } from '@artusx/core';
-import type { ArtusxContext, NunjucksClient } from '@artusx/core';
+import type { ArtusXContext, NunjucksClient } from '@artusx/core';
 
 @Controller()
 export default class HomeController {
@@ -210,7 +210,7 @@ export default class HomeController {
 
   @GET('/')
   @StatusCode(209)
-  async home(ctx: ArtusxContext) {
+  async home(ctx: ArtusXContext) {
     return this.nunjucks.render('index.html', { title: 'ArtusX', message: 'Hello ArtusX!' });
   }
 }
@@ -224,7 +224,7 @@ export default class HomeController {
 
 ```ts filename="controller/api.ts" {11}
 import { Inject, GET, Controller, ContentType } from '@artusx/core';
-import type { ArtusxContext } from '@artusx/core';
+import type { ArtusXContext } from '@artusx/core';
 import APIService from './api.service';
 
 @Controller('/api')
@@ -234,7 +234,7 @@ export default class APIController {
 
   @GET('/mockApi')
   @ContentType('application/json; charset=utf-8')
-  async getInfo(ctx: ArtusxContext) {
+  async getInfo(ctx: ArtusXContext) {
     ctx.body = await this.apiService.mockApi();
   }
 }
@@ -297,7 +297,7 @@ export const BodyScheme: JSONSchemaType<BodyTypes> = {
 
 ```ts filename="validator.controller.ts" {25-27}
 import { Controller, StatusCode, GET, Query, Params, Body, POST } from '@artusx/core';
-import type { ArtusxContext } from '@artusx/core';
+import type { ArtusXContext } from '@artusx/core';
 
 import {
   QueryTypes,
@@ -324,7 +324,7 @@ export default class ValidatorController {
   @Body<BodyTypes>(BodyScheme)
   @Params<ParamsTypes>(ParamsScheme)
   @StatusCode(200)
-  async index(ctx: ArtusxContext): Promise<Object> {
+  async index(ctx: ArtusXContext): Promise<Object> {
     const query = ctx.context.output.data.query;
     const params = ctx.context.output.data.params;
     const body = ctx.context.output.data.body;
@@ -364,7 +364,7 @@ export default class APIService {
 
 ```ts filename="module-api/api.contoller.ts" {7-8,13}
 import { Inject, GET, Controller, ContentType } from '@artusx/core';
-import type { ArtusxContext } from '@artusx/core';
+import type { ArtusXContext } from '@artusx/core';
 import APIService from './api.service';
 
 @Controller('/api')
@@ -374,7 +374,7 @@ export default class APIController {
 
   @GET('/mockApi')
   @ContentType('application/json; charset=utf-8')
-  async getInfo(ctx: ArtusxContext) {
+  async getInfo(ctx: ArtusXContext) {
     ctx.body = await this.apiService.mockApi();
   }
 }
@@ -388,7 +388,7 @@ export default class APIController {
 
 ```ts filename="middleware/LimitRate.ts" copy
 import { ArtusInjectEnum, Inject } from '@artus/core';
-import { ArtusxContext, ArtusxNext, Middleware } from '@artusx/core';
+import { ArtusXContext, ArtusXNext, Middleware } from '@artusx/core';
 
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 
@@ -410,7 +410,7 @@ export default class LimitRateMiddleware {
     this.rateLimiter = new RateLimiterMemory(rateLimiterOptions);
   }
 
-  async use(ctx: ArtusxContext, next: ArtusxNext): Promise<void> {
+  async use(ctx: ArtusXContext, next: ArtusXNext): Promise<void> {
     try {
       const rateLimiterRes = await this.rateLimiter.consume(ctx.ip);
       ctx.set('Retry-After', `${rateLimiterRes.msBeforeNext / 1000}`);
@@ -430,9 +430,9 @@ export default class LimitRateMiddleware {
 #### 函数中间件
 
 ```ts filename="middleware/traceTime.ts" copy
-import { ArtusxContext, ArtusxNext } from '@artusx/core';
+import { ArtusXContext, ArtusXNext } from '@artusx/core';
 
-export default async function traceTime(_ctx: ArtusxContext, next: ArtusxNext): Promise<void> {
+export default async function traceTime(_ctx: ArtusXContext, next: ArtusXNext): Promise<void> {
   console.time('TraceTime');
   await next();
   console.timeEnd('TraceTime');
@@ -443,7 +443,7 @@ export default async function traceTime(_ctx: ArtusxContext, next: ArtusxNext): 
 
 ```ts filename="controller/home.ts" copy {7}
 import { Controller, GET, POST, MW } from '@artusx/core';
-import type { ArtusxContext } from '@artusx/core';
+import type { ArtusXContext } from '@artusx/core';
 import traceTime from '../middleware/traceTime';
 
 @Controller()
@@ -451,7 +451,7 @@ export default class HomeController {
   @MW([traceTime])
   @GET('/can-be-get')
   @POST('/post')
-  async home(ctx: ArtusxContext) {
+  async home(ctx: ArtusXContext) {
     ctx.body = 'Hello World';
   }
 }
@@ -465,14 +465,14 @@ export default class HomeController {
 
 ```ts filename="shedule/notify.ts" {4-8}
 import { Schedule } from '@artusx/core';
-import type { ArtusxSchedule } from '@artusx/core';
+import type { ArtusXSchedule } from '@artusx/core';
 
 @Schedule({
   enable: true,
   cron: '30 * * * * *',
   runOnInit: true,
 })
-export default class NotifySchedule implements ArtusxSchedule {
+export default class NotifySchedule implements ArtusXSchedule {
   async run() {
     console.log('ScheduleTaskClass.run', Date.now());
   }
