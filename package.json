@@ -27,6 +27,7 @@
     "nextra": "^2.13.3",
     "nextra-theme-docs": "^2.13.3",
     "postcss": "^8.4.31",
+    "rc-table": "^7.45.5",
     "react": "^18.2",
     "react-dom": "^18.2",
     "tailwindcss": "^3.3.3"
