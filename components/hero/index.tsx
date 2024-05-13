@@ -16,10 +16,11 @@ const Hero: React.FC<{}> = () => {
             {data.title} <br /> {data.subtitle}
           </h1>
           <p className={styles.subtitle}>{data.tagline}</p>
-          <p className={styles.subtitle}>
+          <p className={styles.actions}>
             {(data.actions || []).map((item, index) => {
+              const openInNewTable = item?.theme === 'alt' ? '__blank' : '_self';
               return (
-                <Link className={styles.cta} href={item.link} key={index}>
+                <Link className={styles.cta} href={item.link} key={index} target={openInNewTable}>
                   {item.text}
                 </Link>
               );

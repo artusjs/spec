@@ -25,6 +25,11 @@
   line-height: 1.6;
 }
 
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 a.cta {
   display: inline-block;
   background: linear-gradient(to bottom, #238aff, #0077ff);
