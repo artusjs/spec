@@ -1,4 +1,10 @@
-# 请求处理机制 Trigger
+# 请求处理机制 Trigger / Pipeline
+
+import { Callout } from 'nextra/components';
+
+<Callout type='info' emoji='ℹ️'>
+  Trigger 在 2.x 中废弃，由 Pipeline 代替。
+</Callout>
 
 Artus 作为底层 Core 规范，具备协议无关特性，请求处理模型基于洋葱模型和 Context 构建，但不具备协议相关的概念。上层框架可基于以下模型，构建出适用于特定协议的实现（如：HTTP/1.1, HTTP/2, QUIC, HTTP/3, WebSocket, Timer, MQ, gRPC, etc...）。
 

@@ -145,6 +145,16 @@ export default () => {
 
 `@arutsx/core` 默认集成了 web 常用插件，并提供了常用注解，方便用户快速增加添加处理逻辑。
 
+import { Callout } from 'nextra/components';
+
+<Callout type='info' emoji='ℹ️'>
+  框架的 Web 能力由 Koa 上层封装实现，故而可以完整支持 Koa 的生态，同时也可以通过 Koa
+  的上下文扩展来实现更多功能。 在业务开发中，我们需要注意： 基于 Koa
+  的中间件机制，书写的业务逻辑，相当于一个 Koa 插件，无法向上兼容 ArtusX，故而挂载在 `ctx`
+  上的数据可能无法被 ArtusX 插件、中间件获取，如数据需被 ArtusX 插件、中间件消费，请使用
+  `ctx.context.output.data` 进行数据传递。
+</Callout>
+
 #### @Controller
 
 ```ts filename="controller/home.ts" {5}
