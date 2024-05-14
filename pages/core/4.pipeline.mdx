@@ -1,10 +1,4 @@
-# 请求处理机制 Trigger / Pipeline
-
-import { Callout } from 'nextra/components';
-
-<Callout type='info' emoji='ℹ️'>
-  Trigger 在 2.x 中废弃，由 Pipeline 代替。
-</Callout>
+# 请求处理机制 Pipeline
 
 Artus 作为底层 Core 规范，具备协议无关特性，请求处理模型基于洋葱模型和 Context 构建，但不具备协议相关的概念。上层框架可基于以下模型，构建出适用于特定协议的实现（如：HTTP/1.1, HTTP/2, QUIC, HTTP/3, WebSocket, Timer, MQ, gRPC, etc...）。
 
@@ -30,8 +24,8 @@ Artus 作为底层 Core 规范，具备协议无关特性，请求处理模型�
 
 - 抽象 BaseContext
   - HttpContext / RpcContext / WebSocketContext / TimerContext 可以根据场景自行扩展
-- 抽象 BaseTrigger + 洋葱中间件驱动
-  - Trigger 作为中间件入口触发器，不同协议可以自行扩展加一些定制信息
+- 抽象 BasePipeline + 洋葱中间件驱动
+  - Pipeline 作为中间件入口触发器，不同协议可以自行扩展加一些定制信息
 
 如下图可以展示根据上述设计的框架内核驱动一次任务流程：
 
@@ -41,15 +35,44 @@ Artus 作为底层 Core 规范，具备协议无关特性，请求处理模型�
 
 ![流程图 (3).jpg](../assets/onion-model.png)
 
-这里的 `BaseTrigger` 基类，作为任务流程的触发点，不同的协议场景下可以根据自身进行扩展。
+这里的 `BasePipeline` 基类，作为任务流程的触发点，不同的协议场景下可以根据自身进行扩展。
 
-Trigger 构造函数初始化时，会根据参数进行如下操作：
+Pipeline 构造函数初始化时，会根据参数进行如下操作：
 
 - [必须]初始化 Execution（extends BaseExecution）
 - [可选]初始化 Request（extends BaseRequest），针对需要处理请求参数的场景
 - [可选]初始化 Response（extends BaseResponse），针对需要进行响应的场景
 
 初始化完成后，开始进入洋葱中间件模型进行统一的中间件和用户编写业务逻辑中进行处理，最后根据场景选择是否返回响应。
+
+```ts
+const main = async () => {
+  const pipeline = new Pipeline();
+
+  pipeline.use([
+    async function (_: Context, next: Next): Promise<void> {
+      await next();
+      throw new Error('mock error');
+    },
+
+    async function (ctx: Context): Promise<void> {
+      const { data } = ctx.output;
+      data.set('responseValue', 1);
+    },
+  ]);
+
+  const ctx = new Context();
+  let error = '';
+
+  try {
+    await pipeline.run(ctx);
+  } catch (err: any) {
+    error = err.message;
+  }
+
+  assert(error === 'mock error');
+};
+```
 
 对于例如 `runInBackground` 的异步场景，应由上层框架拆分为两次 Pipeline Execution
 

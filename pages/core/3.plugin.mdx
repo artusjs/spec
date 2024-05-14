@@ -1,19 +1,25 @@
 # 插件 Plugin
 
+import { Callout } from 'nextra/components';
+
 ## 插件能做什么
 
-在 `Application` 和 `Framework` 之外增加一层插件（`Plugin`）的抽象，主要是解决以下问题：
+<Callout type='info' emoji='ℹ️'>
+  Framework(Plugin) = Core + Custom Loader + Plugins
+</Callout>
+
+在 `Application` 和 `Framework(Plugin)` 之外增加一层插件（`Plugin`）的抽象，主要是解决以下问题：
 
 - 以可复用的方式对 `application` 进行通用能力扩展
 - 完整介入 `application` 生命周期钩子
 - 对请求模型中的 `pipeline` 引入的中间件顺序自定义
 - 实现通用业务逻辑的复用或者对巨石型应用以逻辑插件粒度的拆分
 
-## 插件目录结构
+## 目录结构
 
 从插件定义中可以看到，它的能力决定了插件本质上就是 _Mini_ `Application`，因此其目录组织结构和 `Application` 保持一致。
 
-## 插件元信息
+## 元信息
 
 `Plugin` 同样会以 npm 模块的形式进行发布，但是与此同时它又会有别于通用的标准 npm 模块，反映为：
 
@@ -30,7 +36,7 @@
 
 - `name`: 在 Artus Core 中标记插件的真正名称，在插件列表中具有唯一性
 
-## 插件依赖管理
+## 依赖管理
 
 `Plugin` 的依赖管理会分为两个部分：
 
@@ -62,7 +68,7 @@
 
 `Plugin` 之间的依赖顺序会于 Artus Core 中在启动前根据 `artusjsPlugin` 配置的 `dependencies` 进行计算，出现 `Plugin` 间的循环依赖需要抛出对应的错误。
 
-## 插件开启关闭
+## 开启关闭
 
 插件虽然目录和 `Application` 保持一致，但是其自身不应当被允许直接部署或者执行，因此 `Plugin` 的开启和关闭管理应当置于 `Application` / `Framework` 中进行。
 
@@ -89,7 +95,7 @@ export default {
 - `path`: 渐进式开发中的内联插件，此配置为内联插件的具体绝对路径，配置此项后 `package` 不再生效
 - `package`: 独立 npm 包形式引入的插件对应的 npm 包名
 
-## 插件支持多级别的 API 可见性
+## 支持多级别的 API 可见性
 
 在 `meta.json` 中添加 `type` 标识插件类型：
 
@@ -159,3 +165,38 @@ module.exports = class AnyPlugin extends PluginBase {
 ```
 
 // TODO: 增加 plugin type 为 module 时（即插件为完整的业务复用逻辑模块）针对模块自身的元信息描述
+
+## 生命周期
+
+Core 中应有一套生命周期钩子管理机制
+
+- Core 通过内置的生命周期列表维护一个 hookList
+- Hook 应当支持异步行为，允许返回 Promise 或同步返回量
+- 生命周期需要可以提供一个工具方法来进行分析
+  - 提供 Meta + Timestamp
+  - 日志需要友好
+  - 方便追溯
+- 提供 insertHook 方法，用于框架基础插件中增加自定义的生命周期
+- 提供 registerHook 方法，用于增加对应的生命周期处理函数
+  - 注册动作应当有序，Core 将依照注册顺序调用之
+  - 自定义钩子需要在 insert 后再 register，否则直接跑错，避免预期外效果，
+- 提供 emitHook 方法，用于在特定时间点触发生命周期处理
+  - 内置的生命周期将由 Core 负责触发
+  - 自定义的生命周期需由对应调用 insertHook 的插件在内置钩子的处理器中予以 emit
+
+其中，Artus 规范内置的生命周期事件包括：
+
+- **configWillLoad** 配置文件即将加载，这是最后动态修改配置的时机
+- **configDidLoad** 配置文件加载完成
+- **didLoad** 文件加载完成
+- **willReady** 插件启动完毕
+- **didReady** 应用启动完成
+- **beforeClose** 应用即将关闭
+
+TODO: 补充 Plugin 的加载和卸载对应的生命周期钩子
+
+## 启动流程
+
+![流程图 (2).jpg](../assets/lifecycle.png)
+
+注：上图中自定义钩子逻辑仅为示意，可在任意 hook 位置启动这一机制
