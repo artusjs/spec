@@ -52,6 +52,15 @@ body {
   border: 1px solid #eee !important;
 }
 
+/* medium-zoom */
+
+.medium-zoom-image,
+.medium-zoom-image--opened {
+  max-width: 100%;
+  height: auto;
+  z-index: 999;
+}
+
 @media screen and (max-width: 1200px) {
   .home-content .hide-medium {
     display: none;

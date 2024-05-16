@@ -2,8 +2,35 @@
 
 {/* <!-- markdownlint-disable --> */}
 
+import React, { useEffect } from 'react';
+import mediumZoom from 'medium-zoom';
+import { useRouter } from 'next/router';
 import '../style.css';
 
 export default function App({ Component, pageProps }) {
-  return <Component {...pageProps} />;
+  const { route } = useRouter();
+  useEffect(() => {      
+    let zoom;
+
+    const init = () => {
+      zoom = mediumZoom('.nextra-content img', {
+        margin: 12,
+        background: '#fff',
+        scrollOffset: 0,
+      });
+
+      window.zoom = zoom;
+    };
+
+    setTimeout(() => {
+      init();
+    }, 1000);
+
+    return () => {
+      zoom?.detach();
+    };
+
+}, [route]);
+
+return <Component {...pageProps} />;
 }
