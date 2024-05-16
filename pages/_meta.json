@@ -17,10 +17,38 @@
   },
   "ecosystem": {
     "title": "Ecosystem",
-    "type": "page"
+    "type": "menu",
+    "items": {
+      "artusx": {
+        "title": "ArtusX",
+        "href": "/ecosystem/artusx/1.quickstart"
+      },
+      "artus_cli": {
+        "title": "Artus CLI",
+        "href": "/ecosystem/artus-cli/1.quickstart"
+      }
+    }
   },
   "community": {
     "title": "Community",
-    "type": "page"
+    "type": "menu",
+    "items": {
+      "convention": {
+        "title": "Convention",
+        "href": "/community/4.convention"
+      },
+      "package": {
+        "title": "Official Package List",
+        "href": "/community/2.package"
+      },
+      "error_code": {
+        "title": "Common Error-Code List",
+        "href": "/community/1.error_code"
+      },
+      "fundamental": {
+        "title": "Fundamental List",
+        "href": "/community/3.fundamental"
+      }
+    }
   }
 }

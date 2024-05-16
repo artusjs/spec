@@ -35,6 +35,23 @@ body {
   margin: 0 auto;
 }
 
+/* rc-table  */
+
+.rc-table {
+  font-size: 14px !important;
+}
+
+.rc-table-content {
+  overflow: hidden !important;
+  border-radius: 10px !important;
+}
+
+.rc-table-content,
+.rc-table th,
+.rc-table td {
+  border: 1px solid #eee !important;
+}
+
 @media screen and (max-width: 1200px) {
   .home-content .hide-medium {
     display: none;

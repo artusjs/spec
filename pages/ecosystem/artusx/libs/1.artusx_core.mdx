@@ -70,7 +70,7 @@ export default {
 
 ```ts filename="middleware/LimitRate.ts" copy
 import { ArtusInjectEnum, Inject } from '@artus/core';
-import { ArtusxContext, ArtusxNext, Middleware } from '@artusx/core';
+import { ArtusXContext, ArtusXNext, Middleware } from '@artusx/core';
 
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 
@@ -92,7 +92,7 @@ export default class LimitRateMiddleware {
     this.rateLimiter = new RateLimiterMemory(rateLimiterOptions);
   }
 
-  async use(ctx: ArtusxContext, next: ArtusxNext): Promise<void> {
+  async use(ctx: ArtusXContext, next: ArtusXNext): Promise<void> {
     try {
       const rateLimiterRes = await this.rateLimiter.consume(ctx.ip);
       ctx.set('Retry-After', `${rateLimiterRes.msBeforeNext / 1000}`);
@@ -113,7 +113,7 @@ export default class LimitRateMiddleware {
 
 ```ts filename="middleware/traceTime.ts" copy
 import { ArtusInjectEnum, Inject } from '@artus/core';
-import { ArtusxContext, ArtusxNext, Middleware } from '@artusx/core';
+import { ArtusXContext, ArtusXNext, Middleware } from '@artusx/core';
 
 @Middleware({
   enable: true,
@@ -122,7 +122,7 @@ export default class TraceTimeMiddleware {
   @Inject(ArtusInjectEnum.Config)
   config: Record<string, string | number>;
 
-  async use(ctx: ArtusxContext, next: ArtusxNext): Promise<void> {
+  async use(ctx: ArtusXContext, next: ArtusXNext): Promise<void> {
     const { data } = ctx.context.output;
     data.traced = true;
     console.log('middleware - traceTime', ctx.context);
@@ -138,7 +138,7 @@ export default class TraceTimeMiddleware {
 
 ```ts filename="controller/home.ts" copy
 import { Controller, GET, POST, MW } from '@artusx/core';
-import type { ArtusxContext } from '@artusx/core';
+import type { ArtusXContext } from '@artusx/core';
 import traceTime from '../middleware/traceTime';
 
 @Controller()
@@ -146,7 +146,7 @@ export default class HomeController {
   @MW([traceTime])
   @GET('/can-be-get')
   @POST('/post')
-  async home(ctx: ArtusxContext) {
+  async home(ctx: ArtusXContext) {
     ctx.body = 'Hello World';
   }
 }
@@ -175,7 +175,7 @@ core 内置部分注解，简化业务使用
 
 ```ts filename="controller/home.ts"
 import { Controller, GET, Headers } from '@artusx/core';
-import type { ArtusxContext } from '@artusx/core';
+import type { ArtusXContext } from '@artusx/core';
 
 @Controller()
 export default class HomeController {
@@ -183,7 +183,7 @@ export default class HomeController {
   @Headers({
     'x-method': 'home-controller',
   })
-  async home(ctx: ArtusxContext) {
+  async home(ctx: ArtusXContext) {
     ctx.body = 'Hello ArtusX!';
   }
 }
@@ -194,16 +194,17 @@ export default class HomeController {
 使用该注解时候，请勿直接通过 `ctx.body = 'Hello ArtusX!';` 赋值，请直接 `return` 想要返回的数据。
 
 ```ts filename="controller/home.ts"
-import { ArtusXInjectEnum, ArtusXErrorEnum } from '@artusx/utils';
+import { ArtusXInjectEnum } from '@artusx/utils';
 import {
   ArtusInjectEnum,
+  ArtusXErrorEnum,
   ArtusApplication,
   Inject,
   Controller,
   GET,
   StatusCode,
 } from '@artusx/core';
-import type { ArtusxContext, NunjucksClient } from '@artusx/core';
+import type { ArtusXContext, NunjucksClient } from '@artusx/core';
 
 @Controller()
 export default class HomeController {
@@ -215,11 +216,11 @@ export default class HomeController {
 
   @GET('/')
   @StatusCode(209)
-  async home(ctx: ArtusxContext) {
+  async home(ctx: ArtusXContext) {
     const mockError = ctx.query.error;
 
     if (mockError) {
-      this.app.throwException(ArtusXErrorEnum.UNKNOWN_ERROR);
+      this.app.throwException(ArtusXErrorEnum.ARTUSX_UNKNOWN_ERROR);
     }
 
     return this.nunjucks.render('index.html', { title: 'ArtusX', message: 'Hello ArtusX!' });
@@ -235,7 +236,7 @@ export default class HomeController {
 
 ```ts filename="controller/api.ts"
 import { ArtusInjectEnum, Inject, GET, Controller, ContentType } from '@artusx/core';
-import type { ArtusxContext } from '@artusx/core';
+import type { ArtusXContext } from '@artusx/core';
 import APIService from './api.service';
 
 @Controller('/api')
@@ -247,13 +248,13 @@ export default class APIController {
   apiService: APIService;
 
   @GET('/')
-  async home(ctx: ArtusxContext) {
+  async home(ctx: ArtusXContext) {
     ctx.body = 'api';
   }
 
   @GET('/mockApi')
   @ContentType('application/json; charset=utf-8')
-  async getInfo(ctx: ArtusxContext) {
+  async getInfo(ctx: ArtusXContext) {
     ctx.body = await this.apiService.mockApi();
   }
 }
@@ -316,7 +317,7 @@ export const BodyScheme: JSONSchemaType<BodyTypes> = {
 
 ```ts filename="validator.controller.ts"
 import { Controller, StatusCode, GET, Query, Params, Body, POST } from '@artusx/core';
-import type { ArtusxContext } from '@artusx/core';
+import type { ArtusXContext } from '@artusx/core';
 
 import {
   QueryTypes,
@@ -343,7 +344,7 @@ export default class ValidatorController {
   @Body<BodyTypes>(BodyScheme)
   @Params<ParamsTypes>(ParamsScheme)
   @StatusCode(200)
-  async index(ctx: ArtusxContext): Promise<Object> {
+  async index(ctx: ArtusXContext): Promise<Object> {
     const query = ctx.context.output.data.query;
     const params = ctx.context.output.data.params;
     const body = ctx.context.output.data.body;

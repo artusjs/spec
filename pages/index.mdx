@@ -12,16 +12,19 @@ hero:
     - theme: brand
       text: Get started →
       link: /core/1.introduction
+    - theme: alt
+      text: View On Gitlab
+      link: https://github.com/artusjs/spec
 
 features:
   - title: Loader
-    description: 基于 IoC 的挂载机制
-  - title: Plugin
-    description: 插件，对中间件缺失的应用生命周期通用能力的补充，也可以认为是对应用通用能力的扩展
-  - title: Framework
-    description: 框架，提供业务逻辑无关的一组基础能力透出，可以认为是一组插件的集合
-  - title: Application
-    description: 应用，具备独立部署且提供完整能力的最小单位
+    description: 框架内置 loader，用于扫描文件并加载模块，并 attach 对应的 meta；将模块挂载到 IoC 容器
+  - title: Pipeline
+    description: 框架协议无关，请求处理模型基于洋葱模型和 Context 构建，但不具备协议相关的概念。
+  - title: Plugin / Framework
+    description: 以可复用的方式对通用能力（集合）进行拓展或者细粒度拆分，插件本质上是 Mini Application
+  - title: Exception
+    description: 框架内置了异常处理能力，支持通过错误码 or 错误实体方式在上层框架 or 业务中使用
 ---
 
 import Hero from '../components/hero';
