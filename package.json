@@ -3,6 +3,7 @@
   "scripts": {
     "dev": "next",
     "build": "next build",
+    "postbuild": "next-sitemap",
     "start": "next start",
     "prepare": "husky install",
     "prettier": "pnpm exec prettier . --write",
@@ -25,6 +26,7 @@
     "autoprefixer": "^10.4.15",
     "medium-zoom": "^1.1.0",
     "next": "^14.1.0",
+    "next-sitemap": "^4.2.3",
     "nextra": "^2.13.3",
     "nextra-theme-docs": "^2.13.3",
     "postcss": "^8.4.31",

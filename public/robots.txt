@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://artusjs.org
+
+# Sitemaps
+Sitemap: https://artusjs.org/sitemap.xml

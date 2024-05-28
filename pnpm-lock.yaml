@@ -14,6 +14,9 @@ dependencies:
   next:
     specifier: ^14.1.0
     version: 14.2.3(react-dom@18.3.0)(react@18.3.0)
+  next-sitemap:
+    specifier: ^4.2.3
+    version: 4.2.3(next@14.2.3)
   nextra:
     specifier: ^2.13.3
     version: 2.13.4(next@14.2.3)(react-dom@18.3.0)(react@18.3.0)
@@ -75,6 +78,10 @@ packages:
 
   /@braintree/sanitize-url@6.0.4:
     resolution: {integrity: sha512-s3jaWicZd0pkP0jf5ysyHUI/RE7MHos6qlToFcGWXVp+ykHOy77OUMrfbgJ9it2C5bow7OIQwYYaHjk9XlBQ2A==}
+    dev: false
+
+  /@corex/deepmerge@4.0.43:
+    resolution: {integrity: sha512-N8uEMrMPL0cu/bdboEWpQYb/0i2K5Qn8eCsxzOmxSggJbbQte7ljMRoXm917AbntqTGOzdTu+vP3KOOzoC70HQ==}
     dev: false
 
   /@emnapi/runtime@1.1.1:
@@ -475,6 +482,10 @@ packages:
       '@napi-rs/simple-git-linux-x64-musl': 0.1.16
       '@napi-rs/simple-git-win32-arm64-msvc': 0.1.16
       '@napi-rs/simple-git-win32-x64-msvc': 0.1.16
+    dev: false
+
+  /@next/env@13.5.6:
+    resolution: {integrity: sha512-Yac/bV5sBGkkEXmAX5FWPS9Mmo2rthrOPRQQNfycJPkjUAUclomCPH7QFVCDQ4Mp2k2K1SSM6m0zrxYrOwtFQw==}
     dev: false
 
   /@next/env@14.2.3:
@@ -2889,7 +2900,6 @@ packages:
 
   /minimist@1.2.8:
     resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
-    dev: true
 
   /minipass@7.0.4:
     resolution: {integrity: sha512-jYofLM5Dam9279rdkWzqHozUo4ybjdZmCsDHePy5V/PbBcVMiSZR97gmAy45aqi8CK1lG2ECd356FU86avfwUQ==}
@@ -2944,6 +2954,20 @@ packages:
       next: 14.2.3(react-dom@18.3.0)(react@18.3.0)
       react: 18.3.0
       react-dom: 18.3.0(react@18.3.0)
+    dev: false
+
+  /next-sitemap@4.2.3(next@14.2.3):
+    resolution: {integrity: sha512-vjdCxeDuWDzldhCnyFCQipw5bfpl4HmZA7uoo3GAaYGjGgfL4Cxb1CiztPuWGmS+auYs7/8OekRS8C2cjdAsjQ==}
+    engines: {node: '>=14.18'}
+    hasBin: true
+    peerDependencies:
+      next: '*'
+    dependencies:
+      '@corex/deepmerge': 4.0.43
+      '@next/env': 13.5.6
+      fast-glob: 3.3.2
+      minimist: 1.2.8
+      next: 14.2.3(react-dom@18.3.0)(react@18.3.0)
     dev: false
 
   /next-themes@0.2.1(next@14.2.3)(react-dom@18.3.0)(react@18.3.0):
