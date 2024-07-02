@@ -2,25 +2,40 @@
   "name": "artus-spec",
   "scripts": {
     "dev": "next",
+    "dev:rollup": "rollup --config -w",
     "build": "next build",
-    "postbuild": "next-sitemap",
+    "build:rollup": "rollup --config",
+    "postbuild": "next-sitemap && pnpm run build:rollup",
     "start": "next start",
     "prepare": "husky install",
     "prettier": "pnpm exec prettier . --write",
     "lint:md": "markdownlint -c .markdownlint.json pages/**/*.{md,mdx}"
   },
+  "lint-staged": {
+    "*": "prettier --write --ignore-unknown",
+    "docs/**/*.{md,mdx}": "markdownlint -c .markdownlint.json"
+  },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^26.0.1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^5.0.7",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/node": "^20.14.9",
     "@types/react": "^18.2",
     "husky": "^8.0.3",
     "lint-staged": "^15.1.0",
     "markdownlint": "^0.33.0",
     "markdownlint-cli": "^0.39.0",
     "prettier": "3.1.0",
-    "sharp": "^0.33.2"
-  },
-  "lint-staged": {
-    "*": "prettier --write --ignore-unknown",
-    "docs/**/*.{md,mdx}": "markdownlint -c .markdownlint.json"
+    "rollup": "^4.18.0",
+    "sharp": "^0.33.2",
+    "typescript": "5.5.2",
+    "workbox-core": "^7.1.0",
+    "workbox-precaching": "~7.1.0",
+    "workbox-routing": "~7.1.0",
+    "workbox-strategies": "~7.1.0",
+    "workbox-window": "~7.1.0"
   },
   "dependencies": {
     "autoprefixer": "^10.4.15",

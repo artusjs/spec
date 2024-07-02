@@ -9,8 +9,9 @@ import '../style.css';
 
 export default function App({ Component, pageProps }) {
   const { route } = useRouter();
-  useEffect(() => {      
-    let zoom;
+
+useEffect(() => {
+let zoom;
 
     const init = () => {
       zoom = mediumZoom('.nextra-content img', {
@@ -31,6 +32,28 @@ export default function App({ Component, pageProps }) {
     };
 
 }, [route]);
+
+useEffect(() => {
+if('serviceWorker' in navigator) {
+console.log('serviceWorker:register');
+navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
+
+      navigator.serviceWorker.ready
+        .then((registration) => {
+
+          // sync
+          console.log('serviceWorker:ready', registration);
+          registration.sync.register('sync:page');
+
+          // update
+          // setTimeout(() => {
+          //   console.log('serviceWorker:updating');
+          //   registration.update();
+          // }, 5000);
+        });
+    }
+
+}, []);
 
 return <Component {...pageProps} />;
 }
