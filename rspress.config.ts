@@ -12,44 +12,47 @@ export default defineConfig({
   locales: [
     {
       label: '简体中文',
-      lang: 'zh',      
+      lang: 'zh',
     },
   ],
   themeConfig: {
     nav: [
-      { text: '核心概念', link: '/core/1.introduction' },      
+      { text: '核心概念', link: '/core/1.introduction' },
       { text: '教程', link: '/tutorials/1.quickstart' },
       {
         text: '生态',
         items: [
           {
             text: 'artus-cli',
-            link: '/ecosystem/artus-cli/1.quickstart'
+            link: '/ecosystem/artus-cli/1.quickstart',
           },
           {
             text: 'artusx',
-            link: '/ecosystem/artusx/1.quickstart'
-          }
+            link: '/ecosystem/artusx/1.quickstart',
+          },
         ],
       },
-      { text: '社区', items: [
-        {
-          text: 'Convention',
-          link: '/community/4.convention'
-        },
-        {
-          text: 'Common Error-Code List',
-          link: '/community/1.error_code'
-        },
-        {
-          text: 'Official Package List',
-          link: '/community/2.package'
-        },
-        {
-          text: 'Fundamental List',
-          link: '/community/3.fundamental'
-        }
-      ] },
+      {
+        text: '社区',
+        items: [
+          {
+            text: 'Convention',
+            link: '/community/4.convention',
+          },
+          {
+            text: 'Common Error-Code List',
+            link: '/community/1.error_code',
+          },
+          {
+            text: 'Official Package List',
+            link: '/community/2.package',
+          },
+          {
+            text: 'Fundamental List',
+            link: '/community/3.fundamental',
+          },
+        ],
+      },
     ],
     sidebar: {
       '/core/': [
@@ -58,16 +61,19 @@ export default defineConfig({
         { text: 'Plugin', link: '/core/3.plugin' },
         { text: 'Pipeline', link: '/core/4.pipeline' },
         { text: 'Exception', link: '/core/5.exception' },
-        { text: 'v1.x', items: [
-          {
-            text: 'Framework',
-            link: '/core/v1/4.framework',            
-          },
-          {
-            text: 'Trigger',
-            link: '/core/v1/5.trigger'
-          }
-        ] },
+        {
+          text: 'v1.x',
+          items: [
+            {
+              text: 'Framework',
+              link: '/core/v1/4.framework',
+            },
+            {
+              text: 'Trigger',
+              link: '/core/v1/5.trigger',
+            },
+          ],
+        },
       ],
       '/tutorials/': [
         { text: '快速开始', link: '/tutorials/1.quickstart' },
@@ -88,10 +94,8 @@ export default defineConfig({
         },
         {
           text: '插件',
-          items: [
-            { text: '插件列表', link: '/ecosystem/artus-cli/plugins/1.plugins_list' },
-          ],
-        },        
+          items: [{ text: '插件列表', link: '/ecosystem/artus-cli/plugins/1.plugins_list' }],
+        },
       ],
       '/ecosystem/artusx/': [
         { text: '快速开始', link: '/ecosystem/artusx/1.quickstart' },
@@ -116,22 +120,21 @@ export default defineConfig({
         },
         { text: 'API', link: 'https://artusx-api.artusjs.org/' },
         { text: '更新日志', link: 'https://github.com/artusjs/artusx/blob/main/CHANGELOG.md' },
-      ],      
+      ],
       '/community/': [
         { text: '格式约定', link: '/community/4.convention' },
         { text: '错误码规范', link: '/community/1.error_code' },
         { text: '包规范', link: '/community/2.package' },
-        { text: '基础设计', link: '/community/3.fundamental' },        
+        { text: '基础设计', link: '/community/3.fundamental' },
       ],
     },
-    socialLinks: [
-      { icon: 'github', mode: 'link', content: 'https://github.com/artusjs/spec' },
-    ],
+    socialLinks: [{ icon: 'github', mode: 'link', content: 'https://github.com/artusjs/spec' }],
     editLink: {
       docRepoBaseUrl: 'https://github.com/artusjs/spec/tree/master/docs',
     },
     footer: {
-      message: 'Released under the MIT License. <br/> Copyright © 2022-present - China Open Node.js Framework Specification Working Group.',      
+      message:
+        'Released under the MIT License. <br/> Copyright © 2022-present - China Open Node.js Framework Specification Working Group.',
     },
     enableScrollToTop: true,
   },
