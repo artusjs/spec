@@ -1,4 +1,6 @@
 import { defineConfig } from '@rspress/core';
+import { pluginLlms } from '@rspress/plugin-llms';
+import { pluginSitemap } from '@rspress/plugin-sitemap';
 
 export default defineConfig({
   root: 'docs',
@@ -137,5 +139,12 @@ export default defineConfig({
         'Released under the MIT License. <br/> Copyright © 2022-present - China Open Node.js Framework Specification Working Group.',
     },
     enableScrollToTop: true,
+    llmsUI: true,
   },
+  plugins: [
+    pluginLlms(),
+    pluginSitemap({
+      siteUrl: 'https://www.artusjs.org/',
+    }),
+  ],
 });
