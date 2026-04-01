@@ -26,7 +26,7 @@ Framework(Plugin) = Core + Custom Loader + Plugins
 
 下面是一个最简化的 `meta.json` 内容：
 
-```json
+```json title="iTerm"
 {
   "name": "plugin-example"
 }
@@ -45,7 +45,7 @@ Framework(Plugin) = Core + Custom Loader + Plugins
 
 对于后者，当前 `Plugin` 依赖的其余 `Plugin` 的时候，需要通过如下方式申明，以便扫描机制对其进行额外处理：
 
-```json
+```json title="iTerm"
 {
   "name": "plugin-example",
   "dependencies": [
@@ -72,7 +72,7 @@ Framework(Plugin) = Core + Custom Loader + Plugins
 
 插件的启停管理配置位于 `${application/framework}/config/plugin[.${env}].[js|ts]` 中：
 
-```ts
+```ts title="iTerm"
 export default {
   // inline plugin
   foo: {
@@ -97,7 +97,7 @@ export default {
 
 在 `meta.json` 中添加 `type` 标识插件类型：
 
-```json
+```json title="iTerm"
 {
   "name": "plugin-example",
   "dependencies": [
@@ -126,7 +126,7 @@ export default {
 
 以下是使用样例：
 
-```ts
+```ts title="iTerm"
 // src/app/service/any.ts
 import { Inject, Injectable, ScopeEnum } from '@artusjs/core';
 
@@ -141,7 +141,7 @@ export default class AnyService {
 }
 ```
 
-```js
+```js title="iTerm"
 // app.js
 
 const { PluginBase } = require('@artusjs/core');

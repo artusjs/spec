@@ -37,7 +37,7 @@ Core 中内置默认的目录扫描规范，优先级 CustomLoader -> Manifest -
 
 以 HTTP 框架中的常见 Case 为例：
 
-```json
+```ts title="iTerm"
 {
   "root": "/rootDir",
   "items": [
@@ -67,7 +67,7 @@ Core 中内置默认的目录扫描规范，优先级 CustomLoader -> Manifest -
 
 ### CustomLoader
 
-```javascript
+```ts title="iTerm"
 export default () => {
   // customLoader
   customLoader: {
@@ -90,7 +90,7 @@ export default () => {
 - 配置加载完毕后，需要 dump 出配置信息用于分析和排查
 - [TODO] 可以通过 setConfig API，在 config 加载完成后对 config 进行修改， 以便框架记录配置改动的操作位置，方便分析
 
-```ts
+```ts title="iTerm"
 // 以 ARTUS_SERVER_ENV=prod 为例
 // config.default.ts
 // 下面的 Config 可以是 Object 或 Async Function
@@ -125,7 +125,7 @@ export default {
 }
 ```
 
-```ts
+```ts title="iTerm"
 // config.default.ts
 // 支持使用函数及异步方式
 export default async (appInfo, appConfig) => {
@@ -140,7 +140,7 @@ export default async (appInfo, appConfig) => {
 
 `ARTUS_SERVER_ENV` 默认值枚举值如下
 
-```ts
+```ts title="iTerm"
 enum ARTUS_SERVER_ENV {
   DEV = 'development',
   PROD = 'production',
@@ -167,7 +167,7 @@ POC 如下：
 
 - 加载流程
 
-```ts
+```ts title="iTerm"
 interface FileItemLoader {
     loadFile() {}
 }
@@ -197,7 +197,7 @@ class MetaFileLoader implements FileItemLoader {
   - 按照目录约定的形式，Meta 由上层框架通过对 Loader 的预先配置指定
 - Meta 信息挂载（TypeScript Decorator）
 
-```ts
+```ts title="iTerm"
 // app/service/user.ts 用户代码
 @Service(ScopeEnum.Application)
 class UserService {
@@ -238,7 +238,7 @@ PoC 如下
 
 - Container 容器伪代码
 
-```javascript
+```js title="iTerm"
 // container.js
 class Container {
   constructor() {
@@ -288,7 +288,7 @@ module.exports = new Container();
 
 - 以注入形式使用 IoC 托管的类实例（TypeScript）
 
-```ts
+```ts title="iTerm"
 // src/app/controller/home.ts
 import { Inject, Injectable } from '@artusjs/a-framework';
 import { AnyService } from '../service/user';
@@ -324,7 +324,7 @@ export default class AnyClassA {
   - 注：如有异步情况（getAsync）这种代理层可能不能完全向下兼容（需要 await）
   - 对于代理层不能完全处理的情况（如：异步）需要在分析（构建时）或启动（运行时）给出 warning 提示
 
-```javascript
+```js title="iTerm"
 // src/app/controller/home.js
 export default class AnyClassB {
   async anyMethod() {
