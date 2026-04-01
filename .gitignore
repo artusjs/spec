@@ -3,3 +3,4 @@
 node_modules/
 .worktrees/
 .playwright-mcp/
+doc_build/
