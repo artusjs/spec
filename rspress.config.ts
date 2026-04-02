@@ -1,6 +1,7 @@
 import { defineConfig } from '@rspress/core';
 import { pluginLlms } from '@rspress/plugin-llms';
 import { pluginSitemap } from '@rspress/plugin-sitemap';
+import mermaid from 'rspress-plugin-mermaid';
 
 export default defineConfig({
   root: 'docs',
@@ -145,6 +146,11 @@ export default defineConfig({
     pluginLlms(),
     pluginSitemap({
       siteUrl: 'https://www.artusjs.org/',
+    }),
+    mermaid({
+      mermaidConfig: {
+        theme: 'neutral',
+      },
     }),
   ],
 });

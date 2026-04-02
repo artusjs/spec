@@ -8,7 +8,8 @@
     "lint:md": "markdownlint -c .markdownlint.json docs/**/*.{md,mdx}"
   },
   "dependencies": {
-    "@rspress/core": "^2.0.7"
+    "@rspress/core": "^2.0.7",
+    "rspress-plugin-mermaid": "^1.0.1"
   },
   "devDependencies": {
     "@rspress/plugin-llms": "^2.0.8",
