@@ -1,0 +1,158 @@
+# 异常处理 Exception
+
+**Artus** 要求各上层框架使用 `@artus/core` 提供的能力，实现如下规定的异常机制。同时要求上层框架生态系统中的插件/扩展，使用这一机制统一抛出错误。
+
+预期可对**满足 Artus 规范的上层框架**中产生的异常构建全链路的**发现**与**用户自检**机制
+
+## 错误码 ErrorCode
+
+异常应当按照如下格式编制错误码，并在链路中使用错误码进行抛出和捕获
+
+- `[NAMESPACE:]ERROR_CODE`
+- 仅包括大写字母、数字 和 `_`
+- NAMESPACE 为 `CORE` 的是 Artus 通用异常，上层框架不应使用，其详细内容见附录 1
+- 不包括 NAMESPACE 的错误码用于业务代码自定义异常，框架及生态插件不应使用
+- 所有未经 Artus 管理的 `Error` 默认具有错误码 `CORE:UNKNOWN`
+- Artus 通用异常，未找到配置文件：`CORE:NO_CONFIGURATION`
+- Gulu 框架中的 IO 超时异常：`GULU:IO_TIMEOUT`
+- @gulu/redis 插件中的连接池为空异常：`GULU_REDIS:POOL_EMPTY`
+- 业务代码中抛出的下游异常：`BIZA_FETCH_PLATFORM_FAIL`
+
+错误码及对应描述应当在发布的 npm 包被按如下格式的 JSON 文件中被编制：
+
+注：描述字段支持使用对象格式声明 i18n，Language Code 使用 [ISO639-1:2002](https://www.loc.gov/standards/iso639-2/php/code_list.php)，其中 `en` 是默认值
+
+```json title="iTerm"
+// ./exception.json
+{
+  "GULU:IO_TIMEOUT": {
+    "desc": "IO 处理超时"
+  },
+  "GULU:ADDRESS_USED": {
+    "desc": {
+      "zh": "待监听地址已被占用。",
+      "en": "Listen address already in use."
+    },
+    "detailUrl": "https://www.bytedance.com"
+  }
+}
+```
+
+该文件将被 @artus/core 读取用于格式化异常
+
+上层框架可通过插件树取得合并后的错误码表，用于自身的上报/自检平台建设
+
+## 错误实体 StdError
+
+```ts title="iTerm"
+class ArtusStdError extends Error {
+  name: string = 'ArtusStdError';
+  _code: string;
+
+  constructor(code: string) {
+    super(
+      `[${code}] This is Artus standard error, Please check on https://github.com/artusjs/spec`
+    );
+    this._code = code;
+  }
+
+  get code(): string {
+    return this._code;
+  }
+
+  get desc(): string {
+    return ErrorCodeUtils.getI18NDesc(ErrorCodeMap[this._code]);
+  }
+
+  get detailUrl(): string | undefined {
+    return ErrorCodeMap[this._code]?.detailUrl;
+  }
+}
+```
+
+## 抛出 Throw
+
+用户可通过直接 `throw` 的形式抛出 ArtusStdError，如：
+
+```ts title="iTerm"
+throw new ArtusStdError('ARTUS:TEST_EXCEPTION');
+```
+
+也可通过包装的形式：
+
+```ts title="iTerm"
+class TestException extends ArtusStdError {
+  static code = 'ARTUS:TEST_EXCEPTION';
+  name = 'TestException';
+  constructor() {
+    super(TestException.code);
+  }
+}
+
+throw new TestException();
+```
+
+注意包装类中需要包括一个名为 `code` 的 static property，这一属性将用于 ExceptionFilter 机制中 `@Catch()` 装饰器的加速匹配（基于错误码）
+
+上层框架/ Artus WG 亦可提供工具链用于基于错误码声明机制，生成 Exception 类的 TS.
+
+## 捕获 Catch
+
+工程中产生的所有未被用户主动 Catch 的异常，均应被框架 catch，并按各自诉求上报和打点（可观测性特性，社区版本提供基于 _OpenTelemetry_ 的实现）。
+
+同时，用户可通过 `ExceptionFilter` 机制处理**执行过程中的异常**（注意：生命周期中的异常应当显式处理或框架统一 Catch，不在 Filter 处理范围内），并支持向终端用户响应该错误。
+
+其中，公共的错误处理器可被这样声明：
+
+```ts title="iTerm"
+import { Catch, ExceptionFilterType, ArtusStdError, Inject, Logger } from '@artusjs/core';
+import { HTTPResponse } from '@artusjs/http';
+
+@Catch() // Equal to @Injectable({ id: ExceptionFilter })
+export default class MyExceptionFilter implments ExceptionFilterType {
+  @Inject()
+  logger: Logger;
+
+  @Inject()
+  res: HTTPResponse;
+
+  async catch(err: Error): Promise<void> {
+    if (err instanceof ArtusStdError) {
+      this.logger.error('MyExceptionFilter has catch a Artus Standard Error, code is ' + err.code);
+    } else {
+      this.logger.error('MyExceptionFilter has catch a Non-Standard Error, type is ' + err.name + ', Message: ' + err.message);
+    }
+    res.status = 500;
+    res.write(JSON.stringify({
+      code: err.code,
+      errMsg: err.message
+    }));
+    res.end();
+  }
+}
+```
+
+同时提供语法糖用于处理特定类别异常，如：
+
+```ts title="iTerm"
+import { Catch, ExceptionFilterType, ArtusStdError, Inject, Logger } from '@artus/core';
+import { HTTPResponse } from '@artus/http';
+
+@Catch('GULU:IO_TIMEOUT') // Or @Catch(MyCustomError)
+export default class MyTimeoutExceptionFilter implments ExceptionFilterType {
+  @Inject()
+  logger: Logger;
+
+  async catch(err: Error): Promise<void> {
+    this.logger.error('MyExceptionFilter has catch Timeout Error of Gulu');
+  }
+}
+```
+
+值得注意的是：
+
+- 全局性质的 `ExceptionFilter`（`@Catch()` 无参数）全局唯一，多次声明会覆盖
+- 针对特定异常的 `ExceptionFilter` 针对单个异常需唯一，多次声明会覆盖
+- 实现时仍基于 Trigger 的中间件序列来实现捕获，限制会是：
+  - 不能处理 `Singleton` 作用域中的异常，它们应当被显式 `try-catch`
+  - 其他框架或应用中定义的中间件如试图 catch 错误，需继续 throw 才能走到 `ExceptionFilter` 中

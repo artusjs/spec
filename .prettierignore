@@ -2,5 +2,7 @@
 build
 coverage
 .next/
+.claude/
+.agents/
 
 pnpm-lock.yaml

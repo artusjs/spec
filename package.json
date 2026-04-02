@@ -1,38 +1,32 @@
 {
   "name": "artus-spec",
   "scripts": {
-    "dev": "next",
-    "build": "next build",
-    "postbuild": "next-sitemap",
-    "start": "next start",
-    "prepare": "husky install",
-    "prettier": "pnpm exec prettier . --write",
-    "lint:md": "markdownlint -c .markdownlint.json pages/**/*.{md,mdx}"
+    "dev": "rspress dev",
+    "build": "rspress build",
+    "preview": "rspress preview",
+    "prettier": "prettier . --write",
+    "lint:md": "markdownlint -c .markdownlint.json docs/**/*.{md,mdx}"
+  },
+  "dependencies": {
+    "@rspress/core": "^2.0.7",
+    "rspress-plugin-mermaid": "^1.0.1"
   },
   "devDependencies": {
-    "@types/react": "^18.2",
+    "@rspress/plugin-llms": "^2.0.8",
+    "@rspress/plugin-sitemap": "^2.0.8",
+    "@types/node": "^22.8.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "husky": "^8.0.3",
     "lint-staged": "^15.1.0",
     "markdownlint": "^0.33.0",
     "markdownlint-cli": "^0.39.0",
     "prettier": "3.1.0",
-    "sharp": "^0.33.2"
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "lint-staged": {
     "*": "prettier --write --ignore-unknown",
     "docs/**/*.{md,mdx}": "markdownlint -c .markdownlint.json"
-  },
-  "dependencies": {
-    "autoprefixer": "^10.4.15",
-    "medium-zoom": "^1.1.0",
-    "next": "^14.1.0",
-    "next-sitemap": "^4.2.3",
-    "nextra": "^2.13.3",
-    "nextra-theme-docs": "^2.13.3",
-    "postcss": "^8.4.31",
-    "rc-table": "^7.45.5",
-    "react": "^18.2",
-    "react-dom": "^18.2",
-    "tailwindcss": "^3.3.3"
   }
 }
