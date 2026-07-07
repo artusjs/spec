@@ -268,7 +268,7 @@ export class ModuleDebugCommand extends Command {
 - `<options...>` 必传的动态参数，比如 `command: 'test <files...>'` ，最终拿到的 files 将是个数组。
 - `[options...]` 可选动态参数，跟上面效果一样。
 
-## Option
+## Option 装饰器
 
 Option 是 Arguments 与 Flags(`--port` 这种参数) 的统一配置，通过 `Option` 装饰器定义
 
@@ -594,7 +594,7 @@ dev postrun 1           # --> DevCommand>run_middleware
 
 ## Examples
 
-体验用的相关 demo 例子都在：https://github.com/artus-cli/examples
+体验用的相关 demo 例子都在：[artus-cli/examples](https://github.com/artus-cli/examples)
 
 - [simple-bin](https://github.com/artus-cli/examples/tree/master/simple-bin)：简单 demo
 - [singlefile](https://github.com/artus-cli/examples/tree/master/singlefile)：单文件 demo
