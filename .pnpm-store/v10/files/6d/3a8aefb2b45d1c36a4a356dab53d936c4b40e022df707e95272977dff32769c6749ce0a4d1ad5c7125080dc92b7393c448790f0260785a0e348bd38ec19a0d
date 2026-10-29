@@ -1,0 +1,6 @@
+.rp-nav-screen-menu {
+  flex-direction: column;
+  align-items: center;
+  display: flex;
+}
+

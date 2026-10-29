@@ -1,0 +1,67 @@
+.rp-sidebar-menu {
+  background-color: var(--rp-c-bg);
+  border-bottom: 1px solid var(--rp-c-divider-light);
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 20px;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  display: flex;
+}
+
+.rp-sidebar-menu__left {
+  background: none;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  display: flex;
+}
+
+.rp-sidebar-menu__right {
+  background: none;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  overflow: hidden;
+}
+
+.rp-sidebar-menu__right__text {
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  display: -webkit-box;
+  overflow: hidden;
+}
+
+.rp-sidebar-menu__right__icon, .rp-sidebar-menu__right .rp-progress-circle {
+  flex-shrink: 0;
+}
+
+@media (width >= 1280px) {
+  .rp-sidebar-menu {
+    display: none;
+  }
+}
+
+.rp-sidebar-menu__mask {
+  z-index: var(--rp-z-index-mask);
+  backdrop-filter: blur(3px);
+  background-color: color-mix(in srgb, var(--rp-c-bg) 60%, transparent);
+  display: none;
+  position: fixed;
+  inset: 0;
+}
+
+@media (width <= 767px) {
+  .rp-sidebar-menu__mask {
+    display: block;
+  }
+}
+

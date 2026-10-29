@@ -1,0 +1,359 @@
+import { addTrailingSlash, node_path, fileURLToPath, cwd, PLUGIN_REACT_NAME, removeTrailingSlash, pluginVirtualModule, pluginReact, createRequire, MDX_OR_MD_REGEXP } from "../7319.js";
+import { createError } from "./utils/error.js";
+import { PUBLIC_DIR, CSR_CLIENT_ENTRY, SSR_CLIENT_ENTRY, OUTPUT_DIR, SSG_MD_SERVER_ENTRY, inlineThemeScript, NODE_SSG_BUNDLE_FOLDER, isProduction, PACKAGE_ROOT, SSR_SERVER_ENTRY, TEMPLATE_PATH, NODE_SSG_MD_BUNDLE_FOLDER, DEFAULT_THEME, NODE_SSG_MD_BUNDLE_NAME, DEFAULT_TITLE, NODE_SSG_BUNDLE_NAME } from "./constants.js";
+import { hintBuilderPluginsBreakingChange, hintThemeBreakingChange } from "./logger/hint.js";
+import { resolveReactRouterDomAlias, resolveReactRenderToMarkdownAlias, resolveReactAlias } from "./utils/reactAlias.js";
+import { rsbuildPluginDocVM } from "./runtimeModule/pageData/rsbuildPlugin.js";
+import { socialLinksVMPlugin } from "./runtimeModule/socialLinks.js";
+import { i18nVMPlugin } from "./runtimeModule/i18n.js";
+import { globalUIComponentsVMPlugin } from "./runtimeModule/globalUIComponents.js";
+import { globalStylesVMPlugin } from "./runtimeModule/globalStyles.js";
+import { searchHookVMPlugin } from "./runtimeModule/searchHooks.js";
+import { routeListVMPlugin } from "./runtimeModule/routeList.js";
+import { siteDataVMPlugin } from "./runtimeModule/siteData/rsbuildPlugin.js";
+import { rsbuildPluginSSG } from "./ssg/rsbuildPluginSSG.js";
+import { rsbuildPluginCSR } from "./ssg/rsbuildPluginCSR.js";
+import { rsbuildPluginSSGMD } from "./ssg-md/rsbuildPluginSSGMD.js";
+import { package_namespaceObject } from "../8311.js";
+function isPluginIncluded(config, pluginName) {
+    return Boolean(config.builderConfig?.plugins?.some((plugin)=>plugin && plugin.name === pluginName));
+}
+const initRsbuild_require = createRequire(import.meta.url);
+async function getVirtualModulesFromPlugins(pluginDriver) {
+    const runtimeModule = {};
+    const modulesByPlugin = await pluginDriver.addRuntimeModules();
+    Object.keys(modulesByPlugin).forEach((key)=>{
+        if (runtimeModule[key]) throw createError(`The runtime module ${key} is duplicated, please check your plugin`);
+        runtimeModule[key] = ()=>modulesByPlugin[key];
+    });
+    return runtimeModule;
+}
+async function createInternalBuildConfig(userDocRoot, config, enableSSG, routeService, pluginDriver) {
+    const CUSTOM_THEME_DIR = node_path.isAbsolute(config.themeDir) ? config.themeDir : node_path.join(cwd(), config.themeDir);
+    const outDir = config?.outDir ?? OUTPUT_DIR;
+    const base = config?.base ?? '/';
+    const assetPrefix = isProduction() ? addTrailingSlash(config?.builderConfig?.output?.assetPrefix ?? base) : '/';
+    const normalizeIcon = (icon)=>{
+        if (!icon) return;
+        icon = icon.toString();
+        if (icon.startsWith('file://')) icon = fileURLToPath(icon);
+        else if (node_path.isAbsolute(icon)) return node_path.join(userDocRoot, PUBLIC_DIR, icon);
+        return icon;
+    };
+    await hintThemeBreakingChange(CUSTOM_THEME_DIR);
+    const [reactCSRAlias, reactSSRAlias, reactRouterDomAlias, reactRenderToMarkdownAlias] = await Promise.all([
+        resolveReactAlias(false),
+        enableSSG ? resolveReactAlias(true) : Promise.resolve({}),
+        resolveReactRouterDomAlias(),
+        enableSSG && config.llms ? resolveReactRenderToMarkdownAlias() : Promise.resolve({})
+    ]);
+    const context = {
+        userDocRoot,
+        config,
+        routeService,
+        pluginDriver
+    };
+    return {
+        plugins: [
+            ...isPluginIncluded(config, PLUGIN_REACT_NAME) ? [] : [
+                pluginReact()
+            ],
+            rsbuildPluginDocVM({
+                config,
+                pluginDriver,
+                routeService,
+                userDocRoot
+            }),
+            pluginVirtualModule({
+                tempDir: '.rspress/runtime',
+                virtualModules: {
+                    ...socialLinksVMPlugin(context),
+                    ...i18nVMPlugin(context),
+                    ...globalUIComponentsVMPlugin(context),
+                    ...globalStylesVMPlugin(context),
+                    ...searchHookVMPlugin(context),
+                    ...routeListVMPlugin(context),
+                    ...await getVirtualModulesFromPlugins(pluginDriver),
+                    ...siteDataVMPlugin(context)
+                }
+            }),
+            enableSSG && config.ssg ? rsbuildPluginSSG({
+                routeService,
+                config
+            }) : rsbuildPluginCSR({
+                routeService,
+                config
+            }),
+            enableSSG && config.llms ? rsbuildPluginSSGMD({
+                routeService,
+                config
+            }) : null
+        ],
+        server: {
+            port: !isProduction() && process.env.PORT ? Number(process.env.PORT) : void 0,
+            publicDir: {
+                name: node_path.join(userDocRoot, PUBLIC_DIR)
+            },
+            ...base.length > 0 ? {
+                base: removeTrailingSlash(base)
+            } : {}
+        },
+        dev: {
+            lazyCompilation: 'false' !== process.env.RSPRESS_LAZY_COMPILATION,
+            cliShortcuts: {
+                custom: (shortcuts)=>shortcuts.filter(({ key })=>'r' !== key)
+            }
+        },
+        html: {
+            title: config?.title ?? DEFAULT_TITLE,
+            favicon: normalizeIcon(config?.icon),
+            template: TEMPLATE_PATH,
+            tags: [
+                config.themeConfig?.darkMode !== false ? {
+                    tag: "script",
+                    children: inlineThemeScript,
+                    append: false
+                } : null
+            ].filter(Boolean)
+        },
+        output: {
+            assetPrefix,
+            distPath: {
+                root: outDir
+            }
+        },
+        resolve: {
+            alias: {
+                '@mdx-js/react': initRsbuild_require.resolve('@mdx-js/react'),
+                'react-lazy-with-preload': initRsbuild_require.resolve('react-lazy-with-preload'),
+                '@theme': [
+                    CUSTOM_THEME_DIR,
+                    DEFAULT_THEME
+                ],
+                '@rspress/core/theme': [
+                    CUSTOM_THEME_DIR,
+                    DEFAULT_THEME
+                ],
+                '@theme-original': DEFAULT_THEME,
+                '@rspress/core/theme-original': DEFAULT_THEME,
+                '@rspress/core/runtime': node_path.join(PACKAGE_ROOT, 'dist/runtime/index.js'),
+                '@rspress/core/shiki-transformers': node_path.join(PACKAGE_ROOT, 'dist/shiki-transformers.js')
+            }
+        },
+        source: {
+            preEntry: [
+                node_path.join(DEFAULT_THEME, './styles/index.js'),
+                'virtual-global-styles',
+                '@theme'
+            ],
+            include: [
+                PACKAGE_ROOT
+            ],
+            define: {
+                'process.env.TEST': JSON.stringify(process.env.TEST),
+                'process.env.ENABLE_LLMS_UI': JSON.stringify(Boolean(config.themeConfig?.llmsUI ?? config.llms))
+            }
+        },
+        performance: {
+            ...'false' !== process.env.RSPRESS_PERSISTENT_CACHE ? {
+                buildCache: {
+                    buildDependencies: [
+                        new URL(import.meta.url).href,
+                        pluginDriver.getConfigFilePath()
+                    ],
+                    cacheDigest: [
+                        routeService.generateRoutesCode(),
+                        JSON.stringify(config.themeConfig?.locales?.map((i)=>({
+                                nav: i.nav,
+                                sidebar: i.sidebar
+                            })) ?? {
+                            nav: config.themeConfig?.nav,
+                            sidebar: config.themeConfig?.sidebar
+                        }),
+                        package_namespaceObject.rE
+                    ]
+                }
+            } : {}
+        },
+        splitChunks: {
+            cacheGroups: {
+                styles: {
+                    name: 'styles',
+                    minSize: 0,
+                    chunks: 'all',
+                    test: /\.(?:css|less|sass|scss)$/,
+                    priority: 99
+                }
+            }
+        },
+        tools: {
+            swc: {
+                jsc: {
+                    transform: {
+                        verbatimModuleSyntax: false
+                    }
+                }
+            },
+            bundlerChain (chain, { CHAIN_ID, environment }) {
+                const isSsg = 'node' === environment.name;
+                const isSsgMd = 'node_md' === environment.name;
+                const jsModuleRule = chain.module.rule(CHAIN_ID.RULE.JS).oneOfs.get(CHAIN_ID.ONE_OF.JS_MAIN);
+                const swcLoaderOptions = jsModuleRule.use(CHAIN_ID.USE.SWC).get('options');
+                chain.module.rule('MDX').type("javascript/auto").test(MDX_OR_MD_REGEXP).resolve.merge({
+                    conditionNames: jsModuleRule.resolve.conditionNames.values(),
+                    mainFields: jsModuleRule.resolve.mainFields.values()
+                }).end().oneOf('MDXCompile').use('builtin:swc-loader').loader('builtin:swc-loader').options(swcLoaderOptions).end().use('mdx-loader').loader(fileURLToPath(new URL('./mdx/loader.js', import.meta.url))).options({
+                    config,
+                    docDirectory: userDocRoot,
+                    routeService,
+                    pluginDriver,
+                    isSsgMd
+                }).end();
+                if (chain.plugins.has(CHAIN_ID.PLUGIN.REACT_FAST_REFRESH)) chain.plugin(CHAIN_ID.PLUGIN.REACT_FAST_REFRESH).tap((options)=>{
+                    options[0] ??= {};
+                    options[0].test = [
+                        /\.([cm]js|[jt]sx?|flow)$/i,
+                        MDX_OR_MD_REGEXP
+                    ];
+                    options[0].include = [
+                        /\.([cm]js|[jt]sx?|flow)$/i,
+                        MDX_OR_MD_REGEXP
+                    ];
+                    return options;
+                });
+                chain.resolve.extensions.prepend('.md').prepend('.mdx').prepend('.mjs');
+                chain.module.rule('rspress-css-virtual-module').test(/\.rspress[\\/]runtime[\\/]virtual-global-styles/).merge({
+                    sideEffects: true
+                });
+                if (isSsg || isSsgMd) chain.optimization.splitChunks({});
+                if (isSsg) {
+                    chain.output.filename(`${NODE_SSG_BUNDLE_FOLDER}/${NODE_SSG_BUNDLE_NAME}`);
+                    chain.output.chunkFilename(`${NODE_SSG_BUNDLE_FOLDER}/[name].cjs`);
+                } else if (isSsgMd) {
+                    chain.output.filename(`${NODE_SSG_MD_BUNDLE_FOLDER}/${NODE_SSG_MD_BUNDLE_NAME}`);
+                    chain.output.chunkFilename(`${NODE_SSG_MD_BUNDLE_FOLDER}/[name].cjs`);
+                }
+            }
+        },
+        environments: {
+            web: {
+                resolve: {
+                    alias: {
+                        ...reactCSRAlias,
+                        ...reactRouterDomAlias
+                    }
+                },
+                source: {
+                    entry: {
+                        index: enableSSG && isProduction() ? SSR_CLIENT_ENTRY : CSR_CLIENT_ENTRY
+                    },
+                    define: {
+                        'process.env.__SSR__': JSON.stringify(false),
+                        'process.env.__SSR_MD__': JSON.stringify(false),
+                        'import.meta.env.SSR': JSON.stringify(false),
+                        'import.meta.env.SSG_MD': JSON.stringify(false)
+                    }
+                },
+                output: {
+                    target: 'web',
+                    distPath: {
+                        root: outDir
+                    }
+                },
+                tools: {
+                    rspack: {
+                        node: {
+                            __dirname: 'mock',
+                            __filename: 'mock'
+                        }
+                    }
+                }
+            },
+            ...enableSSG && config.ssg ? {
+                node: {
+                    resolve: {
+                        alias: {
+                            ...reactSSRAlias,
+                            ...reactRouterDomAlias
+                        }
+                    },
+                    source: {
+                        entry: {
+                            index: SSR_SERVER_ENTRY
+                        },
+                        define: {
+                            'process.env.__SSR__': JSON.stringify(true),
+                            'process.env.__SSR_MD__': JSON.stringify(false),
+                            'import.meta.env.SSR': JSON.stringify(true),
+                            'import.meta.env.SSG_MD': JSON.stringify(false)
+                        }
+                    },
+                    performance: {
+                        printFileSize: {
+                            compressed: true
+                        }
+                    },
+                    output: {
+                        emitAssets: false,
+                        target: 'node',
+                        module: false,
+                        minify: false
+                    }
+                }
+            } : {},
+            ...enableSSG && config.llms ? {
+                node_md: {
+                    resolve: {
+                        alias: {
+                            ...reactSSRAlias,
+                            ...reactRouterDomAlias,
+                            ...reactRenderToMarkdownAlias
+                        }
+                    },
+                    tools: {
+                        rspack: {
+                            optimization: {
+                                moduleIds: 'named',
+                                chunkIds: 'named'
+                            }
+                        }
+                    },
+                    source: {
+                        entry: {
+                            index: SSG_MD_SERVER_ENTRY
+                        },
+                        define: {
+                            'process.env.__SSR__': JSON.stringify(true),
+                            'process.env.__SSR_MD__': JSON.stringify(true),
+                            'import.meta.env.SSR': JSON.stringify(true),
+                            'import.meta.env.SSG_MD': JSON.stringify(true)
+                        }
+                    },
+                    performance: {
+                        printFileSize: {
+                            compressed: true
+                        }
+                    },
+                    output: {
+                        emitAssets: false,
+                        target: 'node',
+                        module: false,
+                        minify: false
+                    }
+                }
+            } : {}
+        }
+    };
+}
+async function initRsbuild(rootDir, config, pluginDriver, routeService, enableSSG, extraRsbuildConfig) {
+    const userDocRoot = node_path.resolve(rootDir || config.root);
+    hintBuilderPluginsBreakingChange(config);
+    const { createRsbuild, mergeRsbuildConfig } = await import("@rsbuild/core");
+    const internalRsbuildConfig = await createInternalBuildConfig(userDocRoot, config, enableSSG, routeService, pluginDriver);
+    const rsbuild = await createRsbuild({
+        callerName: 'rspress',
+        rsbuildConfig: mergeRsbuildConfig(internalRsbuildConfig, ...pluginDriver.getPlugins()?.map((plugin)=>plugin.builderConfig ?? {}) || [], config.builderConfig || {}, extraRsbuildConfig || {})
+    });
+    return rsbuild;
+}
+export { initRsbuild };

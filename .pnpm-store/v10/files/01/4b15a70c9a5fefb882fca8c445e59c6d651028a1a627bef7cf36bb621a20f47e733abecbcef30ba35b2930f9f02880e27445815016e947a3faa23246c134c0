@@ -1,0 +1,121 @@
+import { chokidar, node_path, logger, picocolors, join, cac } from "../4454.js";
+import { package_namespaceObject } from "../8311.js";
+import { loadConfigFile, resolveDocRoot } from "../config/loadConfigFile.js";
+import { dev } from "../node/dev.js";
+import { PUBLIC_DIR } from "../node/constants.js";
+import { build } from "../node/build.js";
+import { serve } from "../node/serve.js";
+import { listComponents, ejectComponent } from "../node/eject.js";
+const META_FILES = [
+    '_meta.json',
+    '_nav.json'
+];
+const cli = cac('rspress').version(package_namespaceObject.rE).help();
+const landingMessage = `🔥 Rspress v${package_namespaceObject.rE}\n`;
+logger.greet(landingMessage);
+const setNodeEnv = (env)=>{
+    process.env.NODE_ENV = env;
+};
+cli.option('-c,--config [config]', 'Specify the path to the config file');
+cli.command('[root]', 'start dev server').alias('dev').option('--port [port]', 'port number').option('--host [host]', 'hostname').action(async (root, options)=>{
+    setNodeEnv('development');
+    let isRestarting = false;
+    const cwd = process.cwd();
+    let cliWatcher;
+    let devServer;
+    const startDevServer = async ()=>{
+        const { port, host } = options || {};
+        const { config, configFilePath } = await loadConfigFile(options?.config);
+        config.root = resolveDocRoot(cwd, root, config.root);
+        const docDirectory = config.root;
+        devServer = await dev({
+            appDirectory: cwd,
+            docDirectory,
+            config,
+            configFilePath,
+            extraBuilderConfig: {
+                server: {
+                    port,
+                    host
+                }
+            }
+        });
+        cliWatcher = chokidar.watch([
+            configFilePath,
+            docDirectory
+        ], {
+            ignoreInitial: true,
+            ignored: [
+                '**/node_modules/**',
+                '**/.git/**',
+                '**/.DS_Store/**',
+                join(docDirectory, PUBLIC_DIR)
+            ]
+        });
+        cliWatcher.on('all', async (eventName, filepath)=>{
+            const basename = node_path.basename(filepath);
+            if ('change' === eventName && META_FILES.includes(basename)) return;
+            if ('add' === eventName || 'unlink' === eventName || 'change' === eventName && filepath === configFilePath) {
+                if (isRestarting) return;
+                isRestarting = true;
+                console.log(`\n✨ ${eventName} ${picocolors.green(node_path.relative(cwd, filepath))}, dev server will restart...\n`);
+                await devServer.close();
+                await cliWatcher.close();
+                await startDevServer();
+                isRestarting = false;
+            }
+        });
+    };
+    await startDevServer();
+    const exitProcess = async ()=>{
+        try {
+            await devServer.close();
+            await cliWatcher.close();
+        } finally{
+            process.exit(0);
+        }
+    };
+    process.on('SIGINT', exitProcess);
+    process.on('SIGTERM', exitProcess);
+});
+cli.command('build [root]').action(async (root, options)=>{
+    setNodeEnv('production');
+    const cwd = process.cwd();
+    const { config, configFilePath } = await loadConfigFile(options.config);
+    config.root = resolveDocRoot(cwd, root, config.root);
+    const docDirectory = config.root;
+    try {
+        await build({
+            docDirectory,
+            config,
+            configFilePath
+        });
+    } catch (err) {
+        logger.error(err);
+        process.exit(1);
+    }
+});
+cli.command('preview [root]').alias('serve').option('--port [port]', 'port number').option('--host [host]', 'hostname').action(async (root, options)=>{
+    setNodeEnv('production');
+    const cwd = process.cwd();
+    const { port, host } = options || {};
+    const { config, configFilePath } = await loadConfigFile(options?.config);
+    config.root = resolveDocRoot(cwd, root, config.root);
+    await serve({
+        config,
+        host,
+        port,
+        configFilePath
+    });
+});
+cli.command('eject [component]', 'Eject a theme component to customize it').action(async (component)=>{
+    if (!component) return void await listComponents();
+    const cwd = process.cwd();
+    try {
+        await ejectComponent(component, cwd);
+    } catch (error) {
+        logger.error(`Failed to eject component: ${error}`);
+        process.exit(1);
+    }
+});
+cli.parse();

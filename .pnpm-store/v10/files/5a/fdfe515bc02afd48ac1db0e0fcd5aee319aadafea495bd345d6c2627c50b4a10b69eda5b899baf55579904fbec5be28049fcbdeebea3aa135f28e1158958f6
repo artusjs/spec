@@ -1,0 +1,4 @@
+.rp-sidebar-group {
+  color: var(--rp-c-text-1);
+}
+

@@ -1,0 +1,34 @@
+import { createHead, logger, transformHtmlTemplate, pathToFileURL, picocolors } from "../../8311.js";
+import { hintSSGFailed } from "../logger/hint.js";
+import { renderHtmlTemplate } from "./renderHtmlTemplate.js";
+async function renderPage(route, htmlTemplate, configHead, ssrBundlePath) {
+    let render;
+    try {
+        let { default: ssrExports } = await import(pathToFileURL(ssrBundlePath).toString());
+        if (ssrExports instanceof Promise) ssrExports = await ssrExports;
+        render = ssrExports.render;
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(`Failed to load SSG bundle: ${picocolors.yellow(ssrBundlePath)}: ${e.message}`);
+            logger.debug(e);
+            hintSSGFailed();
+        }
+        throw e;
+    }
+    const head = createHead();
+    const { routePath, absolutePath } = route;
+    let appHtml = '';
+    if (render) try {
+        ({ appHtml } = await render(routePath, head));
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(`Page "${picocolors.yellow(routePath)}" SSG rendering failed.
+${absolutePath ? picocolors.gray(`    File: ${absolutePath}\n`) : ''}    ${picocolors.gray(e.toString())}`);
+            throw e;
+        }
+    }
+    const replacedHtmlTemplate = await renderHtmlTemplate(htmlTemplate, configHead, route, appHtml);
+    const html = await transformHtmlTemplate(head, replacedHtmlTemplate);
+    return html;
+}
+export { renderPage };

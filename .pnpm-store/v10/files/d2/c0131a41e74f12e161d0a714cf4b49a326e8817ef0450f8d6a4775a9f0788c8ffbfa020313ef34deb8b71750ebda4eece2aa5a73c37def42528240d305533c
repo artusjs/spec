@@ -1,0 +1,37 @@
+.rp-page-tabs__label {
+  border-bottom: 1px solid var(--rp-c-divider-light);
+  width: 100%;
+  box-shadow: var(--rp-shadow-1);
+  justify-content: flex-start;
+  gap: 1.5rem;
+  margin: 2rem 0;
+  display: flex;
+}
+
+.rp-page-tabs__label__item {
+  cursor: pointer;
+  color: var(--rp-c-text-2);
+  border-bottom: 2px solid #0000;
+  padding: 1rem .5rem;
+  display: inline-block;
+}
+
+.rp-page-tabs__label__item:hover {
+  border-bottom: 2px solid var(--rp-c-divider-light);
+  color: var(--rp-c-text-1);
+}
+
+body[data-page-tabs-active-index="0"] .rp-page-tabs__label__item[data-index="0"], body[data-page-tabs-active-index="1"] .rp-page-tabs__label__item[data-index="1"], body[data-page-tabs-active-index="2"] .rp-page-tabs__label__item[data-index="2"], body[data-page-tabs-active-index="3"] .rp-page-tabs__label__item[data-index="3"], body[data-page-tabs-active-index="4"] .rp-page-tabs__label__item[data-index="4"], body[data-page-tabs-active-index="5"] .rp-page-tabs__label__item[data-index="5"], body[data-page-tabs-active-index="6"] .rp-page-tabs__label__item[data-index="6"], body[data-page-tabs-active-index="7"] .rp-page-tabs__label__item[data-index="7"] {
+  color: var(--rp-c-text-0);
+  border-bottom: 2px solid var(--rp-c-brand-dark);
+  font-weight: 700;
+}
+
+.rp-page-tabs__content__item h2:first-of-type:before, .rp-page-tabs__content__item {
+  display: none;
+}
+
+body[data-page-tabs-active-index="0"] .rp-page-tabs__content__item[data-index="0"], body[data-page-tabs-active-index="1"] .rp-page-tabs__content__item[data-index="1"], body[data-page-tabs-active-index="2"] .rp-page-tabs__content__item[data-index="2"], body[data-page-tabs-active-index="3"] .rp-page-tabs__content__item[data-index="3"], body[data-page-tabs-active-index="4"] .rp-page-tabs__content__item[data-index="4"], body[data-page-tabs-active-index="5"] .rp-page-tabs__content__item[data-index="5"], body[data-page-tabs-active-index="6"] .rp-page-tabs__content__item[data-index="6"], body[data-page-tabs-active-index="7"] .rp-page-tabs__content__item[data-index="7"] {
+  display: block;
+}
+

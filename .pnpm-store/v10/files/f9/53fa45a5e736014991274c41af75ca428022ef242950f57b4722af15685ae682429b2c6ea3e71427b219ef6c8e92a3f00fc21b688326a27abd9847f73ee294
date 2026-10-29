@@ -1,0 +1,63 @@
+.rp-button {
+  box-sizing: border-box;
+  white-space: nowrap;
+  justify-content: center;
+  align-items: center;
+  height: 48px;
+  font-weight: 700;
+  transition: color .1s, border-color .1s, background-color .1s;
+  display: inline-flex;
+}
+
+.rp-button--medium {
+  border-radius: var(--rp-radius);
+  height: 38px;
+  padding: 0 20px;
+  font-size: 14px;
+  line-height: 38px;
+}
+
+.rp-button--big {
+  border-radius: var(--rp-radius-large);
+  min-width: 142px;
+  font-size: 16px;
+}
+
+@media (width <= 768px) {
+  .rp-button--big {
+    min-width: 100px;
+    height: 42px;
+    font-size: 14px;
+    line-height: 42px;
+  }
+}
+
+.rp-button--brand {
+  opacity: 1;
+  color: #fff;
+  background: var(--rp-home-hero-title-bg);
+  transition: all .3s;
+}
+
+.rp-button--brand:hover {
+  opacity: .8;
+}
+
+.rp-button--alt {
+  border: 1px solid var(--rp-c-gray-light-3);
+  color: var(--rp-c-text-0);
+  background-color: var(--rp-c-bg);
+  transition: all .3s;
+}
+
+.dark .rp-button--alt {
+  background-color: var(--rp-c-bg-mute);
+  color: var(--rp-c-text-1);
+  border-color: #484848;
+}
+
+.rp-button--alt:hover {
+  opacity: .8;
+  background-color: var(--rp-c-bg-mute);
+}
+

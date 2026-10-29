@@ -1,0 +1,48 @@
+{
+  "name": "rspress-plugin-mermaid",
+  "version": "1.0.1",
+  "description": "Rspress plugin to render mermaid diagrams",
+  "type": "module",
+  "files": [
+    "dist",
+    "components"
+  ],
+  "keywords": [
+    "rspress",
+    "plugin",
+    "mermaid"
+  ],
+  "homepage": "https://github.com/linbudu599/rspress-plugins/tree/main/packages/rspress-plugin-mermaid#readme",
+  "bugs": {
+    "url": "https://github.com/linbudu599/rspress-plugins/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/linbudu599/rspress-plugins.git"
+  },
+  "license": "MIT",
+  "author": "Linbudu <linbudu599@gmail.com> (https://github.com/linbudu599)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "mermaid": "^10.9.0",
+    "rspress-plugin-devkit": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.5",
+    "@types/react": "^18.2.74",
+    "typescript": "^5.4.4"
+  },
+  "peerDependencies": {
+    "@rspress/core": "^2.0.0-rc.4 || ^2.0.0"
+  },
+  "scripts": {
+    "build": "tsc --declarationMap false",
+    "dev": "tsc -w",
+    "docs:build": "rspress build",
+    "docs:dev": "rspress dev"
+  }
+}

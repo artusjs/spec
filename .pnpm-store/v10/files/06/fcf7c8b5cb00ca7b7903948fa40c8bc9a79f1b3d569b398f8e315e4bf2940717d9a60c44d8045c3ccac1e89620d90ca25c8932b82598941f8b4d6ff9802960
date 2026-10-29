@@ -1,0 +1,47 @@
+.rp-scrollbar {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #0000000d #0000;
+}
+
+.rp-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.rp-scrollbar::-webkit-scrollbar-track {
+  background: none;
+}
+
+.rp-scrollbar::-webkit-scrollbar-thumb {
+  background: #0000000d;
+  border-radius: 4px;
+  transition: background .2s;
+}
+
+.rp-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #0000001a;
+}
+
+.rp-scrollbar::-webkit-scrollbar-corner {
+  background: none;
+}
+
+.rp-dark .rp-scrollbar {
+  scrollbar-color: #ffffff1a #0000;
+}
+
+.rp-dark .rp-scrollbar::-webkit-scrollbar-thumb {
+  background: #ffffff1a;
+}
+
+.rp-dark .rp-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #fff3;
+}
+
+.rp-scrollbar--always {
+  scrollbar-gutter: stable;
+  scrollbar-width: unset;
+  scrollbar-color: unset;
+}
+

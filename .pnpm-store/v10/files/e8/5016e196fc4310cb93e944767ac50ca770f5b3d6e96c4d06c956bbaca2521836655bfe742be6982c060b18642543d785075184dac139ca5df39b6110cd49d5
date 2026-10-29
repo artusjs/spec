@@ -1,0 +1,111 @@
+import { node_path, logger, promises, picocolors } from "../4454.js";
+import { EJECTED_THEME } from "./constants.js";
+let _themeComponentsPathOverride;
+function getThemeComponentsPath() {
+    if (_themeComponentsPathOverride) return _themeComponentsPathOverride;
+    return node_path.join(EJECTED_THEME, 'components');
+}
+async function getAvailableComponents() {
+    return [
+        'Banner',
+        'Badge',
+        'Callout',
+        'DocFooter',
+        'FallbackHeading',
+        'HomeFeature',
+        'HomeHero',
+        'HomeBackground',
+        'HomeFooter',
+        'NavTitle',
+        'SourceCode',
+        'Toc',
+        'Tabs',
+        'Tag',
+        'PackageManagerTabs',
+        'PrevNextPage',
+        'OverviewGroup',
+        'Root',
+        'SocialLinks',
+        'Steps'
+    ];
+}
+async function componentExists(componentName) {
+    const themePath = getThemeComponentsPath();
+    const componentPath = node_path.join(themePath, componentName);
+    try {
+        const stat = await promises.stat(componentPath);
+        return stat.isDirectory();
+    } catch  {
+        return false;
+    }
+}
+async function copyDir(src, dest) {
+    await promises.mkdir(dest, {
+        recursive: true
+    });
+    const entries = await promises.readdir(src, {
+        withFileTypes: true
+    });
+    for (const entry of entries){
+        const srcPath = node_path.join(src, entry.name);
+        const destPath = node_path.join(dest, entry.name);
+        if (entry.isDirectory()) await copyDir(srcPath, destPath);
+        else await promises.copyFile(srcPath, destPath);
+    }
+}
+async function transformImports(filePath) {
+    const content = await promises.readFile(filePath, 'utf-8');
+    const transformed = content;
+    if (transformed !== content) await promises.writeFile(filePath, transformed, 'utf-8');
+}
+async function transformDirectory(dir) {
+    const entries = await promises.readdir(dir, {
+        withFileTypes: true
+    });
+    for (const entry of entries){
+        const fullPath = node_path.join(dir, entry.name);
+        if (entry.isDirectory()) await transformDirectory(fullPath);
+        else if (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) await transformImports(fullPath);
+    }
+}
+async function ejectComponent(componentName, cwd = process.cwd()) {
+    const exists = await componentExists(componentName);
+    if (!exists) {
+        logger.error(`Component ${picocolors.cyan(componentName)} not found in theme.`);
+        const available = await getAvailableComponents();
+        logger.info(`\nAvailable components:\n${available.map((c)=>`  - ${c}`).join('\n')}`);
+        process.exit(1);
+    }
+    const themePath = getThemeComponentsPath();
+    const sourceComponentPath = node_path.join(themePath, componentName);
+    const destThemePath = node_path.join(cwd, 'theme', 'components');
+    const destComponentPath = node_path.join(destThemePath, componentName);
+    try {
+        await promises.access(destComponentPath);
+        logger.warn(`Component ${picocolors.cyan(componentName)} already exists in ${picocolors.yellow(node_path.relative(cwd, destComponentPath))}`);
+        logger.info('Overwriting existing component...');
+    } catch  {}
+    try {
+        await promises.mkdir(destThemePath, {
+            recursive: true
+        });
+        await copyDir(sourceComponentPath, destComponentPath);
+        await transformDirectory(destComponentPath);
+        logger.success(`✨ Component ${picocolors.cyan(componentName)} ejected successfully!`);
+        logger.info(`Component files copied to: ${picocolors.green(node_path.relative(cwd, destComponentPath))}\nYou can now customize the component. To use it in your theme, you'll need to:\n  1. Re-export it in your custom \`theme/index.tsx\` file\n  2. Edit it by yourself`);
+    } catch (error) {
+        logger.error(`Failed to eject component: ${error}`);
+        throw error;
+    }
+}
+async function listComponents() {
+    const components = await getAvailableComponents();
+    logger.info(`📦 Available components to eject:\n`);
+    components.forEach((component)=>{
+        logger.info(`  ${picocolors.cyan('•')} ${component}`);
+    });
+    logger.info(`💡 Usage: ${picocolors.dim('rspress eject <ComponentName>')}\n`);
+}
+var eject__setThemeComponentsPathForTesting = void 0;
+var eject_getAvailableComponents = void 0;
+export { ejectComponent, eject__setThemeComponentsPathForTesting as __setThemeComponentsPathForTesting, eject_getAvailableComponents as getAvailableComponents, listComponents };

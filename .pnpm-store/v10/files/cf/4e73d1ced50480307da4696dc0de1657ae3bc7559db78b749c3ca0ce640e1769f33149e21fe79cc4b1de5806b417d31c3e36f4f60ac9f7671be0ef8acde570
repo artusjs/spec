@@ -1,0 +1,25 @@
+.rp-nav-screen-appearance {
+  border-radius: var(--rp-radius-small);
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 14px;
+  display: flex;
+}
+
+.rp-nav-screen-appearance__left, .rp-nav-screen-appearance__right {
+  align-items: center;
+  display: flex;
+}
+
+.rp-nav-screen-appearance__icon {
+  transition: transform .3s;
+  transform: rotate(-90deg);
+}
+
+.rp-nav-screen-appearance__icon--open {
+  transform: rotate(0);
+}
+

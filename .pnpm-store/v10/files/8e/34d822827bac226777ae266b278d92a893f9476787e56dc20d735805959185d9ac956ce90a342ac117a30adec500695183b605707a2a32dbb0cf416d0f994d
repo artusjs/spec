@@ -1,0 +1,253 @@
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(p):not(:where(li p)) {
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(strong, b) {
+  font-weight: 600;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(hr) {
+  border-color: var(--rp-c-divider-light);
+  border-top-width: 1px;
+  margin: 3rem 0;
+  display: block;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(a.rp-link):not(:where(.rp-header-anchor)) {
+  color: var(--rp-c-link);
+  overflow-wrap: break-word;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color .25s;
+  display: inline;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(a.rp-link):not(:where(.rp-header-anchor)):hover {
+  opacity: .85;
+  border-bottom: 1px solid;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(a.rp-link):not(:where(.rp-header-anchor))[target="_blank"]:after {
+  content: "↗";
+  margin-left: .2em;
+  margin-right: .1em;
+  font-size: .7em;
+  font-weight: 700;
+  transition: transform .2s;
+  display: inline-block;
+  transform: translate(0, -.3em);
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(a.rp-link):not(:where(.rp-header-anchor))[target="_blank"]:hover:after {
+  transform: translate(.1em, -.5em);
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(h1, h2, h3, h4, h5, h6) {
+  outline: none;
+  font-weight: 600;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(h1, h2, h3, h4, h5, h6) .rp-header-anchor {
+  float: left;
+  opacity: 0;
+  font-weight: 500;
+  font-size: inherit;
+  margin-left: -.8em;
+  transition: color .25s, opacity .25s;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(h1, h2, h3, h4, h5, h6) .rp-header-anchor:hover {
+  border-bottom: 1px solid var(--rp-c-brand);
+  opacity: .85;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(h1, h2, h3, h4, h5, h6):hover .rp-header-anchor, .rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(h1, h2, h3, h4, h5, h6):hover .rp-header-anchor:focus {
+  opacity: 1;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(.rp-header-anchor) {
+  color: var(--rp-c-brand);
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(h1) {
+  margin-bottom: 2rem;
+  font-size: 2rem;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(h2) {
+  margin-top: 3rem;
+  margin-bottom: 1.25rem;
+  font-size: 1.75rem;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(h2:first-of-type):before {
+  content: "";
+  background: var(--rp-c-divider-light);
+  width: 100%;
+  height: 1px;
+  margin-bottom: 3rem;
+  display: block;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(h3) {
+  margin-top: 2rem;
+  margin-bottom: 1.25rem;
+  font-size: 1.5rem;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(h4) {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(h5) {
+  margin-top: 1.25rem;
+  margin-bottom: .75rem;
+  font-size: 1.125rem;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(h6) {
+  margin-top: 1rem;
+  margin-bottom: .5rem;
+  font-size: 1rem;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(blockquote) {
+  border-left: 2px solid var(--rp-c-divider);
+  color: var(--rp-c-text-2);
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-left: 1rem;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(blockquote p) {
+  color: var(--rp-c-text-2);
+  margin: 0;
+  font-size: 1rem;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(ul) {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-left: 1.25rem;
+  line-height: 1.75rem;
+  list-style: outside;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(ol) {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-left: 1.25rem;
+  line-height: 1.75rem;
+  list-style: decimal;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(ul li):not(:first-child), .rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(ol li):not(:first-child) {
+  margin-top: .5rem;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(.rp-table-scroll-container) {
+  overflow-x: auto;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(table) {
+  table-layout: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: var(--rp-code-block-border);
+  border-radius: var(--rp-radius);
+  width: 100%;
+  overflow: hidden;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(table)::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(table)::-webkit-scrollbar-corner {
+  display: none;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(table)::-webkit-scrollbar-thumb {
+  background-color: #0000000d;
+  border-radius: 10px;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(thead) {
+  color: var(--rp-c-text-0);
+  background: var(--rp-code-title-bg);
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(th) {
+  text-align: left;
+  border-bottom: 1px solid var(--rp-c-divider-light);
+  padding: .75rem 1.25rem;
+  font-size: .875rem;
+  font-weight: 600;
+  position: relative;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(tbody) {
+  background: var(--rp-c-bg);
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(td) {
+  border-bottom: 1px solid var(--rp-c-divider-light);
+  padding: .75rem 1.25rem;
+  font-size: .875rem;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(tr) {
+  transition: background-color .2s;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(tr):hover {
+  background: var(--rp-c-bg-soft);
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(tr:last-child td) {
+  border-bottom: none;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(:not(pre) > code) {
+  font-size: .875em;
+  font-family: var(--rp-font-family-mono);
+  border-radius: var(--rp-radius-small);
+  background-color: var(--rp-c-text-code-bg);
+  border: 1px solid var(--rp-c-text-code-border);
+  overflow-wrap: break-word;
+  padding: 3px 6px;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(:not(pre, a) > code) {
+  color: var(--rp-c-text-code);
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(a > code) {
+  color: var(--rp-c-brand-dark);
+  transition: color .25s;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(a:hover > code) {
+  color: var(--rp-c-brand);
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(details) {
+  cursor: pointer;
+  margin: 16px 0;
+  padding: 8px;
+  transition: background-color .3s;
+}
+
+.rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(details):hover {
+  background-color: var(--rp-c-bg-mute);
+}
+
+:where(.rp-dark) .rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(table), :where(.rp-dark) .rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(table tr), :where(.rp-dark) .rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(table td), :where(.rp-dark) .rp-doc :not(:where(.rp-not-doc, .rp-not-doc *)):where(table th) {
+  border-color: var(--rp-c-divider);
+}
+

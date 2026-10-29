@@ -1,0 +1,257 @@
+import { extname, stat as promises_stat, logger, picocolors, readdir, isExternalUrl, relative, slash, join } from "../../7319.js";
+import { createError } from "../utils/error.js";
+import { PUBLIC_DIR } from "../constants.js";
+import { pathExists, extractInfoFromFrontmatterWithAbsolutePath, readJson } from "./utils.js";
+import { absolutePathToRoutePath, addRoutePrefix } from "../route/RoutePage.js";
+import { RouteService } from "../route/RouteService.js";
+const AUTO_NAV_SIDEBAR_ERROR_PREFIX = '[auto-nav-sidebar] ';
+function getFileKey(realPath, docsDir) {
+    return realPath ? slash(relative(docsDir, realPath).replace(extname(realPath), '')) : '';
+}
+async function fsDirToMetaItems(workDir, docsDir, extensions) {
+    let subItems;
+    try {
+        subItems = (await readdir(workDir)).sort((a, b)=>{
+            const aIsIndex = 'index' === a.replace(/\.[^/.]+$/, '');
+            const bIsIndex = 'index' === b.replace(/\.[^/.]+$/, '');
+            if (aIsIndex !== bIsIndex) return aIsIndex ? -1 : 1;
+            return a.localeCompare(b);
+        });
+    } catch (e) {
+        const metaFilePath = join(workDir, '_meta.json');
+        throw createError(`${AUTO_NAV_SIDEBAR_ERROR_PREFIX}Failed to read directory: ${picocolors.yellow(workDir)}, maybe it does not exist. Please check it in ${picocolors.cyan(metaFilePath)}. (${e})`);
+    }
+    subItems = subItems.filter((item)=>{
+        const hasExtension = extensions.some((ext)=>item.endsWith(ext));
+        const hasSameBaseName = subItems.some((elem)=>{
+            const baseName = elem.replace(/\.[^/.]+$/, '');
+            return baseName === item.replace(/\.[^/.]+$/, '') && elem !== item;
+        });
+        return !(hasExtension && hasSameBaseName);
+    });
+    const sideMeta = (await Promise.all(subItems.map(async (item)=>{
+        if ('_meta.json' === item) return null;
+        const stat = await promises_stat(join(workDir, item));
+        if (stat.isDirectory()) {
+            if (item === PUBLIC_DIR && workDir === docsDir) return null;
+            return {
+                type: 'dir',
+                name: item
+            };
+        }
+        return extensions.some((ext)=>item.endsWith(ext)) ? item : null;
+    }))).filter(Boolean);
+    return sideMeta;
+}
+async function metaItemToSidebarItem(metaItem, workDir, docsDir, extensions, metaFileSet, mdFileSet) {
+    if ('string' == typeof metaItem) return metaFileItemToSidebarItem(metaItem, workDir, docsDir, extensions, mdFileSet);
+    const { type } = metaItem;
+    if ('file' === type) return metaFileItemToSidebarItem(metaItem, workDir, docsDir, extensions, mdFileSet);
+    if ('dir' === type) {
+        const group = await metaDirItemToSidebarItem(metaItem, workDir, docsDir, extensions, metaFileSet, mdFileSet, false);
+        if (0 === group.items.length && !group.link) return null;
+        return group;
+    }
+    if ('dir-section-header' === type) {
+        const items = await metaDirSectionHeaderItemToSidebarItem(metaItem, workDir, docsDir, extensions, metaFileSet, mdFileSet);
+        if (items.length <= 1) return null;
+        return items;
+    }
+    if ('custom-link' === type) return metaCustomLinkItemToSidebarItem(metaItem, workDir, docsDir);
+    if ('divider' === type) return metaDividerToSidebarItem(metaItem);
+    if ('section-header' === type) return metaSectionHeaderToSidebarItem(metaItem);
+    throw createError(`${AUTO_NAV_SIDEBAR_ERROR_PREFIX}Unknown meta item type: ${metaItem.type}, please check it in "${join(workDir, '_meta.json')}".`);
+}
+async function detectFilePath(absolutePath, extensions) {
+    const ext = extname(absolutePath);
+    if (ext && extensions.includes(ext)) return absolutePath;
+    for (const extension of extensions){
+        const realPath = absolutePath + extension;
+        if (await pathExists(realPath)) return realPath;
+    }
+    throw createError(`${AUTO_NAV_SIDEBAR_ERROR_PREFIX}The file extension "${ext}" is not supported, please use one of the following extensions: ${extensions.join(', ')}`);
+}
+async function metaFileItemToSidebarItem(metaItemRaw, workDir, docsDir, extensions, mdFileSet) {
+    let metaItem = null;
+    metaItem = 'string' == typeof metaItemRaw ? {
+        name: metaItemRaw,
+        type: 'file'
+    } : metaItemRaw;
+    const { name, context, label, overviewHeaders, tag } = metaItem;
+    const metaFilePath = join(workDir, '_meta.json');
+    if ('string' != typeof name) throw createError(`${AUTO_NAV_SIDEBAR_ERROR_PREFIX}The file name "${name}" is not a string, please check it in ${picocolors.cyan(metaFilePath)}.`);
+    const absolutePath = join(workDir, name);
+    let absolutePathWithExt;
+    try {
+        absolutePathWithExt = await detectFilePath(absolutePath, extensions);
+    } catch  {
+        throw createError(`${AUTO_NAV_SIDEBAR_ERROR_PREFIX}${picocolors.white('Missing page file:')} ${picocolors.yellow(`"${absolutePath}"`)}\n${picocolors.white('Please check')} ${picocolors.cyan(join(workDir, '_meta.json'))}.`);
+    }
+    const link = absolutePathToRoutePath(absolutePathWithExt, docsDir);
+    const routeService = RouteService.getInstance();
+    if (routeService?.isExistRoute && !routeService.isExistRoute(link)) return null;
+    const info = await extractInfoFromFrontmatterWithAbsolutePath(absolutePathWithExt, docsDir);
+    const title = label || info.title;
+    mdFileSet.add(absolutePathWithExt);
+    return {
+        text: title,
+        link,
+        tag: info.tag || tag,
+        overviewHeaders: info.overviewHeaders || overviewHeaders,
+        context: info.context || context,
+        _fileKey: getFileKey(absolutePathWithExt, docsDir)
+    };
+}
+async function metaDirItemToSidebarItem(metaItem, workDir, docsDir, extensions, metaFileSet, mdFileSet, forceIndexFileAsItem) {
+    const { name, label, collapsible, collapsed, tag: metaJsonTag, context: metaJsonContext, overviewHeaders: metaJsonOverviewHeaders } = metaItem;
+    const dirAbsolutePath = join(workDir, name);
+    const dirMetaJsonPath = join(dirAbsolutePath, '_meta.json');
+    const isMetaJsonExist = await pathExists(dirMetaJsonPath);
+    let dirMetaJson = [];
+    if (isMetaJsonExist) {
+        metaFileSet.add(dirMetaJsonPath);
+        dirMetaJson = await readJson(dirMetaJsonPath);
+    } else dirMetaJson = await fsDirToMetaItems(dirAbsolutePath, docsDir, extensions);
+    async function getItems(withoutIndex = false) {
+        const items = await Promise.all((withoutIndex ? dirMetaJson.filter((i)=>{
+            let name;
+            if ('object' == typeof i && 'type' in i && 'file' === i.type) name = i.name;
+            else {
+                if ('string' != typeof i) return true;
+                name = i;
+            }
+            return 'index.md' !== name && 'index.mdx' !== i && 'index' !== i;
+        }) : dirMetaJson).map((item)=>metaItemToSidebarItem(item, dirAbsolutePath, docsDir, extensions, metaFileSet, mdFileSet)));
+        return items.flat().filter(Boolean);
+    }
+    try {
+        const sameNameFile = await metaFileItemToSidebarItem(name, workDir, docsDir, extensions, mdFileSet);
+        if (!sameNameFile) throw new Error(`Excluded route: ${name}`);
+        const { link, text, _fileKey, context, overviewHeaders, tag } = sameNameFile;
+        return {
+            text: label || text || name,
+            collapsible,
+            collapsed,
+            items: await getItems(),
+            link,
+            tag: metaJsonTag || tag,
+            overviewHeaders: metaJsonOverviewHeaders || overviewHeaders,
+            context: metaJsonContext || context,
+            _fileKey
+        };
+    } catch (e) {
+        logger.debug(e);
+        const isIndexInMetaJsonIndex = dirMetaJson.find((i)=>{
+            if ('string' == typeof i) return 'index' === i.replace(extname(i), '');
+            return false;
+        });
+        const isIndexFileExists = await pathExists(join(dirAbsolutePath, 'index.mdx')) || await pathExists(join(dirAbsolutePath, 'index.md'));
+        if (isMetaJsonExist && isIndexInMetaJsonIndex || !isIndexFileExists) return {
+            text: label || name,
+            collapsible,
+            collapsed,
+            items: await getItems(),
+            tag: metaJsonTag,
+            overviewHeaders: metaJsonOverviewHeaders,
+            context: metaJsonContext,
+            _fileKey: getFileKey(dirAbsolutePath, docsDir)
+        };
+        {
+            const indexFile = await metaFileItemToSidebarItem('index', dirAbsolutePath, docsDir, extensions, mdFileSet);
+            if (!indexFile) return {
+                text: label || name,
+                collapsible,
+                collapsed,
+                items: await getItems(),
+                tag: metaJsonTag,
+                overviewHeaders: metaJsonOverviewHeaders,
+                context: metaJsonContext,
+                _fileKey: getFileKey(dirAbsolutePath, docsDir)
+            };
+            const { link, text, _fileKey, context, overviewHeaders, tag } = indexFile;
+            return {
+                text: label || text || name,
+                collapsible,
+                collapsed,
+                items: await getItems(!forceIndexFileAsItem),
+                link,
+                tag: metaJsonTag || tag,
+                overviewHeaders: metaJsonOverviewHeaders || overviewHeaders,
+                context: metaJsonContext || context,
+                _fileKey
+            };
+        }
+    }
+}
+async function metaDirSectionHeaderItemToSidebarItem(metaItem, workDir, docsDir, extensions, metaFileSet, mdFileSet) {
+    const fakeDirMetaItem = {
+        ...metaItem,
+        type: 'dir'
+    };
+    const fakeSectionHeaderMetaItem = {
+        label: metaItem.label,
+        tag: metaItem.tag,
+        type: 'section-header'
+    };
+    const dirSideGroup = await metaDirItemToSidebarItem(fakeDirMetaItem, workDir, docsDir, extensions, metaFileSet, mdFileSet, true);
+    const sectionHeaderSideItem = metaSectionHeaderToSidebarItem(fakeSectionHeaderMetaItem);
+    return [
+        sectionHeaderSideItem,
+        ...dirSideGroup.items.length >= 1 ? dirSideGroup.items : []
+    ];
+}
+function metaCustomLinkItemToSidebarItem(metaItem, workDir, docsDir) {
+    if ('items' in metaItem && Array.isArray(metaItem.items) && metaItem.items.length > 0) {
+        const { label, link, context, items, tag, collapsed, collapsible, overviewHeaders } = metaItem;
+        return {
+            text: label ?? link,
+            context,
+            tag,
+            link,
+            items: items.map((subItem)=>metaCustomLinkItemToSidebarItem(Object.assign(subItem, {
+                    type: 'custom-link'
+                }), workDir, docsDir)),
+            collapsed,
+            collapsible,
+            overviewHeaders
+        };
+    }
+    if ('link' in metaItem && 'string' == typeof metaItem.link) {
+        const { label, link, context, tag } = metaItem;
+        if (isExternalUrl(link)) return {
+            text: label ?? link,
+            link,
+            tag,
+            context
+        };
+        return {
+            text: label ?? link,
+            link: addRoutePrefix(workDir, docsDir, link),
+            tag,
+            context
+        };
+    }
+    const { label } = metaItem;
+    throw createError(`${AUTO_NAV_SIDEBAR_ERROR_PREFIX}The custom link "${label}" does not have a link, please check it in "${join(workDir, '_meta.json')}".`);
+}
+function metaDividerToSidebarItem(metaItem) {
+    const { dashed } = metaItem;
+    return {
+        dividerType: dashed ? 'dashed' : 'solid'
+    };
+}
+function metaSectionHeaderToSidebarItem(metaItem) {
+    const { label, tag } = metaItem;
+    return {
+        sectionHeaderText: label ?? '',
+        tag
+    };
+}
+async function scanSideMeta(workDir, docsDir, extensions, metaFileSet, mdFileSet) {
+    const dir = await metaDirItemToSidebarItem({
+        type: 'dir',
+        name: ''
+    }, workDir, docsDir, extensions, metaFileSet, mdFileSet, true);
+    return dir.items;
+}
+export { scanSideMeta };

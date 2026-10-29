@@ -1,0 +1,53 @@
+import { github_slugger, visitChildren, extractTextAndId } from "../../../1361.js";
+const extractChildText = (child)=>{
+    if ('link' === child.type) return child.children?.map(extractChildText).join('') ?? '';
+    if ('strong' === child.type) return `**${child.children?.map(extractChildText).join('') ?? ''}**`;
+    if ('emphasis' === child.type) return `*${child.children?.map(extractChildText).join('') ?? ''}*`;
+    if ('delete' === child.type) return `~~${child.children?.map(extractChildText).join('') ?? ''}~~`;
+    if ('text' === child.type) return child.value;
+    if ('inlineCode' === child.type) return `\`${child.value}\``;
+    return '';
+};
+const parseToc = (tree)=>{
+    let title = '';
+    const toc = [];
+    const slugger = new github_slugger();
+    visitChildren((node)=>{
+        if ('heading' !== node.type || !node.depth || !node.children) return;
+        if (node.depth >= 1 && node.depth < 5) {
+            let customId = '';
+            const text = node.children.map((child)=>{
+                if ('text' === child.type) {
+                    const [textPart, idPart] = extractTextAndId(child.value);
+                    customId = idPart;
+                    return textPart;
+                }
+                return extractChildText(child);
+            }).join('').trim();
+            if (1 === node.depth) {
+                if (!title) title = text;
+            } else {
+                const id = customId ? customId : slugger.slug(text);
+                const { depth } = node;
+                toc.push({
+                    id,
+                    text,
+                    depth
+                });
+            }
+        }
+    })(tree);
+    return {
+        title,
+        toc
+    };
+};
+const remarkToc = function() {
+    const data = this.data();
+    return (tree)=>{
+        const { toc, title } = parseToc(tree);
+        data.pageMeta.toc = toc;
+        if (title) data.pageMeta.title = title;
+    };
+};
+export { parseToc, remarkToc };

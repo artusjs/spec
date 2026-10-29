@@ -1,0 +1,264 @@
+/*! LICENSE: connect-next.js.LICENSE.txt */
+import { EventEmitter } from "node:events";
+import { Server, createServer } from "node:http";
+import { __webpack_require__ } from "./1~rslib-runtime.js";
+import "./debug.js";
+import "./552.js";
+__webpack_require__.add({
+    "../../node_modules/.pnpm/encodeurl@2.0.0/node_modules/encodeurl/index.js" (module) {
+        module.exports = encodeUrl;
+        var ENCODE_CHARS_REGEXP = /(?:[^\x21\x23-\x3B\x3D\x3F-\x5F\x61-\x7A\x7C\x7E]|%(?:[^0-9A-Fa-f]|[0-9A-Fa-f][^0-9A-Fa-f]|$))+/g, UNMATCHED_SURROGATE_PAIR_REGEXP = /(^|[^\uD800-\uDBFF])[\uDC00-\uDFFF]|[\uD800-\uDBFF]([^\uDC00-\uDFFF]|$)/g;
+        function encodeUrl(url) {
+            return String(url).replace(UNMATCHED_SURROGATE_PAIR_REGEXP, '$1\uFFFD$2').replace(ENCODE_CHARS_REGEXP, encodeURI);
+        }
+    },
+    "../../node_modules/.pnpm/escape-html@1.0.3/node_modules/escape-html/index.js" (module) {
+        var matchHtmlRegExp = /["'&<>]/;
+        module.exports = function escapeHtml(string) {
+            var escape, str = '' + string, match = matchHtmlRegExp.exec(str);
+            if (!match) return str;
+            var html = '', index = 0, lastIndex = 0;
+            for(index = match.index; index < str.length; index++){
+                switch(str.charCodeAt(index)){
+                    case 34:
+                        escape = '&quot;';
+                        break;
+                    case 38:
+                        escape = '&amp;';
+                        break;
+                    case 39:
+                        escape = '&#39;';
+                        break;
+                    case 60:
+                        escape = '&lt;';
+                        break;
+                    case 62:
+                        escape = '&gt;';
+                        break;
+                    default:
+                        continue;
+                }
+                lastIndex !== index && (html += str.substring(lastIndex, index)), lastIndex = index + 1, html += escape;
+            }
+            return lastIndex !== index ? html + str.substring(lastIndex, index) : html;
+        };
+    },
+    "../../node_modules/.pnpm/finalhandler@2.1.1_supports-color@10.2.2/node_modules/finalhandler/index.js" (module, __unused_rspack_exports, __webpack_require__) {
+        var debug = __webpack_require__("../../node_modules/.pnpm/debug@4.4.3_supports-color@10.2.2/node_modules/debug/src/index.js")('finalhandler'), encodeUrl = __webpack_require__("../../node_modules/.pnpm/encodeurl@2.0.0/node_modules/encodeurl/index.js"), escapeHtml = __webpack_require__("../../node_modules/.pnpm/escape-html@1.0.3/node_modules/escape-html/index.js"), onFinished = __webpack_require__("../../node_modules/.pnpm/on-finished@2.4.1/node_modules/on-finished/index.js"), parseUrl = __webpack_require__("../../node_modules/.pnpm/parseurl@1.3.3/node_modules/parseurl/index.js"), statuses = __webpack_require__("../../node_modules/.pnpm/statuses@2.0.2/node_modules/statuses/index.js"), isFinished = onFinished.isFinished;
+        function createHtmlDocument(message) {
+            return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>Error</title>\n</head>\n<body>\n<pre>' + escapeHtml(message).replaceAll('\n', '<br>').replaceAll('  ', ' &nbsp;') + "</pre>\n</body>\n</html>\n";
+        }
+        function getErrorHeaders(err) {
+            if (err.headers && 'object' == typeof err.headers) return {
+                ...err.headers
+            };
+        }
+        function getErrorMessage(err, status, env) {
+            var msg;
+            return 'production' !== env && ((msg = err.stack) || 'function' != typeof err.toString || (msg = err.toString())), msg || statuses.message[status];
+        }
+        function getErrorStatusCode(err) {
+            return 'number' == typeof err.status && err.status >= 400 && err.status < 600 ? err.status : 'number' == typeof err.statusCode && err.statusCode >= 400 && err.statusCode < 600 ? err.statusCode : void 0;
+        }
+        function getResourceName(req) {
+            try {
+                return parseUrl.original(req).pathname;
+            } catch (e) {
+                return 'resource';
+            }
+        }
+        function getResponseStatusCode(res) {
+            var status = res.statusCode;
+            return ('number' != typeof status || status < 400 || status > 599) && (status = 500), status;
+        }
+        function send(req, res, status, headers, message) {
+            function write() {
+                var body = createHtmlDocument(message);
+                for (let [key, value] of (res.statusCode = status, req.httpVersionMajor < 2 && (res.statusMessage = statuses.message[status]), res.removeHeader('Content-Encoding'), res.removeHeader('Content-Language'), res.removeHeader('Content-Range'), Object.entries(headers ?? {})))res.setHeader(key, value);
+                (res.setHeader('Content-Security-Policy', "default-src 'none'"), res.setHeader('X-Content-Type-Options', 'nosniff'), res.setHeader('Content-Type', 'text/html; charset=utf-8'), res.setHeader('Content-Length', Buffer.byteLength(body, 'utf8')), 'HEAD' === req.method) ? res.end() : res.end(body, 'utf8');
+            }
+            isFinished(req) ? write() : (req.unpipe(), onFinished(req, write), req.resume());
+        }
+        module.exports = function finalhandler(req, res, options) {
+            var opts = options || {}, env = opts.env || process.env.NODE_ENV || 'development', onerror = opts.onerror;
+            return function(err) {
+                var headers, msg, status;
+                if (!err && res.headersSent) return void debug('cannot 404 after headers sent');
+                if (err ? (void 0 === (status = getErrorStatusCode(err)) ? status = getResponseStatusCode(res) : headers = getErrorHeaders(err), msg = getErrorMessage(err, status, env)) : (status = 404, msg = 'Cannot ' + req.method + ' ' + encodeUrl(getResourceName(req))), debug('default %s', status), err && onerror && setImmediate(onerror, err, req, res), res.headersSent) {
+                    debug('cannot %d after headers sent', status), req.socket && req.socket.destroy();
+                    return;
+                }
+                send(req, res, status, headers, msg);
+            };
+        };
+    },
+    "../../node_modules/.pnpm/parseurl@1.3.3/node_modules/parseurl/index.js" (module, __unused_rspack_exports, __webpack_require__) {
+        var url = __webpack_require__("url?5f07"), parse = url.parse, Url = url.Url;
+        function parseurl(req) {
+            var url = req.url;
+            if (void 0 !== url) {
+                var parsed = req._parsedUrl;
+                return fresh(url, parsed) ? parsed : ((parsed = fastparse(url))._raw = url, req._parsedUrl = parsed);
+            }
+        }
+        function originalurl(req) {
+            var url = req.originalUrl;
+            if ('string' != typeof url) return parseurl(req);
+            var parsed = req._parsedOriginalUrl;
+            return fresh(url, parsed) ? parsed : ((parsed = fastparse(url))._raw = url, req._parsedOriginalUrl = parsed);
+        }
+        function fastparse(str) {
+            if ('string' != typeof str || 0x2f !== str.charCodeAt(0)) return parse(str);
+            for(var pathname = str, query = null, search = null, i = 1; i < str.length; i++)switch(str.charCodeAt(i)){
+                case 0x3f:
+                    null === search && (pathname = str.substring(0, i), query = str.substring(i + 1), search = str.substring(i));
+                    break;
+                case 0x09:
+                case 0x0a:
+                case 0x0c:
+                case 0x0d:
+                case 0x20:
+                case 0x23:
+                case 0xa0:
+                case 0xfeff:
+                    return parse(str);
+            }
+            var url = void 0 !== Url ? new Url() : {};
+            return url.path = str, url.href = str, url.pathname = pathname, null !== search && (url.query = query, url.search = search), url;
+        }
+        function fresh(url, parsedUrl) {
+            return 'object' == typeof parsedUrl && null !== parsedUrl && (void 0 === Url || parsedUrl instanceof Url) && parsedUrl._raw === url;
+        }
+        module.exports = parseurl, module.exports.original = originalurl;
+    },
+    "../../node_modules/.pnpm/statuses@2.0.2/node_modules/statuses/index.js" (module, __unused_rspack_exports, __webpack_require__) {
+        var codes = __webpack_require__("../../node_modules/.pnpm/statuses@2.0.2/node_modules/statuses/codes.json");
+        function createMessageToStatusCodeMap(codes) {
+            var map = {};
+            return Object.keys(codes).forEach(function forEachCode(code) {
+                var message = codes[code], status = Number(code);
+                map[message.toLowerCase()] = status;
+            }), map;
+        }
+        function createStatusCodeList(codes) {
+            return Object.keys(codes).map(function mapCode(code) {
+                return Number(code);
+            });
+        }
+        function getStatusCode(message) {
+            var msg = message.toLowerCase();
+            if (!Object.prototype.hasOwnProperty.call(status.code, msg)) throw Error('invalid status message: "' + message + '"');
+            return status.code[msg];
+        }
+        function getStatusMessage(code) {
+            if (!Object.prototype.hasOwnProperty.call(status.message, code)) throw Error('invalid status code: ' + code);
+            return status.message[code];
+        }
+        function status(code) {
+            if ('number' == typeof code) return getStatusMessage(code);
+            if ('string' != typeof code) throw TypeError('code must be a number or string');
+            var n = parseInt(code, 10);
+            return isNaN(n) ? getStatusCode(code) : getStatusMessage(n);
+        }
+        module.exports = status, status.message = codes, status.code = createMessageToStatusCodeMap(codes), status.codes = createStatusCodeList(codes), status.redirect = {
+            300: !0,
+            301: !0,
+            302: !0,
+            303: !0,
+            305: !0,
+            307: !0,
+            308: !0
+        }, status.empty = {
+            204: !0,
+            205: !0,
+            304: !0
+        }, status.retry = {
+            502: !0,
+            503: !0,
+            504: !0
+        };
+    },
+    "../../node_modules/.pnpm/statuses@2.0.2/node_modules/statuses/codes.json" (module) {
+        module.exports = JSON.parse('{"100":"Continue","101":"Switching Protocols","102":"Processing","103":"Early Hints","200":"OK","201":"Created","202":"Accepted","203":"Non-Authoritative Information","204":"No Content","205":"Reset Content","206":"Partial Content","207":"Multi-Status","208":"Already Reported","226":"IM Used","300":"Multiple Choices","301":"Moved Permanently","302":"Found","303":"See Other","304":"Not Modified","305":"Use Proxy","307":"Temporary Redirect","308":"Permanent Redirect","400":"Bad Request","401":"Unauthorized","402":"Payment Required","403":"Forbidden","404":"Not Found","405":"Method Not Allowed","406":"Not Acceptable","407":"Proxy Authentication Required","408":"Request Timeout","409":"Conflict","410":"Gone","411":"Length Required","412":"Precondition Failed","413":"Payload Too Large","414":"URI Too Long","415":"Unsupported Media Type","416":"Range Not Satisfiable","417":"Expectation Failed","418":"I\'m a Teapot","421":"Misdirected Request","422":"Unprocessable Entity","423":"Locked","424":"Failed Dependency","425":"Too Early","426":"Upgrade Required","428":"Precondition Required","429":"Too Many Requests","431":"Request Header Fields Too Large","451":"Unavailable For Legal Reasons","500":"Internal Server Error","501":"Not Implemented","502":"Bad Gateway","503":"Service Unavailable","504":"Gateway Timeout","505":"HTTP Version Not Supported","506":"Variant Also Negotiates","507":"Insufficient Storage","508":"Loop Detected","509":"Bandwidth Limit Exceeded","510":"Not Extended","511":"Network Authentication Required"}');
+    }
+});
+let src = __webpack_require__("../../node_modules/.pnpm/debug@4.4.3_supports-color@10.2.2/node_modules/debug/src/index.js"), finalhandler = __webpack_require__("../../node_modules/.pnpm/finalhandler@2.1.1_supports-color@10.2.2/node_modules/finalhandler/index.js"), parseurl = __webpack_require__("../../node_modules/.pnpm/parseurl@1.3.3/node_modules/parseurl/index.js"), src_debug = src('connect:dispatcher'), env = process.env.NODE_ENV || 'development', defer = setImmediate;
+function connect() {
+    let app = function(req, res, next) {
+        app.handle(req, res, next);
+    };
+    return Object.assign(app, proto), Object.assign(app, EventEmitter.prototype), app.route = '/', app.stack = [], app;
+}
+let proto = {
+    use (route, fn) {
+        let handle = fn, path = '/';
+        if ('string' == typeof route ? path = route : handle = route, void 0 === handle) throw TypeError('app.use() requires a middleware function');
+        if (isConnectServer(handle)) {
+            let server = handle;
+            server.route = path, handle = function(req, res, next) {
+                server.handle(req, res, next);
+            };
+        }
+        if (isHttpServer(handle)) {
+            let requestListener = handle.listeners('request')[0];
+            if ('function' != typeof requestListener) throw TypeError('http.Server has no request listener');
+            handle = requestListener;
+        }
+        if (!isConnectHandle(handle)) throw TypeError('app.use() requires a middleware function');
+        return path.endsWith('/') && (path = path.slice(0, -1)), src_debug('use %s %s', path || '/', handle.name || 'anonymous'), this.stack.push({
+            route: path,
+            handle
+        }), this;
+    },
+    handle (req, res, out) {
+        let index = 0, protohost = getProtohost(req.url || '') || '', removed = '', slashAdded = !1, stack = this.stack, done = out ?? finalhandler(req, res, {
+            env: env,
+            onerror: logerror
+        });
+        function next(err) {
+            slashAdded && (req.url = (req.url || '').slice(1), slashAdded = !1), 0 !== removed.length && (req.url = protohost + removed + (req.url || '').slice(protohost.length), removed = '');
+            let layer = stack[index++];
+            if (!layer) return void defer(done, err);
+            let path = parseurl(req)?.pathname || '/', route = layer.route, lowerPath = path.toLowerCase(), lowerRoute = route.toLowerCase();
+            if (!lowerPath.startsWith(lowerRoute)) return void next(err);
+            let c = path.length > route.length ? path.charAt(route.length) : '';
+            '' !== c && '/' !== c && '.' !== c ? next(err) : (0 !== route.length && '/' !== route && (removed = route, req.url = protohost + (req.url || '').slice(protohost.length + removed.length), protohost || '/' === (req.url || '').charAt(0) || (req.url = '/' + (req.url || ''), slashAdded = !0)), call(layer.handle, route, err, req, res, next));
+        }
+        req.originalUrl = req.originalUrl || req.url, next();
+    },
+    listen (...args) {
+        return createServer(this).listen(...args);
+    }
+};
+function call(handle, route, err, req, res, next) {
+    let arity = handle.length, error = err, hasError = void 0 !== err;
+    src_debug('%s %s : %s', handle.name || '<anonymous>', route, req.originalUrl);
+    try {
+        if (hasError && 4 === arity) return void handle(err, req, res, next);
+        if (!hasError && arity < 4) return void handle(req, res, next);
+    } catch (caughtError) {
+        error = caughtError;
+    }
+    next(error);
+}
+function logerror(err) {
+    if ('test' !== env) {
+        if (err instanceof Error) return void console.error(err.stack || err.toString());
+        console.error(String(err));
+    }
+}
+function getProtohost(url) {
+    if (0 === url.length || '/' === url[0]) return;
+    let fqdnIndex = url.indexOf('://');
+    return -1 !== fqdnIndex && -1 === url.lastIndexOf('?', fqdnIndex) ? url.slice(0, url.indexOf('/', 3 + fqdnIndex)) : void 0;
+}
+function isConnectHandle(value) {
+    return 'function' == typeof value;
+}
+function isConnectServer(value) {
+    return 'function' == typeof value && 'handle' in value && 'function' == typeof value.handle;
+}
+function isHttpServer(value) {
+    return value instanceof Server;
+}
+export { connect };

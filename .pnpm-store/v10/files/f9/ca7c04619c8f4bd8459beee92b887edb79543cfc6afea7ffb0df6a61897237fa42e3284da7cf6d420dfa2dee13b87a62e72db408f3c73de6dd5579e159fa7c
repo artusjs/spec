@@ -1,0 +1,66 @@
+import { SEARCH_INDEX_NAME, groupBy } from "../../../7319.js";
+import { extractPageData } from "../../route/extractPageData.js";
+import { createHash } from "../../utils/createHash.js";
+function deletePrivateField(obj) {
+    if ('object' != typeof obj || null === obj) return obj;
+    const newObj = {
+        ...obj
+    };
+    for(const key in newObj)if (key.startsWith('_')) delete newObj[key];
+    return newObj;
+}
+async function createPageData(context) {
+    const { config, alias, userDocRoot, routeService, pluginDriver } = context;
+    const userConfig = config;
+    const tempSearchObj = Object.assign({}, userConfig.search);
+    if (tempSearchObj) tempSearchObj.searchHooks = void 0;
+    const replaceRules = userConfig?.replaceRules || [];
+    const searchConfig = userConfig?.search;
+    const searchEnabled = false !== searchConfig;
+    const searchCodeBlocks = searchConfig && 'object' == typeof searchConfig && 'codeBlocks' in searchConfig ? Boolean(searchConfig.codeBlocks) : true;
+    const pages = await extractPageData(routeService, {
+        replaceRules,
+        alias,
+        root: userDocRoot,
+        searchCodeBlocks,
+        extractDescription: userConfig.markdown?.extractDescription,
+        searchEnabled
+    });
+    await pluginDriver.modifySearchIndexData(pages);
+    const versioned = 'boolean' != typeof userConfig.search && (userConfig.search?.versioned ?? true);
+    const groupedPages = groupBy(pages, (page)=>{
+        if (page.frontmatter?.pageType === 'home') return 'noindex';
+        const version = versioned ? page.version : '';
+        const lang = page.lang || '';
+        return `${version}###${lang}`;
+    });
+    delete groupedPages.noindex;
+    const indexHashByGroup = {};
+    const searchIndex = {};
+    await Promise.all(Object.keys(groupedPages).map(async (group)=>{
+        const stringifiedIndex = JSON.stringify(groupedPages[group].map(deletePrivateField));
+        const indexHash = createHash(stringifiedIndex);
+        indexHashByGroup[group] = indexHash;
+        const [version, lang] = group.split('###');
+        const indexVersion = version ? `.${version.replace('.', '_')}` : '';
+        const indexLang = lang ? `.${lang}` : '';
+        const filename = `${SEARCH_INDEX_NAME}${indexVersion}${indexLang}.${indexHash}.json`;
+        searchIndex[filename] = stringifiedIndex;
+    }));
+    await Promise.all(pages.map(async (pageData)=>pluginDriver.extendPageData(pageData)));
+    const filepaths = [];
+    const pageData = {
+        pages: pages.map((page)=>{
+            const { content: _content, _filepath, _flattenContent, ...rest } = page;
+            filepaths.push(_filepath);
+            return rest;
+        })
+    };
+    return {
+        filepaths,
+        pageData,
+        searchIndex,
+        indexHashByGroup
+    };
+}
+export { createPageData };

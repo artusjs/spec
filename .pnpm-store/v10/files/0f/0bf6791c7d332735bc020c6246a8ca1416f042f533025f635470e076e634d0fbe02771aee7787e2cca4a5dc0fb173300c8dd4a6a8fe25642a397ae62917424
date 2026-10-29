@@ -1,0 +1,109 @@
+.rp-home-feature {
+  --rp-home-feature-gap: 15px;
+  gap: var(--rp-home-feature-gap);
+  flex-wrap: wrap;
+  max-width: 72rem;
+  margin: auto auto 2rem;
+  padding: 10px;
+  display: flex;
+  overflow: hidden;
+}
+
+.rp-home-feature__item {
+  width: 100%;
+  position: relative;
+}
+
+@media (width >= 640px) {
+  .rp-home-feature__item--span-2, .rp-home-feature__item--span-4, .rp-home-feature__item--span-6 {
+    width: calc(50% - var(--rp-home-feature-gap));
+  }
+}
+
+@media (width >= 768px) {
+  .rp-home-feature__item--span-2, .rp-home-feature__item--span-4 {
+    width: calc(50% - var(--rp-home-feature-gap));
+  }
+
+  .rp-home-feature__item--span-3, .rp-home-feature__item--span-6 {
+    width: calc((100% - 2*var(--rp-home-feature-gap))/3);
+  }
+}
+
+@media (width >= 960px) {
+  .rp-home-feature__item--span-3 {
+    width: calc((100% - 3*var(--rp-home-feature-gap))/4);
+  }
+
+  .rp-home-feature__item--span-4 {
+    width: calc((100% - 2*var(--rp-home-feature-gap))/3);
+  }
+
+  .rp-home-feature__item--span-6 {
+    width: calc(50% - var(--rp-home-feature-gap));
+  }
+}
+
+.rp-home-feature__item-wrapper {
+  height: 100%;
+  position: relative;
+}
+
+.rp-home-feature__card {
+  border: 1px solid var(--rp-c-divider-light);
+  background: var(--rp-home-feature-bg);
+  backdrop-filter: blur(10px);
+  border-radius: 2rem;
+  height: 100%;
+  padding: 2rem;
+  transition: all .3s;
+}
+
+.rp-home-feature__card--clickable {
+  cursor: pointer;
+}
+
+.rp-home-feature__card:hover {
+  border: 1px solid var(--rp-c-brand);
+  color: var(--rp-c-brand);
+}
+
+.rp-home-feature__title-wrapper {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .5rem;
+  display: flex;
+}
+
+.rp-home-feature__icon {
+  background-color: var(--rp-c-bg);
+  border: 3px solid var(--rp-c-divider-light);
+  border-radius: 1rem;
+  justify-content: center;
+  align-items: center;
+  min-width: 3rem;
+  min-height: 3rem;
+  font-size: 1.5rem;
+  display: inline-flex;
+}
+
+.rp-home-feature__icon img, .rp-home-feature__icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.rp-home-feature__title {
+  text-align: left;
+  margin: 0;
+  font-weight: 700;
+}
+
+.rp-home-feature__detail {
+  color: var(--rp-c-text-2);
+  margin: 0;
+  padding-top: .5rem;
+  font-size: .875rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+

@@ -1,0 +1,60 @@
+{
+  "name": "rspress-plugin-devkit",
+  "version": "1.0.0",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "description": "Rspress plugin develop kit.",
+  "keywords": [
+    "rspress",
+    "plugin",
+    "devkit"
+  ],
+  "homepage": "https://github.com/linbudu599/rspress-plugins/tree/main/packages/rspress-plugin-devkit#readme",
+  "bugs": {
+    "url": "https://github.com/linbudu599/rspress-plugins/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/linbudu599/rspress-plugins.git"
+  },
+  "license": "MIT",
+  "author": "Linbudu <linbudu599@gmail.com> (https://github.com/linbudu599)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@types/estree-jsx": "^1.0.5",
+    "@types/hast": "^3.0.4",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^25.0.3",
+    "clsx": "^2.1.1",
+    "lodash-es": "^4.17.22",
+    "mdast-util-from-markdown": "^2.0.2",
+    "mdast-util-mdx-jsx": "^3.2.0",
+    "mdast-util-mdxjs-esm": "^2.0.1",
+    "mdast-util-to-markdown": "^2.1.2",
+    "mdast-util-to-string": "^4.0.0",
+    "remark-mdc": "^3.10.0",
+    "ts-morph": "^27.0.2",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.0.0",
+    "unist-util-visit-parents": "^6.0.2",
+    "util-ts-types": "^1.0.0",
+    "vfile": "^6.0.3",
+    "vfile-reporter": "^8.1.1"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12"
+  },
+  "peerDependencies": {
+    "@rspress/core": "^2.0.0-rc.4 || ^2.0.0"
+  },
+  "scripts": {
+    "build": "tsc --declarationMap false",
+    "dev": "tsc -w"
+  }
+}

@@ -1,0 +1,70 @@
+import { isExternalUrl, node_path, promises } from "../../7319.js";
+import { pathExists } from "../utils/fs.js";
+import { readJson } from "./utils.js";
+import { createError } from "../utils/error.js";
+import { addRoutePrefix } from "../route/RoutePage.js";
+import { hintNavJsonChangeThenPanic } from "../logger/hint.js";
+import { scanSideMeta } from "./normalize.js";
+async function scanNav(workDir, docsDir, metaFileSet) {
+    let navConfig;
+    const rootNavJson = node_path.resolve(workDir, '_nav.json');
+    const isRootNavJsonExist = await pathExists(rootNavJson);
+    if (isRootNavJsonExist) {
+        metaFileSet.add(rootNavJson);
+        try {
+            navConfig = await readJson(rootNavJson);
+        } catch (e) {
+            if (e instanceof Error) throw createError(`[auto-nav-sidebar] Generate nav meta error: ${rootNavJson} failed, original error is (${e.message})`);
+            throw e;
+        }
+    } else navConfig = [];
+    navConfig.forEach((navItem)=>{
+        if ('items' in navItem) navItem.items.forEach((item)=>{
+            if ('link' in item && !isExternalUrl(item.link)) item.link = addRoutePrefix(workDir, docsDir, item.link);
+        });
+        if ('link' in navItem && !isExternalUrl(navItem.link)) navItem.link = addRoutePrefix(workDir, docsDir, navItem.link);
+    });
+    return navConfig;
+}
+async function walk(workDir, docsDir, extensions, metaFileSet, mdFileSet) {
+    const rootNavJson = node_path.resolve(workDir, '_nav.json');
+    const rootMetaJson = node_path.resolve(workDir, '_meta.json');
+    const isRootNavJsonExist = await pathExists(rootNavJson);
+    const isRootMetaJsonExist = await pathExists(rootMetaJson);
+    if (isRootMetaJsonExist) {
+        const metaConfig = await readJson(rootMetaJson);
+        hintNavJsonChangeThenPanic(metaConfig, workDir, docsDir);
+    }
+    if (isRootMetaJsonExist && isRootNavJsonExist) {
+        const navConfig = await scanNav(workDir, docsDir, metaFileSet);
+        return {
+            nav: navConfig,
+            sidebar: {
+                '/': await scanSideMeta(workDir, docsDir, extensions, metaFileSet, mdFileSet)
+            }
+        };
+    }
+    if (isRootNavJsonExist) {
+        const navConfig = await scanNav(workDir, docsDir, metaFileSet);
+        const subDirs = (await Promise.all((await promises.readdir(workDir)).map((v)=>promises.stat(node_path.join(workDir, v)).then((s)=>{
+                if (s.isDirectory() && 'node_modules' !== v) return v;
+                return false;
+            })))).filter(Boolean);
+        const sidebarConfig = {};
+        await Promise.all(subDirs.map(async (subDir)=>{
+            const sidebarGroupKey = addRoutePrefix(workDir, docsDir, subDir);
+            sidebarConfig[sidebarGroupKey] = await scanSideMeta(node_path.join(workDir, subDir), docsDir, extensions, metaFileSet, mdFileSet);
+        }));
+        return {
+            nav: navConfig,
+            sidebar: sidebarConfig
+        };
+    }
+    return {
+        nav: [],
+        sidebar: {
+            '/': await scanSideMeta(workDir, docsDir, extensions, metaFileSet, mdFileSet)
+        }
+    };
+}
+export { walk };

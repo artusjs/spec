@@ -1,0 +1,120 @@
+import { node_path, core_rspack, logger, picocolors } from "../../7319.js";
+import { pathExists, readJson } from "./fs.js";
+import { PACKAGE_ROOT } from "../constants.js";
+import { hintReactVersion } from "../logger/hint.js";
+const Resolver = core_rspack.experiments.resolver.ResolverFactory;
+async function detectPackageMajorVersion(name) {
+    const cwd = process.cwd();
+    const pkgPath = node_path.join(cwd, 'node_modules', name);
+    if (await pathExists(pkgPath)) {
+        const pkgJson = await readJson(node_path.join(pkgPath, 'package.json'));
+        const version = Number(pkgJson.version?.split('.')[0]);
+        return version;
+    }
+}
+async function resolveReactRouterDomAlias() {
+    const hasInstalled = await detectPackageMajorVersion('react-router-dom');
+    const basedir = hasInstalled ? process.cwd() : PACKAGE_ROOT;
+    const alias = {};
+    const resolver = new Resolver({
+        mainFields: [
+            'browser',
+            'module',
+            'main'
+        ],
+        extensions: [
+            '.js'
+        ],
+        alias,
+        enablePnp: !!process.versions.pnp
+    });
+    try {
+        const resolved = await resolver.async(basedir, 'react-router-dom/package.json');
+        if (resolved.error) throw Error(resolved.error);
+        if (!resolved.path) throw Error("'react-router-dom' resolved to empty path");
+        return {
+            'react-router-dom': node_path.dirname(resolved.path)
+        };
+    } catch (e) {
+        logger.warn('react-router-dom not found: \n', e);
+    }
+    return {};
+}
+async function resolveReactAlias(isSSR) {
+    const hasInstalled = await detectPackageMajorVersion('react');
+    const basedir = hasInstalled ? process.cwd() : PACKAGE_ROOT;
+    const libPaths = [
+        'react',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
+        'react/package.json',
+        'react-dom',
+        'react-dom/client',
+        'react-dom/server',
+        'react-dom/package.json'
+    ];
+    const alias = {};
+    const resolver = new Resolver({
+        extensions: [
+            '.js'
+        ],
+        alias,
+        conditionNames: [
+            ...isSSR ? [
+                'node'
+            ] : [
+                'browser'
+            ],
+            'import',
+            'module'
+        ],
+        enablePnp: !!process.versions.pnp
+    });
+    await Promise.all(libPaths.map(async (lib)=>{
+        try {
+            const resolved = await resolver.async(basedir, lib);
+            if (resolved.error || !resolved.path) throw Error(resolved.error);
+            alias[lib] = resolved.path;
+        } catch (e) {
+            if (e instanceof Error) {
+                logger.warn(`${lib} not found: \n    ${picocolors.gray(e.toString())}`);
+                hintReactVersion();
+            }
+        }
+    }));
+    return alias;
+}
+async function resolveReactRenderToMarkdownAlias() {
+    const hasInstalled = await detectPackageMajorVersion('react-render-to-markdown');
+    if (!hasInstalled) {
+        const reactMajorVersion = await detectPackageMajorVersion('react');
+        if (reactMajorVersion && reactMajorVersion < 19) logger.warn(`You are using React ${reactMajorVersion} with \`llms: true\`. Please install \`react-render-to-markdown\` to ensure compatibility.\n\nAdd the following to your ${picocolors.greenBright('package.json')}:\n\n` + picocolors.greenBright(`  "dependencies": {\n    "react": "^18.3.1",\n    "react-dom": "^18.3.1",\n    "react-render-to-markdown": "^18.3.1"\n  }\n`));
+        return {};
+    }
+    const alias = {};
+    const resolver = new Resolver({
+        extensions: [
+            '.js'
+        ],
+        alias,
+        conditionNames: [
+            'import',
+            'require',
+            'node',
+            'default'
+        ],
+        enablePnp: !!process.versions.pnp
+    });
+    try {
+        const resolved = await resolver.async(process.cwd(), 'react-render-to-markdown');
+        if (resolved.error) throw Error(resolved.error);
+        if (!resolved.path) throw Error("'react-render-to-markdown' resolved to empty path");
+        return {
+            'react-render-to-markdown': resolved.path
+        };
+    } catch (e) {
+        logger.warn('react-render-to-markdown not found: \n', e);
+    }
+    return {};
+}
+export { resolveReactAlias, resolveReactRenderToMarkdownAlias, resolveReactRouterDomAlias };

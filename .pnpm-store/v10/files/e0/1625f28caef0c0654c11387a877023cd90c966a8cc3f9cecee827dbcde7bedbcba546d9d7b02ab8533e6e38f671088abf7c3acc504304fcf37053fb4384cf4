@@ -1,0 +1,29 @@
+import { node_fs, node_path, logger, DEFAULT_CONFIG_NAME, DEFAULT_CONFIG_EXTENSIONS } from "../4454.js";
+const findConfig = (basePath)=>DEFAULT_CONFIG_EXTENSIONS.map((ext)=>basePath + ext).find(node_fs.existsSync);
+async function loadConfigFile(customConfigFile) {
+    const baseDir = process.cwd();
+    let configFilePath = '';
+    configFilePath = customConfigFile ? node_path.isAbsolute(customConfigFile) ? customConfigFile : node_path.join(baseDir, customConfigFile) : findConfig(node_path.join(baseDir, DEFAULT_CONFIG_NAME));
+    if (!configFilePath) {
+        logger.info(`No config file found in ${baseDir}`);
+        return {
+            config: {},
+            configFilePath: ''
+        };
+    }
+    const { loadConfig } = await import("@rsbuild/core");
+    const { content } = await loadConfig({
+        cwd: node_path.dirname(configFilePath),
+        path: configFilePath
+    });
+    return {
+        config: content,
+        configFilePath
+    };
+}
+function resolveDocRoot(cwd, cliRoot, configRoot) {
+    if (cliRoot) return node_path.join(cwd, cliRoot);
+    if (configRoot) return node_path.isAbsolute(configRoot) ? configRoot : node_path.join(cwd, configRoot);
+    return node_path.join(cwd, 'docs');
+}
+export { loadConfigFile, resolveDocRoot };

@@ -1,0 +1,88 @@
+import node_path, { extname, join, relative } from "node:path";
+import { __webpack_require__ } from "./0~rslib-runtime.js";
+import { createRequire as __rspack_createRequire } from "node:module";
+const __rspack_createRequire_require = __rspack_createRequire(import.meta.url);
+__webpack_require__.add({
+    child_process (module) {
+        module.exports = __rspack_createRequire_require("child_process");
+    },
+    fs (module) {
+        module.exports = __rspack_createRequire_require("fs");
+    },
+    path (module) {
+        module.exports = __rspack_createRequire_require("path");
+    },
+    stream (module) {
+        module.exports = __rspack_createRequire_require("stream");
+    }
+});
+const PLUGIN_VIRTUAL_MODULE_NAME = 'rsbuild:virtual-module';
+const pluginVirtualModule = (pluginOptions = {})=>({
+        name: PLUGIN_VIRTUAL_MODULE_NAME,
+        async setup (api) {
+            const { virtualModules = {}, tempDir: virtualFolderName = '.rsbuild-virtual-module' } = pluginOptions;
+            const TEMP_DIR = join(api.context.rootPath, virtualFolderName);
+            const virtualFileAbsolutePaths = Object.keys(virtualModules).map((i)=>{
+                let absolutePath = join(TEMP_DIR, i);
+                if (!extname(absolutePath)) absolutePath = `${absolutePath}.js`;
+                return [
+                    i,
+                    absolutePath
+                ];
+            });
+            api.modifyBundlerChain((chain, { rspack })=>{
+                const pluginId = 'RSBUILD_VIRTUAL_MODULE_PLUGIN';
+                const virtualModules = Object.fromEntries(virtualFileAbsolutePaths.map((i)=>[
+                        i[1],
+                        ''
+                    ]));
+                if (chain.plugins.has(pluginId)) chain.plugin(pluginId).tap((options)=>{
+                    const existingPaths = new Set(Object.keys(options[0] ?? {}));
+                    const conflictPath = virtualFileAbsolutePaths.find(([, path])=>existingPaths.has(path));
+                    if (conflictPath) throw new Error(`Virtual module name conflicted: ${conflictPath[0]}`);
+                    return [
+                        {
+                            ...options[0],
+                            ...virtualModules
+                        }
+                    ];
+                });
+                else chain.plugin(pluginId).use(rspack.experiments.VirtualModulesPlugin, [
+                    virtualModules
+                ]);
+                chain.resolve.alias.merge(Object.fromEntries(virtualFileAbsolutePaths));
+            });
+            for (const [moduleName, absolutePath] of virtualFileAbsolutePaths){
+                const handler = virtualModules[moduleName];
+                if (handler) api.transform({
+                    test: absolutePath
+                }, handler);
+            }
+        }
+    });
+export { DEFAULT_PAGE_EXTENSIONS } from "@rspress/shared/constants";
+export { default as promises, mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
+export { MDX_OR_MD_REGEXP, RSPRESS_TEMP_DIR, SEARCH_INDEX_NAME, addLeadingSlash, addTrailingSlash, getSidebarDataGroup, isDebugMode, isExternalUrl, normalizeHref, removeLeadingSlash, removeTrailingSlash, slash, withBase } from "@rspress/shared";
+export { glob } from "tinyglobby";
+export { logger } from "@rspress/shared/logger";
+export { default as picocolors } from "picocolors";
+export { extractTextAndId, getIconUrlPath, loadFrontMatter } from "@rspress/shared/node-utils";
+export { createRequire } from "node:module";
+export { cwd } from "node:process";
+export { fileURLToPath, pathToFileURL } from "node:url";
+export { PLUGIN_REACT_NAME, pluginReact } from "@rsbuild/plugin-react";
+export { chunk, groupBy } from "lodash-es";
+export { default as remark_gfm } from "remark-gfm";
+export { default as remark_parse } from "remark-parse";
+export { default as remark_stringify } from "remark-stringify";
+export { unified } from "unified";
+export { remove } from "unist-util-remove";
+export { visit } from "unist-util-visit";
+export { default as node_fs } from "node:fs";
+export { createProcessor } from "@mdx-js/mdx";
+export { mergeRsbuildConfig, rspack as core_rspack } from "@rsbuild/core";
+export { createHash } from "node:crypto";
+export { default as node_os } from "node:os";
+export { matchPath } from "react-router-dom";
+export { createHead } from "@unhead/react/server";
+export { extname, join, node_path, pluginVirtualModule, relative };

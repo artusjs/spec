@@ -1,0 +1,57 @@
+.rp-llms-copy-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.rp-llms-copy-button--loading.rp-llms-copy-button {
+  background: var(--rp-c-bg-mute);
+  opacity: .7;
+  cursor: wait;
+}
+
+.rp-llms-copy-button--success.rp-llms-copy-button {
+  color: var(--rp-c-green-1, #10b981);
+  border-color: var(--rp-c-green-1, #10b981);
+  background: var(--rp-c-bg-soft);
+}
+
+.rp-llms-copy-button--success .rp-llms-copy-button__icon-copy {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(.5);
+}
+
+.rp-llms-copy-button--success .rp-llms-copy-button__icon-success {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.rp-llms-copy-button__icon-wrapper {
+  width: 16px;
+  height: 16px;
+  position: relative;
+}
+
+.rp-llms-copy-button__icon-copy {
+  width: 16px;
+  height: 16px;
+  transition: all .2s;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.rp-llms-copy-button__icon-success {
+  width: 16px;
+  height: 16px;
+  color: var(--rp-c-green-1, #10b981);
+  visibility: hidden;
+  opacity: 0;
+  transition: all .2s cubic-bezier(.18, .89, .32, 1.28);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(.5);
+}
+

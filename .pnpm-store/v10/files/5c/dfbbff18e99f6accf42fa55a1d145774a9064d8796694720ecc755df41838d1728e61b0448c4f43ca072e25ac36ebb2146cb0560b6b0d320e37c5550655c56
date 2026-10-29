@@ -1,0 +1,12 @@
+.rp-sidebar-divider {
+  border-top: 1px solid var(--rp-c-divider-light);
+  margin-top: .75rem;
+  margin-bottom: .75rem;
+}
+
+.rp-sidebar-divider--dashed {
+  border-top: 1px dashed var(--rp-c-divider-light);
+  margin-top: .75rem;
+  margin-bottom: .75rem;
+}
+

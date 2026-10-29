@@ -1,0 +1,137 @@
+import { addTrailingSlash, node_path, addLeadingSlash } from "../7319.js";
+import { createError } from "./utils/error.js";
+import { haveNavSidebarConfig as auto_nav_sidebar_haveNavSidebarConfig } from "./auto-nav-sidebar/index.js";
+class PluginDriver {
+    #config;
+    #configFilePath;
+    #plugins;
+    #isProd;
+    haveNavSidebarConfig = false;
+    static async create(config, configFilePath, isProd) {
+        const pluginDriver = new PluginDriver(config, configFilePath, isProd);
+        await pluginDriver.init();
+        return pluginDriver;
+    }
+    constructor(config, configFilePath, isProd){
+        this.#config = config;
+        this.#configFilePath = configFilePath;
+        this.#isProd = isProd;
+        this.#plugins = [];
+    }
+    getConfigFilePath() {
+        return this.#configFilePath;
+    }
+    async init() {
+        this.clearPlugins();
+        const config = this.#config;
+        const themeConfig = config?.themeConfig || {};
+        const enableLastUpdated = themeConfig?.lastUpdated;
+        const mediumZoomConfig = config?.mediumZoom ?? true;
+        if (enableLastUpdated) {
+            const { pluginLastUpdated } = await import("./last-updated/index.js");
+            this.addPlugin(pluginLastUpdated());
+        }
+        if (mediumZoomConfig) {
+            const { pluginMediumZoom } = await import("./medium-zoom/index.js");
+            this.addPlugin(pluginMediumZoom('object' == typeof mediumZoomConfig ? mediumZoomConfig : void 0));
+        }
+        (config.plugins || []).forEach((plugin)=>{
+            this.addPlugin(plugin);
+        });
+    }
+    addPlugin(plugin) {
+        const existedIndex = this.#plugins.findIndex((item)=>item.name === plugin.name);
+        if (-1 !== existedIndex) throw createError(`The plugin "${plugin.name}" has been registered`);
+        this.#plugins.push(plugin);
+    }
+    getPlugins() {
+        return this.#plugins;
+    }
+    clearPlugins() {
+        this.#plugins = [];
+    }
+    removePlugin(pluginName) {
+        const index = this.#plugins.findIndex((item)=>item.name === pluginName);
+        if (-1 !== index) this.#plugins.splice(index, 1);
+    }
+    async normalizeConfig() {
+        this.#config.root ??= 'docs';
+        this.#config.ssg ??= true;
+        this.#config.llms ??= false;
+        this.#config.base = addTrailingSlash(addLeadingSlash(this.#config.base ?? '/'));
+        this.#config.lang ??= 'en';
+        this.#config.themeDir ??= node_path.join(process.cwd(), 'theme');
+    }
+    async modifyConfig() {
+        this.normalizeConfig();
+        let config = this.#config;
+        for(let i = 0; i < this.#plugins.length; i++){
+            const plugin = this.#plugins[i];
+            if ('function' == typeof plugin.config) config = await plugin.config(config || {}, {
+                addPlugin: this.addPlugin.bind(this),
+                removePlugin: (pluginName)=>{
+                    const index = this.#plugins.findIndex((item)=>item.name === pluginName);
+                    this.removePlugin(pluginName);
+                    if (index <= i && index > 0) i--;
+                }
+            }, this.#isProd);
+        }
+        this.#config = config;
+        this.haveNavSidebarConfig = auto_nav_sidebar_haveNavSidebarConfig(config);
+        return this.#config;
+    }
+    async beforeBuild() {
+        return this._runParallelAsyncHook('beforeBuild', this.#config || {}, this.#isProd);
+    }
+    async afterBuild() {
+        return this._runParallelAsyncHook('afterBuild', this.#config || {}, this.#isProd);
+    }
+    async modifySearchIndexData(pages) {
+        return this._runParallelAsyncHook('modifySearchIndexData', pages, this.#isProd);
+    }
+    async extendPageData(pageData) {
+        return this._runParallelAsyncHook('extendPageData', pageData, this.#isProd);
+    }
+    async addPages() {
+        const result = await this._runParallelAsyncHook('addPages', this.#config || {}, this.#isProd);
+        return result.flat();
+    }
+    async routeGenerated(routes) {
+        return this._runParallelAsyncHook('routeGenerated', routes, this.#isProd);
+    }
+    async routeServiceGenerated(routeService) {
+        return this._runParallelAsyncHook('routeServiceGenerated', routeService, this.#isProd);
+    }
+    async addRuntimeModules() {
+        const result = await this._runParallelAsyncHook('addRuntimeModules', this.#config || {}, this.#isProd);
+        return result.reduce((prev, current)=>({
+                ...prev,
+                ...current
+            }), {});
+    }
+    async i18nSource(defaultSource) {
+        let i18nSource = defaultSource;
+        for (const plugin of this.#plugins)if ('function' == typeof plugin.i18nSource) i18nSource = await plugin.i18nSource(i18nSource) || i18nSource;
+        return i18nSource;
+    }
+    globalUIComponents() {
+        const result = this.#plugins.map((plugin)=>plugin.globalUIComponents || []);
+        return result.flat();
+    }
+    globalStyles() {
+        return this.#plugins.filter((plugin)=>'string' == typeof plugin.globalStyles).map((plugin)=>plugin.globalStyles);
+    }
+    _runParallelAsyncHook(hookName, ...args) {
+        return Promise.all(this.#plugins.filter((plugin)=>'function' == typeof plugin[hookName]).map((plugin)=>plugin[hookName](...args)));
+    }
+    _runSerialAsyncHook(hookName, ...args) {
+        return this.#plugins.reduce(async (prev, plugin)=>{
+            if ('function' == typeof plugin[hookName]) {
+                await prev;
+                return plugin[hookName](...args);
+            }
+            return prev;
+        }, Promise.resolve());
+    }
+}
+export { PluginDriver };

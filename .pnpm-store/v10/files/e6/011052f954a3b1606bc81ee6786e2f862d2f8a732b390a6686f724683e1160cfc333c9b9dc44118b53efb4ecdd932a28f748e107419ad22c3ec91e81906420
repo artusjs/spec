@@ -1,0 +1,70 @@
+import { node_path, extractTextAndId, createProcessor, loadFrontMatter } from "../../7397.js";
+import { createMDXOptions } from "./options.js";
+import { applyReplaceRules } from "../utils/applyReplaceRules.js";
+import { escapeMarkdownHeadingIds } from "../utils/escapeHeadingIds.js";
+import { normalizePath } from "../utils/normalizePath.js";
+import { createError } from "../utils/error.js";
+async function compile(options) {
+    const { source, filepath, docDirectory, config, routeService, pluginDriver, addDependency, isSsgMd = false } = options;
+    const mdxOptions = await createMDXOptions({
+        config,
+        docDirectory,
+        filepath,
+        pluginDriver,
+        routeService,
+        addDependency,
+        isSsgMd
+    });
+    const { frontmatter, emptyLinesSource } = loadFrontMatter(source, filepath, docDirectory, true);
+    const { replaceRules } = config ?? {};
+    const replacedSource = applyReplaceRules(emptyLinesSource, replaceRules);
+    const preprocessedContent = escapeMarkdownHeadingIds(replacedSource);
+    try {
+        let pageMeta = {
+            title: '',
+            toc: [],
+            headingTitle: ''
+        };
+        const frontmatterTitle = extractTextAndId(frontmatter.title)[0];
+        const compiler = createProcessor(mdxOptions);
+        compiler.data('pageMeta', {
+            toc: [],
+            title: ''
+        });
+        const vFile = await compiler.process({
+            value: preprocessedContent,
+            path: filepath
+        });
+        const compileResult = String(vFile);
+        const compilationMeta = compiler.data('pageMeta');
+        const headingTitle = extractTextAndId(compilationMeta.title)[0];
+        pageMeta = {
+            ...compilationMeta,
+            title: frontmatterTitle || headingTitle,
+            headingTitle,
+            frontmatter
+        };
+        const result = `${compileResult}
+
+MDXContent.__RSPRESS_PAGE_META = {};
+MDXContent.__RSPRESS_PAGE_META["${encodeURIComponent(normalizePath(node_path.relative(docDirectory, filepath)))}"] = ${JSON.stringify(pageMeta)};
+`;
+        return result;
+    } catch (e) {
+        if (e instanceof Error) throw e;
+        throw createError(`MDX compile error: ${e} in ${filepath}`);
+    }
+}
+const cache = new Map();
+async function compileWithCrossCompilerCache(options) {
+    const filepath = options.filepath;
+    const task = cache.get(filepath);
+    if (task) {
+        cache.delete(filepath);
+        return task;
+    }
+    const promise = compile(options);
+    cache.set(filepath, promise);
+    return promise;
+}
+export { compile, compileWithCrossCompilerCache };
