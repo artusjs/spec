@@ -1,0 +1,25 @@
+import { Code } from './code.js';
+import { ShikiPre } from './pre.js';
+export declare function getCustomMDXComponent(): {
+    h1: (props: React.ComponentProps<"h1">) => import("react/jsx-runtime").JSX.Element;
+    h2: (props: React.ComponentProps<"h2">) => import("react/jsx-runtime").JSX.Element;
+    h3: (props: React.ComponentProps<"h3">) => import("react/jsx-runtime").JSX.Element;
+    h4: (props: React.ComponentProps<"h4">) => import("react/jsx-runtime").JSX.Element;
+    h5: (props: React.ComponentProps<"h5">) => import("react/jsx-runtime").JSX.Element;
+    h6: (props: React.ComponentProps<"h6">) => import("react/jsx-runtime").JSX.Element;
+    ul: (props: import("react").ComponentProps<"ul">) => import("react/jsx-runtime").JSX.Element;
+    ol: (props: import("react").ComponentProps<"ol">) => import("react/jsx-runtime").JSX.Element;
+    li: (props: import("react").ComponentProps<"li">) => import("react/jsx-runtime").JSX.Element;
+    table: import("react").ForwardRefExoticComponent<Omit<import("react").DetailedHTMLProps<import("react").TableHTMLAttributes<HTMLTableElement>, HTMLTableElement>, "ref"> & import("react").RefAttributes<HTMLTableElement>>;
+    td: (props: import("react").ComponentProps<"td">) => import("react/jsx-runtime").JSX.Element;
+    th: (props: import("react").ComponentProps<"th">) => import("react/jsx-runtime").JSX.Element;
+    tr: (props: import("react").ComponentProps<"tr">) => import("react/jsx-runtime").JSX.Element;
+    hr: (props: import("react").ComponentProps<"hr">) => import("react/jsx-runtime").JSX.Element;
+    p: (props: import("react").ComponentProps<"p">) => import("react/jsx-runtime").JSX.Element;
+    blockquote: (props: import("react").ComponentProps<"blockquote">) => import("react/jsx-runtime").JSX.Element;
+    strong: (props: import("react").ComponentProps<"strong">) => import("react/jsx-runtime").JSX.Element;
+    a: (props: import("react").ComponentProps<"a">) => import("react/jsx-runtime").JSX.Element;
+    code: typeof Code;
+    img: (props: import("react").ComponentProps<"img">) => import("react/jsx-runtime").JSX.Element;
+    pre: typeof ShikiPre;
+};

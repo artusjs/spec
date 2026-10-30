@@ -1,0 +1,74 @@
+.rp-hover-group {
+  border: var(--rp-code-block-border);
+  background: var(--rp-c-bg);
+  width: auto;
+  min-width: 80px;
+  box-shadow: var(--rp-shadow-2);
+  z-index: 999;
+  border-radius: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 8px;
+  list-style: none;
+  transition: opacity .3s ease-in-out;
+  display: flex;
+  position: absolute;
+  top: 80%;
+}
+
+.rp-hover-group--center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.rp-hover-group--left {
+  left: 0;
+  transform: none;
+}
+
+.rp-hover-group--right {
+  right: 0;
+  transform: none;
+}
+
+.rp-hover-group--hidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s ease-in-out, visibility 0s linear .3s;
+}
+
+.rp-hover-group__item {
+  white-space: nowrap;
+  height: 32px;
+  color: var(--rp-c-text-1);
+  border-radius: 8px;
+  flex: 1;
+  align-self: stretch;
+  padding-right: 8px;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 32px;
+  transition: background-color .3s ease-in-out;
+  display: block;
+}
+
+.rp-hover-group__item__link {
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  display: flex;
+}
+
+.rp-hover-group__item--active {
+  color: var(--rp-c-brand);
+  cursor: auto;
+  pointer-events: none;
+  font-weight: 600;
+}
+
+.rp-hover-group__item:hover {
+  opacity: .7;
+}
+

@@ -1,0 +1,72 @@
+import { node_fs, node_path, core_rspack, logger, createProcessor, MDX_OR_MD_REGEXP } from "../../7319.js";
+import { createError } from "./error.js";
+import { importStatementRegex } from "../constants.js";
+const RspackResolveFactory = core_rspack.experiments.resolver.ResolverFactory;
+let startFlatten = false;
+let resolver;
+const processor = createProcessor();
+async function resolveDepPath(moduleSpecifier, importer, alias) {
+    if (!resolver) resolver = new RspackResolveFactory({
+        extensions: [
+            '.mdx',
+            '.md'
+        ],
+        alias
+    });
+    const resolved = await resolver.async(importer, moduleSpecifier);
+    if (resolved.path) return resolved.path;
+    throw createError(`Empty result when resolving ${moduleSpecifier} from ${importer}`);
+}
+async function flattenMdxContent(content, basePath, alias) {
+    const deps = [];
+    const regex = new RegExp(importStatementRegex);
+    if (!regex.test(content)) return {
+        flattenContent: content,
+        deps
+    };
+    if (!startFlatten) {
+        resolver = new RspackResolveFactory({
+            extensions: [
+                '.mdx',
+                '.md',
+                '.js'
+            ],
+            alias
+        });
+        startFlatten = true;
+    }
+    let ast;
+    let result = content;
+    try {
+        ast = processor.parse(content);
+    } catch (e) {
+        logger.debug('flattenMdxContent parse failed: \n', e);
+        return {
+            flattenContent: content,
+            deps
+        };
+    }
+    const importNodes = ast.children.filter((node)=>'mdxjsEsm' === node.type).flatMap((node)=>node.data?.estree?.body || []).filter((node)=>'ImportDeclaration' === node.type);
+    for (const importNode of importNodes){
+        const id = importNode.specifiers[0].local.name;
+        const importPath = importNode.source.value;
+        let absoluteImportPath;
+        try {
+            absoluteImportPath = await resolveDepPath(importPath, node_path.dirname(basePath), alias);
+        } catch (_e) {
+            continue;
+        }
+        if (MDX_OR_MD_REGEXP.test(absoluteImportPath)) {
+            const importedContent = node_fs.readFileSync(absoluteImportPath, 'utf-8');
+            const { flattenContent: replacedValue, deps: subDeps } = await flattenMdxContent(importedContent, absoluteImportPath, alias);
+            result = result.replace(new RegExp(`import\\s+${id}\\s+from\\s+['"](${importPath})['"];?`), '').replace(new RegExp(`<${id}\\s*/>`, 'g'), ()=>replacedValue);
+            deps.push(...subDeps, absoluteImportPath);
+        }
+    }
+    return {
+        flattenContent: result,
+        deps
+    };
+}
+var flattenMdxContent_resolveDepPath = void 0;
+export { flattenMdxContent, flattenMdxContent_resolveDepPath as resolveDepPath };

@@ -1,0 +1,162 @@
+import { unified, node_path, visit, promises, loadFrontMatter, remark_stringify, remove, remark_gfm, MDX_OR_MD_REGEXP, remark_parse } from "../../7319.js";
+import { applyReplaceRules } from "../utils/applyReplaceRules.js";
+import { flattenMdxContent } from "../utils/flattenMdxContent.js";
+import { importStatementRegex } from "../constants.js";
+import { parseToc } from "../mdx/remarkPlugins/toc.js";
+function applyReplaceRulesToNestedObject(obj, replaceRules) {
+    for(const key in obj)if ('string' == typeof obj[key]) obj[key] = applyReplaceRules(obj[key], replaceRules);
+    else if ('object' == typeof obj[key] && null !== obj[key]) obj[key] = applyReplaceRulesToNestedObject(obj[key], replaceRules);
+    return obj;
+}
+const remarkRemoveCodeBlocks = ()=>(tree)=>{
+        remove(tree, 'code');
+    };
+const remarkRemoveImages = ()=>(tree)=>{
+        remove(tree, 'image');
+    };
+const remarkStripLinkUrls = ()=>(tree)=>{
+        visit(tree, 'link', (node)=>{
+            node.url = '';
+        });
+    };
+const createProcessor = (searchCodeBlocks)=>unified().use(remark_parse).use(remark_gfm).use(remarkRemoveImages).use(remarkStripLinkUrls).use(searchCodeBlocks ? [] : [
+        remarkRemoveCodeBlocks
+    ]).use(remark_stringify, {
+        bullet: '-',
+        listItemIndent: 'one'
+    });
+const processorWithCode = createProcessor(true);
+const processorWithoutCode = createProcessor(false);
+function extractTextFromNode(node) {
+    if ('value' in node && 'string' == typeof node.value) return node.value;
+    if ('children' in node && Array.isArray(node.children)) return node.children.map(extractTextFromNode).join('');
+    return '';
+}
+const SKIP_NODE_TYPES = new Set([
+    'code',
+    'html',
+    'mdxjsEsm',
+    'mdxFlowExpression',
+    'thematicBreak',
+    'image',
+    'table'
+]);
+const CONTAINER_DIRECTIVE_REGEX = /^\s*:::\s*(\w+)\s*(.*)?/;
+const CONTAINER_DIRECTIVE_END_REGEX = /^\s*:::\s*$/;
+function stripContainerDirectives(text) {
+    const lines = text.split('\n');
+    const result = [];
+    let directiveStartIndex = -1;
+    for(let i = 0; i < lines.length; i++){
+        if (-1 === directiveStartIndex && CONTAINER_DIRECTIVE_REGEX.test(lines[i])) {
+            directiveStartIndex = i;
+            continue;
+        }
+        if (-1 !== directiveStartIndex) {
+            if (CONTAINER_DIRECTIVE_END_REGEX.test(lines[i])) directiveStartIndex = -1;
+            continue;
+        }
+        result.push(lines[i]);
+    }
+    if (-1 !== directiveStartIndex) result.push(...lines.slice(directiveStartIndex + 1));
+    return result.join('\n');
+}
+function extractDescription(tree) {
+    const textParts = [];
+    let foundH1 = false;
+    for (const node of tree.children){
+        if ('heading' === node.type && 1 === node.depth) {
+            foundH1 = true;
+            continue;
+        }
+        if ('heading' === node.type && 2 === node.depth) break;
+        if (!SKIP_NODE_TYPES.has(node.type)) {
+            if (foundH1) {
+                const text = extractTextFromNode(node).trim();
+                if (text) textParts.push(text);
+            }
+        }
+    }
+    const joined = textParts.join('\n');
+    return stripContainerDirectives(joined).split('\n').map((l)=>l.trim()).filter(Boolean).join(' ');
+}
+async function getPageIndexInfoByRoute(route, options) {
+    const { alias, replaceRules, root, searchCodeBlocks, extractDescription: extractDescriptionConfig = true, searchEnabled = true } = options;
+    const defaultIndexInfo = {
+        title: '',
+        content: '',
+        _flattenContent: '',
+        routePath: route.routePath,
+        lang: route.lang,
+        toc: [],
+        frontmatter: {},
+        version: route.version,
+        _filepath: route.absolutePath,
+        _relativePath: node_path.relative(root, route.absolutePath).split(node_path.sep).join('/')
+    };
+    if (!MDX_OR_MD_REGEXP.test(route.absolutePath)) return defaultIndexInfo;
+    let content = await promises.readFile(route.absolutePath, 'utf8');
+    const { frontmatter, content: contentWithoutFrontMatter } = loadFrontMatter(content, route.absolutePath, root);
+    applyReplaceRulesToNestedObject(frontmatter, replaceRules);
+    const { flattenContent } = await flattenMdxContent(applyReplaceRules(contentWithoutFrontMatter, replaceRules), route.absolutePath, alias);
+    content = flattenContent.replace(importStatementRegex, '');
+    content = content.replace(/\r\n/g, '\n');
+    const processor = searchCodeBlocks ? processorWithCode : processorWithoutCode;
+    const tree = processor.parse(content);
+    const { title, toc: rawToc } = parseToc(tree);
+    const extractedDescription = frontmatter.description || !extractDescriptionConfig ? '' : extractDescription(tree);
+    if (!searchEnabled) return {
+        ...defaultIndexInfo,
+        title: frontmatter.title || title,
+        toc: rawToc.map((item)=>({
+                ...item,
+                charIndex: -1
+            })),
+        content: '',
+        description: frontmatter.description || extractedDescription || void 0,
+        _flattenContent: flattenContent,
+        frontmatter: {
+            ...frontmatter,
+            __content: void 0
+        }
+    };
+    const processedTree = await processor.run(tree);
+    let processedContent = String(processor.stringify(processedTree));
+    if (processedContent.startsWith(`# ${title}`)) processedContent = processedContent.slice(`# ${title}`.length).trimStart();
+    const toc = rawToc.map((item)=>{
+        const match = item.id.match(/-(\d+)$/);
+        const headingPrefix = '#'.repeat(item.depth);
+        let position = -1;
+        if (match) for(let i = 0; i < Number(match[1]); i++){
+            position = processedContent.indexOf(`${headingPrefix} ${item.text}`, position + 1);
+            if (-1 === position) break;
+        }
+        return {
+            ...item,
+            charIndex: processedContent.indexOf(`${headingPrefix} ${item.text}`, position + 1)
+        };
+    });
+    return {
+        ...defaultIndexInfo,
+        title: frontmatter.title || title,
+        toc,
+        content: processedContent,
+        description: frontmatter.description || extractedDescription || void 0,
+        _flattenContent: flattenContent,
+        frontmatter: {
+            ...frontmatter,
+            __content: void 0
+        }
+    };
+}
+async function extractPageData(routeService, options) {
+    const pageData = await Promise.all(routeService.getRoutes().map(async (routeMeta)=>{
+        const pageIndexInfo = await getPageIndexInfoByRoute(routeMeta, options);
+        const routePage = routeService.getRoutePageByRoutePath(routeMeta.routePath);
+        if (routePage) routePage.setPageIndexInfo(pageIndexInfo);
+        return pageIndexInfo;
+    }));
+    return pageData;
+}
+var extractPageData_getPageIndexInfoByRoute = void 0;
+export { extractPageData, extractPageData_getPageIndexInfoByRoute as getPageIndexInfoByRoute };

@@ -1,0 +1,69 @@
+/*!
+ * Array of passes.
+ *
+ * A `pass` is just a function that is executed on `req, res, options`
+ * so that you can easily add new checks while still keeping the base
+ * flexible.
+ */
+
+/*!
+ * Array of passes.
+ *
+ * A `pass` is just a function that is executed on `req, socket, options`
+ * so that you can easily add new checks while still keeping the base
+ * flexible.
+ */
+
+/*!
+ * Caron dimonio, con occhi di bragia
+ * loro accennando, tutte le raccoglie;
+ * batte col remo qualunque s’adagia 
+ *
+ * Charon the demon, with the eyes of glede,
+ * Beckoning to them, collects them all together,
+ * Beats with his oar whoever lags behind
+ *          
+ *          Dante - The Divine Comedy (Canto III)
+ */
+
+/*!
+ * fill-range <https://github.com/jonschlinkert/fill-range>
+ *
+ * Copyright (c) 2014-present, Jon Schlinkert.
+ * Licensed under the MIT License.
+ */
+
+/*!
+ * is-extglob <https://github.com/jonschlinkert/is-extglob>
+ *
+ * Copyright (c) 2014-2016, Jon Schlinkert.
+ * Licensed under the MIT License.
+ */
+
+/*!
+ * is-glob <https://github.com/jonschlinkert/is-glob>
+ *
+ * Copyright (c) 2014-2017, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+
+/*!
+ * is-number <https://github.com/jonschlinkert/is-number>
+ *
+ * Copyright (c) 2014-present, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+
+/*!
+ * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
+ *
+ * Copyright (c) 2014-2017, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+
+/*!
+ * to-regex-range <https://github.com/micromatch/to-regex-range>
+ *
+ * Copyright (c) 2015-present, Jon Schlinkert.
+ * Released under the MIT License.
+ */

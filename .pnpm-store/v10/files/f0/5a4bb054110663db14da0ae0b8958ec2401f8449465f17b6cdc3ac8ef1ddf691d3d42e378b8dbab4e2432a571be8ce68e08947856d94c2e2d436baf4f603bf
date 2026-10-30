@@ -1,0 +1,96 @@
+import { matchPath, getSidebarDataGroup } from "../../../7319.js";
+import { generateLlmsTxt, generateLlmsFullTxt } from "./llmsTxt.js";
+async function emitLlmsTxt(config, routeService, emitAsset, mdContents) {
+    const base = config.base ?? '/';
+    const locales = config.themeConfig?.locales;
+    const isMultiLang = locales && locales.length > 0;
+    const defaultLang = routeService.getDefaultLang();
+    const langs = [
+        ...new Set([
+            defaultLang,
+            ...routeService.getLangs()
+        ])
+    ];
+    const defaultVersion = routeService.getDefaultVersion();
+    const versions = routeService.getVersions();
+    const isMultiVersion = versions.length > 0;
+    const rawNavConfigs = isMultiLang ? locales.filter((i)=>Boolean(i.nav)).map((i)=>({
+            nav: i.nav,
+            lang: i.lang
+        })) : config.themeConfig?.nav ? [
+        {
+            nav: config.themeConfig.nav,
+            lang: config.lang ?? ''
+        }
+    ] : [];
+    const sidebars = isMultiLang ? locales.map((i)=>i.sidebar) : [
+        config.themeConfig?.sidebar
+    ];
+    const sidebar = sidebars.reduce((prev, curr)=>{
+        Object.assign(prev, curr);
+        return prev;
+    }, {});
+    function resolveNavForVersion(version) {
+        return rawNavConfigs.flatMap(({ nav, lang })=>{
+            let navArray;
+            navArray = Array.isArray(nav) ? nav : nav[version] ?? nav[defaultVersion] ?? nav.default ?? [];
+            return navArray.map((item)=>({
+                    ...item,
+                    lang
+                }));
+        }).filter((i)=>i.activeMatch || i.link);
+    }
+    async function generateForLangVersion(lang, version) {
+        const navList = resolveNavForVersion(version).filter((i)=>i.lang === lang);
+        const routeGroups = new Array(navList.length).fill(0).map(()=>[]);
+        const others = [];
+        routeService.getRoutes().forEach((routeMeta)=>{
+            if (routeMeta.lang !== lang) return;
+            if (isMultiVersion && routeMeta.version !== version) return;
+            const { routePath } = routeMeta;
+            for(let i = 0; i < routeGroups.length; i++){
+                const routeGroup = routeGroups[i];
+                const navItem = navList[i];
+                if (lang === navItem.lang && new RegExp((navItem.activeMatch ?? navItem.link).replace(/\.html$/, '')).test(routePath)) return void routeGroup.push(routePath);
+            }
+            others.push(routePath);
+        });
+        for (const routeGroup of routeGroups)organizeBySidebar(sidebar, routeGroup);
+        const llmsTxtContent = await generateLlmsTxt(routeGroups, others, navList, config.title, config.description, config.base, routeService);
+        const llmsFullTxtContent = generateLlmsFullTxt(routeGroups, navList, others, base, mdContents);
+        const langPrefix = defaultLang === lang ? '' : `${lang}/`;
+        const versionPrefix = isMultiVersion && version !== defaultVersion ? `${version}/` : '';
+        const prefix = `${versionPrefix}${langPrefix}`;
+        emitAsset(`${prefix}llms.txt`, llmsTxtContent);
+        emitAsset(`${prefix}llms-full.txt`, llmsFullTxtContent);
+    }
+    const versionList = isMultiVersion ? versions : [
+        ''
+    ];
+    await Promise.all(versionList.flatMap((version)=>langs.map((lang)=>generateForLangVersion(lang, version))));
+}
+function flatSidebar(sidebar) {
+    if (!sidebar) return [];
+    return sidebar.flatMap((i)=>{
+        if ('string' == typeof i) return i;
+        if ('link' in i && 'string' == typeof i.link) return [
+            i.link,
+            ...flatSidebar(i?.items ?? [])
+        ];
+        if ('items' in i && Array.isArray(i.items)) return flatSidebar(i.items);
+    }).filter(Boolean);
+}
+function organizeBySidebar(sidebar, routes) {
+    if (0 === routes.length) return;
+    const route = routes[0];
+    const currSidebar = getSidebarDataGroup(sidebar, route);
+    if (0 === currSidebar.length) return;
+    const orderList = flatSidebar(currSidebar);
+    const normalizeLink = (p)=>p.replace(/\.html$/, '').replace(/\/index$/, '/');
+    routes.sort((a, b)=>{
+        const aIndex = orderList.findIndex((order)=>matchPath(normalizeLink(order), a));
+        const bIndex = orderList.findIndex((order)=>matchPath(normalizeLink(order), b));
+        return (-1 === aIndex ? Number.MAX_SAFE_INTEGER : aIndex) - (-1 === bIndex ? Number.MAX_SAFE_INTEGER : bIndex);
+    });
+}
+export { emitLlmsTxt };

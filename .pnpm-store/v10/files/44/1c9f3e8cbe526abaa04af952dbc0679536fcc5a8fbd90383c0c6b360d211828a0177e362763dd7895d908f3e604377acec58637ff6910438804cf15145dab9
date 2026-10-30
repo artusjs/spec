@@ -1,0 +1,36 @@
+.rp-toc-item {
+  justify-content: flex-start;
+  align-self: stretch;
+  align-items: flex-start;
+  margin-top: 10px;
+  line-height: 1.4;
+  display: block;
+  position: relative;
+}
+
+.rp-toc-item:first-child {
+  margin-top: 0;
+}
+
+.rp-toc-item__text {
+  color: var(--rp-c-text-2);
+  overflow-wrap: break-word;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.rp-toc-item--active .rp-toc-item__text, .rp-toc-item--active .rp-toc-item__text code {
+  color: var(--rp-c-link);
+}
+
+.rp-toc-item--active:before {
+  content: "";
+  background-color: var(--rp-c-brand);
+  width: 1px;
+  height: 100%;
+  left: calc(-1*var(--rp-outline-padding-x));
+  display: block;
+  position: absolute;
+  top: 0;
+}
+

@@ -1,0 +1,11 @@
+import { node_path } from "../../7319.js";
+const searchHookVMPlugin = (context)=>({
+        ["virtual-search-hooks"]: ()=>{
+            const { config } = context;
+            let content = 'export const onSearch = () => {};';
+            const searchHooks = 'object' == typeof config.search && config.search?.searchHooks;
+            if (searchHooks) content = `export * from ${JSON.stringify(node_path.posix.normalize(searchHooks))}`;
+            return content;
+        }
+    });
+export { searchHookVMPlugin };

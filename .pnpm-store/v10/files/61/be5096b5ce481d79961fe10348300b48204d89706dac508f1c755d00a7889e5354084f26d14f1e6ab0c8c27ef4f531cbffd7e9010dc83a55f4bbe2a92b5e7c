@@ -1,0 +1,23 @@
+import { mergeRsbuildConfig } from "../7319.js";
+import { PluginDriver } from "./PluginDriver.js";
+import { initRsbuild } from "./initRsbuild.js";
+import { RouteService } from "./route/RouteService.js";
+async function serve(options) {
+    const { config, port: userPort, host: userHost, configFilePath } = options;
+    const envPort = process.env.PORT;
+    const envHost = process.env.HOST;
+    const { builderConfig = {} } = config;
+    const port = Number(envPort || userPort || builderConfig?.server?.port || 4173);
+    const host = envHost || userHost || builderConfig?.server?.host || 'localhost';
+    config.builderConfig = mergeRsbuildConfig(builderConfig, {
+        server: {
+            port,
+            host
+        }
+    });
+    const pluginDriver = await PluginDriver.create(config, configFilePath, true);
+    const modifiedConfig = await pluginDriver.modifyConfig();
+    const rsbuild = await initRsbuild(config.root, modifiedConfig, pluginDriver, await RouteService.createSimple(), false);
+    return rsbuild.preview();
+}
+export { serve };

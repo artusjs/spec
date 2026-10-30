@@ -1,0 +1,27 @@
+import { logger, picocolors } from "../../7319.js";
+import { pMap } from "../../8311.js";
+import { renderPage } from "./renderPage.js";
+import { SSGConcurrency } from "../ssg/ssgEnv.js";
+const routePage2MdFilename = (routePath)=>{
+    let fileName = routePath;
+    fileName = fileName.endsWith('/') ? `${routePath}index.md` : `${routePath}.md`;
+    return fileName.replace(/^\/+/, '');
+};
+async function renderPages(routeService, ssrBundlePath, emitAsset) {
+    logger.info('Rendering md pages...');
+    const startTime = Date.now();
+    const result = new Map();
+    const routes = routeService.getRoutes();
+    await pMap(routes, async (route)=>{
+        const html = await renderPage(route, ssrBundlePath);
+        const fileName = routePage2MdFilename(route.routePath);
+        emitAsset(fileName, html);
+        result.set(route.routePath, html);
+    }, {
+        concurrency: SSGConcurrency()
+    });
+    const totalTime = Date.now() - startTime;
+    logger.success(`Markdown rendered in ${picocolors.yellow(totalTime)} ms.`);
+    return result;
+}
+export { renderPages };

@@ -1,0 +1,232 @@
+:root {
+  --rp-container-note-border: var(--rp-c-divider-light);
+  --rp-container-note-text: var(--rp-c-text-1);
+  --rp-container-note-bg: var(--rp-c-bg-soft);
+  --rp-container-note-code-bg: #8080801a;
+  --rp-container-note-link: var(--rp-c-link);
+  --rp-container-tip-border: #079c7033;
+  --rp-container-tip-text: #008555;
+  --rp-container-tip-bg: #f2f9f7;
+  --rp-container-tip-code-bg: #079c701a;
+  --rp-container-info-border: #0095ff33;
+  --rp-container-info-text: #07f;
+  --rp-container-info-bg: #0095ff0f;
+  --rp-container-info-code-bg: #0095ff1a;
+  --rp-container-warning-border: #ffc51766;
+  --rp-container-warning-text: #887233;
+  --rp-container-warning-bg: #ffc5171a;
+  --rp-container-warning-code-bg: #ffc5171a;
+  --rp-container-danger-border: #ed3c5033;
+  --rp-container-danger-text: #ab2131;
+  --rp-container-danger-bg: #ed3c5014;
+  --rp-container-danger-code-bg: #ed3c501a;
+  --rp-container-details-border: var(--rp-c-divider-light);
+  --rp-container-details-text: var(--rp-c-text-1);
+  --rp-container-details-bg: var(--rp-c-bg-soft);
+  --rp-container-details-code-bg: #8080801a;
+  --rp-code-title-bg-with-opacity: color-mix(in srgb, var(--rp-code-title-bg) 70%, transparent);
+  --rp-code-block-bg-with-opacity: color-mix(in srgb, var(--rp-code-block-bg) 70%, transparent);
+}
+
+.dark {
+  --rp-container-tip-text: #3ec480;
+  --rp-container-tip-bg: #079c701a;
+  --rp-container-info-text: #66c2ff;
+  --rp-container-info-bg: #0095ff1a;
+  --rp-container-warning-text: #fbb451;
+  --rp-container-warning-border: #ffc51740;
+  --rp-container-warning-bg: #ffc5171f;
+  --rp-container-danger-text: #f76e85;
+  --rp-container-danger-border: #ed3c504d;
+  --rp-container-danger-bg: #ed3c501f;
+}
+
+.rp-callout {
+  border-radius: var(--rp-radius);
+  border: 1px solid #0000;
+  margin: 24px 0;
+  padding: 20px 24px 12px;
+}
+
+.rp-callout__title {
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  position: relative;
+}
+
+.rp-callout__title:before {
+  content: "";
+  border-radius: 0 20px 20px 0;
+  width: 4px;
+  height: 110%;
+  position: absolute;
+  top: -5%;
+  left: -24px;
+}
+
+.rp-callout__content {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.rp-callout__content p {
+  margin: 8px 0;
+}
+
+.rp-callout__content .rp-codeblock__title {
+  background-color: var(--rp-code-title-bg-with-opacity);
+}
+
+.rp-callout__content .rp-codeblock__content {
+  background-color: var(--rp-code-block-bg-with-opacity);
+}
+
+.rp-callout__content a {
+  border-bottom: 1px solid;
+}
+
+.rp-callout--note {
+  border-color: var(--rp-container-note-border);
+  background-color: var(--rp-container-note-bg);
+}
+
+.rp-callout--note .rp-callout__title {
+  color: var(--rp-container-note-text);
+}
+
+.rp-callout--note .rp-callout__title:before {
+  background-color: var(--rp-container-note-text);
+}
+
+.rp-callout--note :not(pre) > code {
+  color: var(--rp-container-note-text);
+  background-color: var(--rp-container-note-code-bg);
+}
+
+.rp-callout--note a {
+  color: var(--rp-container-note-text);
+}
+
+.rp-callout--tip {
+  border-color: var(--rp-container-tip-border);
+  background-color: var(--rp-container-tip-bg);
+}
+
+.rp-callout--tip .rp-callout__title {
+  color: var(--rp-container-tip-text);
+}
+
+.rp-callout--tip .rp-callout__title:before {
+  background-color: var(--rp-container-tip-text);
+}
+
+.rp-callout--tip :not(pre) > code {
+  color: var(--rp-container-tip-text);
+  background-color: var(--rp-container-tip-code-bg);
+}
+
+.rp-callout--tip a {
+  color: var(--rp-container-tip-text);
+}
+
+.rp-callout--info {
+  border-color: var(--rp-container-info-border);
+  background-color: var(--rp-container-info-bg);
+}
+
+.rp-callout--info .rp-callout__title {
+  color: var(--rp-container-info-text);
+}
+
+.rp-callout--info .rp-callout__title:before {
+  background-color: var(--rp-container-info-text);
+}
+
+.rp-callout--info :not(pre) > code {
+  color: var(--rp-container-info-text);
+  background-color: var(--rp-container-info-code-bg);
+}
+
+.rp-callout--info a {
+  color: var(--rp-container-info-text);
+}
+
+.rp-callout--warning {
+  border-color: var(--rp-container-warning-border);
+  background-color: var(--rp-container-warning-bg);
+}
+
+.rp-callout--warning .rp-callout__title {
+  color: var(--rp-container-warning-text);
+}
+
+.rp-callout--warning .rp-callout__title:before {
+  background-color: var(--rp-container-warning-text);
+}
+
+.rp-callout--warning :not(pre) > code {
+  color: var(--rp-container-warning-text);
+  background-color: var(--rp-container-warning-code-bg);
+}
+
+.rp-callout--warning a {
+  color: var(--rp-container-warning-text);
+}
+
+.rp-callout--caution, .rp-callout--danger {
+  border-color: var(--rp-container-danger-border);
+  background-color: var(--rp-container-danger-bg);
+}
+
+.rp-callout--caution .rp-callout__title, .rp-callout--danger .rp-callout__title {
+  color: var(--rp-container-danger-text);
+}
+
+.rp-callout--caution .rp-callout__title:before, .rp-callout--danger .rp-callout__title:before {
+  background-color: var(--rp-container-danger-text);
+}
+
+.rp-callout--caution :not(pre) > code, .rp-callout--danger :not(pre) > code {
+  color: var(--rp-container-danger-text);
+  background-color: var(--rp-container-danger-code-bg);
+}
+
+.rp-callout--caution a, .rp-callout--danger a {
+  color: var(--rp-container-danger-text);
+}
+
+.rp-callout--details {
+  border-color: var(--rp-container-details-border);
+  background-color: var(--rp-container-details-bg);
+}
+
+.rp-callout--details .rp-callout__title {
+  color: var(--rp-container-details-text);
+}
+
+.rp-callout--details .rp-callout__title:before {
+  background-color: var(--rp-container-details-text);
+}
+
+.rp-callout--details :not(pre) > code {
+  color: var(--rp-container-details-text);
+  background-color: var(--rp-container-details-code-bg);
+}
+
+.rp-callout--details a {
+  color: var(--rp-container-details-text);
+}
+
+details.rp-callout {
+  font-size: normal;
+  cursor: pointer;
+  margin: 24px 0;
+  padding: 20px 24px 12px;
+  transition: background-color .3s;
+}
+
+details.rp-callout:hover {
+  background-color: var(--rp-c-bg-mute);
+}
+

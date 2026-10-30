@@ -1,0 +1,77 @@
+import { node_path, logger, promises } from "../../7319.js";
+import { createError } from "./error.js";
+function normalizePath(filePath) {
+    return filePath.split(node_path.sep).join('/');
+}
+async function getAllMarkdownFilesFrom(dirPath) {
+    const files = await promises.readdir(dirPath, {
+        withFileTypes: true
+    });
+    const allFiles = [];
+    for (const file of files){
+        const fullPath = node_path.join(dirPath, file.name);
+        if (file.isDirectory()) {
+            const nestedFiles = await getAllMarkdownFilesFrom(fullPath);
+            allFiles.push(...nestedFiles);
+        } else if ([
+            '.md',
+            '.mdx'
+        ].includes(node_path.extname(file.name))) allFiles.push(fullPath);
+    }
+    return allFiles;
+}
+async function collectModuleFiles(contentPath, lang, includedDir, excludedDirs, fileLangMap) {
+    const langDirPath = node_path.join(contentPath, lang);
+    const langModuleDir = node_path.join(langDirPath, includedDir);
+    try {
+        const moduleDirStats = await promises.stat(langModuleDir);
+        if (!moduleDirStats.isDirectory()) return fileLangMap;
+        const files = await getAllMarkdownFilesFrom(langModuleDir);
+        for (const file of files){
+            const relativePath = normalizePath(node_path.relative(langDirPath, file));
+            if (excludedDirs.some((excludedDir)=>{
+                const isFilePath = /\.(md|mdx)$/.test(excludedDir);
+                return relativePath.includes(excludedDir + (isFilePath ? '' : '/'));
+            })) continue;
+            const baseName = relativePath;
+            if (!fileLangMap[baseName]) fileLangMap[baseName] = new Set();
+            fileLangMap[baseName].add(lang);
+        }
+    } catch (e) {
+        logger.error(e);
+        throw createError(`Failed to access directory: ${normalizePath(langModuleDir)}`);
+    }
+    return fileLangMap;
+}
+async function checkLanguageParity(config) {
+    if (!config?.languageParity || false === config.languageParity.enabled) return;
+    logger.info('Checking language parity...');
+    const contentPath = node_path.resolve(config.root);
+    const includedDirs = config.languageParity.include?.length ? config.languageParity.include : [
+        ''
+    ];
+    const excludedDirs = config.languageParity.exclude ?? [];
+    const supportedLanguages = (config.locales ?? config.themeConfig?.locales)?.map((locale)=>locale.lang) || [];
+    if (!supportedLanguages.length) return void logger.error('No supported languages found in the configuration.');
+    const missingLanguagesFile = [];
+    try {
+        for (const includedDir of includedDirs){
+            if (excludedDirs.some((excludedDir)=>excludedDir === includedDir)) continue;
+            const curFileLangMap = {};
+            for (const lang of supportedLanguages)await collectModuleFiles(contentPath, lang, includedDir, excludedDirs, curFileLangMap);
+            for (const [baseName, langs] of Object.entries(curFileLangMap)){
+                const missingLangs = supportedLanguages.filter((lang)=>!langs.has(lang));
+                missingLangs.forEach((lang)=>{
+                    const missingPath = node_path.join(lang, baseName);
+                    missingLanguagesFile.push(missingPath);
+                });
+            }
+        }
+        if (missingLanguagesFile.length > 0) throw createError(`Check language parity failed! Missing content:\n${missingLanguagesFile.map((file)=>`        - ${normalizePath(file)}`).join('\n')}`);
+        logger.success('Language parity checked successfully.');
+    } catch (err) {
+        logger.error('Error during language parity check: \n', err);
+        throw err;
+    }
+}
+export { checkLanguageParity };

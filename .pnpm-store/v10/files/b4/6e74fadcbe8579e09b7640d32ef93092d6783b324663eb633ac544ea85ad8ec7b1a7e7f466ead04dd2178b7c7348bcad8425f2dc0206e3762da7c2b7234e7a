@@ -1,0 +1,181 @@
+import { RSPRESS_TEMP_DIR, node_path, removeTrailingSlash, promises, addTrailingSlash, DEFAULT_PAGE_EXTENSIONS, glob } from "../../7319.js";
+import { PUBLIC_DIR } from "../constants.js";
+import { RoutePage, absolutePathToRoutePath, absolutePathToRelativePath } from "./RoutePage.js";
+import { createError } from "../utils/error.js";
+import { getRoutePathParts, normalizeRoutePath, splitRoutePathParts } from "./normalizeRoutePath.js";
+class RouteService {
+    routeData = new Map();
+    #scanDir;
+    #defaultLang;
+    #defaultVersion;
+    #extensions;
+    #langs;
+    #versions;
+    #include;
+    #exclude;
+    #excludeConvention;
+    #tempDir;
+    #externalPages;
+    static __instance__ = null;
+    static getInstance() {
+        return RouteService.__instance__;
+    }
+    static async create(options) {
+        const { scanDir, config, externalPages } = options;
+        const runtimeAbsTempDir = node_path.join(process.cwd(), 'node_modules', RSPRESS_TEMP_DIR, 'runtime');
+        await promises.mkdir(runtimeAbsTempDir, {
+            recursive: true
+        });
+        const routeService = new RouteService(scanDir, config, externalPages || [], runtimeAbsTempDir);
+        RouteService.__instance__ = routeService;
+        await routeService.#init();
+        return routeService;
+    }
+    static async createSimple() {
+        return new RouteService('', {}, [], '');
+    }
+    constructor(scanDir, userConfig, externalPages, runtimeAbsTempDir){
+        const routeOptions = userConfig?.route || {};
+        this.#scanDir = scanDir;
+        this.#extensions = routeOptions.extensions || DEFAULT_PAGE_EXTENSIONS;
+        this.#include = routeOptions.include || [];
+        this.#exclude = routeOptions.exclude || [];
+        this.#excludeConvention = routeOptions.excludeConvention || [
+            '**/_[^_]*'
+        ];
+        this.#defaultLang = userConfig?.lang || '';
+        this.#langs = (userConfig?.locales ?? userConfig?.themeConfig?.locales ?? []).map((item)=>item.lang);
+        this.#tempDir = runtimeAbsTempDir;
+        this.#externalPages = externalPages;
+        if (userConfig.multiVersion) {
+            this.#defaultVersion = userConfig.multiVersion.default || '';
+            this.#versions = userConfig.multiVersion.versions || [];
+        } else {
+            this.#defaultVersion = '';
+            this.#versions = [];
+        }
+    }
+    get extensions() {
+        return this.#extensions;
+    }
+    async #init() {
+        const extensions = this.#extensions.map((i)=>i.slice(1));
+        const files = (await glob([
+            `**/*.{${extensions.join(',')}}`,
+            ...this.#include
+        ], {
+            cwd: this.#scanDir,
+            absolute: true,
+            onlyFiles: true,
+            ignore: [
+                ...this.#exclude,
+                ...this.#excludeConvention,
+                '**/node_modules/**',
+                '**/.eslintrc.js',
+                '**/.nx/**',
+                `./${PUBLIC_DIR}/**`,
+                '**/*.d.ts'
+            ]
+        })).sort();
+        files.forEach((filePath)=>{
+            const routePage = RoutePage.create(filePath, this.#scanDir);
+            this.addRoute(routePage);
+        });
+        const externalPages = this.#externalPages;
+        await Promise.all(externalPages.map(async (route, index)=>{
+            const { routePath, content, filepath } = route;
+            if (filepath) {
+                const routePage = RoutePage.createFromExternal(routePath, filepath, this.#scanDir);
+                this.addRoute(routePage);
+                return;
+            }
+            if (content) {
+                const filepath = await this.#writeTempFile(index, content);
+                const routePage = RoutePage.createFromExternal(routePath, filepath, this.#scanDir);
+                this.addRoute(routePage);
+            }
+        }));
+    }
+    async addRoute(routePage) {
+        const { routeMeta: { routePath } } = routePage;
+        if (this.routeData.has(routePath)) throw createError(`routePath ${routePath} has already been added`);
+        this.routeData.set(routePath, routePage);
+    }
+    getRoutes() {
+        return Array.from(this.routeData.values()).map((i)=>i.routeMeta);
+    }
+    getRoutePages() {
+        return Array.from(this.routeData.values());
+    }
+    isExistRoute(link) {
+        function linkToRoutePath(routePath) {
+            return decodeURIComponent(routePath.split('#')[0]).replace(/\.html$/, '').replace(/\/index$/, '/');
+        }
+        const cleanLinkPath = linkToRoutePath(link);
+        if (!this.routeData.has(removeTrailingSlash(cleanLinkPath)) && !this.routeData.has(addTrailingSlash(cleanLinkPath))) return false;
+        return true;
+    }
+    generateRoutesCode() {
+        return this.generateRoutesCodeByRouteMeta(this.getRoutes());
+    }
+    generateRoutesCodeByRouteMeta(routeMeta) {
+        return `
+import React from 'react';
+import { lazyWithPreload } from "react-lazy-with-preload";
+${routeMeta.map((route, index)=>`const Route${index} = lazyWithPreload(() => import('${route.absolutePath}'))`).join('\n')}
+export const routes = [
+${routeMeta.map((route, index)=>{
+            const preload = `async () => {
+        await Route${index}.preload();
+        return import("${route.absolutePath}");
+      }`;
+            const component = `Route${index}`;
+            return `{ path: '${route.routePath}', element: React.createElement(${component}), filePath: '${route.relativePath}', preload: ${preload}, lang: '${route.lang}', version: '${route.version}' }`;
+        }).join(',\n')}
+];
+`;
+    }
+    getRoutePathParts(relativePath) {
+        return getRoutePathParts(relativePath, this.#defaultLang, this.#defaultVersion, this.#langs, this.#versions);
+    }
+    splitRoutePathParts(relativePath) {
+        return splitRoutePathParts(relativePath, this.#defaultLang, this.#defaultVersion, this.#langs, this.#versions);
+    }
+    normalizeRoutePath(relativePath) {
+        return normalizeRoutePath(relativePath, this.#defaultLang, this.#defaultVersion, this.#langs, this.#versions, this.#extensions);
+    }
+    absolutePathToRoutePath(absolutePath) {
+        return absolutePathToRoutePath(absolutePath, this.#scanDir, this);
+    }
+    isInDocsDir(absolutePath) {
+        const relativePath = node_path.relative(this.#scanDir, absolutePath);
+        return !relativePath.startsWith('..') && !node_path.isAbsolute(relativePath);
+    }
+    absolutePathToRelativePath(absolutePath) {
+        return absolutePathToRelativePath(absolutePath, this.#scanDir);
+    }
+    async #writeTempFile(index, content) {
+        const tempFilePath = node_path.join(this.#tempDir, `temp-${index}.mdx`);
+        await promises.writeFile(tempFilePath, content);
+        return tempFilePath;
+    }
+    getRoutePageByRoutePath(routePath) {
+        return this.routeData.get(routePath);
+    }
+    getDocsDir() {
+        return this.#scanDir;
+    }
+    getLangs() {
+        return this.#langs;
+    }
+    getDefaultLang() {
+        return this.#defaultLang;
+    }
+    getVersions() {
+        return this.#versions;
+    }
+    getDefaultVersion() {
+        return this.#defaultVersion;
+    }
+}
+export { RouteService };

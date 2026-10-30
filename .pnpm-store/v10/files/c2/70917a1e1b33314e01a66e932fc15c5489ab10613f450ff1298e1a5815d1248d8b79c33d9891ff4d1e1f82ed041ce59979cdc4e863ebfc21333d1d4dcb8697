@@ -1,0 +1,78 @@
+{
+  "name": "@rspack/binding",
+  "version": "2.0.0-beta.9",
+  "license": "MIT",
+  "description": "Node binding for rspack",
+  "main": "binding.js",
+  "types": "binding.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "files": [
+    "binding.js",
+    "binding.d.ts",
+    "napi-binding.d.ts",
+    "webcontainer-fallback.cjs"
+  ],
+  "homepage": "https://rspack.rs",
+  "bugs": "https://github.com/web-infra-dev/rspack/issues",
+  "repository": "web-infra-dev/rspack",
+  "devDependencies": {
+    "@types/node": "^20.19.37",
+    "@napi-rs/cli": "3.5.1",
+    "@napi-rs/wasm-runtime": "1.1.1",
+    "emnapi": "1.8.1",
+    "typescript": "^6.0.2"
+  },
+  "napi": {
+    "binaryName": "rspack",
+    "packageName": "@rspack/binding",
+    "targets": [
+      "x86_64-apple-darwin",
+      "x86_64-pc-windows-msvc",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "x86_64-unknown-freebsd",
+      "i686-pc-windows-msvc",
+      "armv7-unknown-linux-gnueabihf",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-apple-darwin",
+      "aarch64-unknown-linux-musl",
+      "aarch64-pc-windows-msvc"
+    ],
+    "wasm": {
+      "initialMemory": 16384,
+      "browser": {
+        "fs": true,
+        "asyncInit": true,
+        "buffer": true
+      }
+    }
+  },
+  "optionalDependencies": {
+    "@rspack/binding-darwin-arm64": "2.0.0-beta.9",
+    "@rspack/binding-win32-arm64-msvc": "2.0.0-beta.9",
+    "@rspack/binding-linux-arm64-gnu": "2.0.0-beta.9",
+    "@rspack/binding-linux-arm64-musl": "2.0.0-beta.9",
+    "@rspack/binding-win32-ia32-msvc": "2.0.0-beta.9",
+    "@rspack/binding-wasm32-wasi": "2.0.0-beta.9",
+    "@rspack/binding-darwin-x64": "2.0.0-beta.9",
+    "@rspack/binding-win32-x64-msvc": "2.0.0-beta.9",
+    "@rspack/binding-linux-x64-gnu": "2.0.0-beta.9",
+    "@rspack/binding-linux-x64-musl": "2.0.0-beta.9"
+  },
+  "scripts": {
+    "build:dev": "node scripts/build.js",
+    "build:debug": "node scripts/build.js --profile release-debug",
+    "build:ci": "node scripts/build.js --profile ci",
+    "build:profiling": "node scripts/build.js --profile profiling",
+    "build:release": "node scripts/build.js --profile release",
+    "build:dev:wasm": "DISABLE_PLUGIN=1 RUST_TARGET=wasm32-wasip1-threads node scripts/build.js",
+    "build:release:wasm": "DISABLE_PLUGIN=1 RUST_TARGET=wasm32-wasip1-threads node scripts/build.js --profile release-wasi",
+    "build:dev:browser": "DISABLE_PLUGIN=1 RUST_TARGET=wasm32-wasip1-threads RSPACK_TARGET_BROWSER=1 node scripts/build.js",
+    "build:release:browser": "DISABLE_PLUGIN=1 RUST_TARGET=wasm32-wasip1-threads RSPACK_TARGET_BROWSER=1 node scripts/build.js --profile release-wasi",
+    "move-binding": "node scripts/move-binding",
+    "test": "tsc -p tsconfig.type-test.json"
+  }
+}

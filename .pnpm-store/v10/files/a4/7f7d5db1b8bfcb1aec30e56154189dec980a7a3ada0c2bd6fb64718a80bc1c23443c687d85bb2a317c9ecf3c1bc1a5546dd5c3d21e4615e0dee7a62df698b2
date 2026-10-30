@@ -1,0 +1,35 @@
+.rp-nav-hamburger {
+  cursor: pointer;
+  background-color: #0000;
+  border-radius: 4px;
+  padding: 8px;
+  transition: background-color .3s;
+  display: none;
+}
+
+@media (width <= 1280px) and (width >= 769px) {
+  .rp-nav-hamburger__md {
+    display: block;
+  }
+}
+
+.rp-nav-hamburger__md__hover-group {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 250px;
+  padding: 12px;
+  display: flex;
+}
+
+@media (width <= 768px) {
+  .rp-nav-hamburger__sm {
+    display: block;
+  }
+}
+
+.rp-nav-hamburger:hover, .rp-nav-hamburger--active {
+  background-color: var(--rp-c-bg-mute);
+}
+

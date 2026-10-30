@@ -1,0 +1,33 @@
+/*! LICENSE: ssgEnv.js.LICENSE.txt */
+import { node_os } from "../../7319.js";
+/**
+ * these codes are copied from
+ * @link https://github.com/facebook/docusaurus/blob/45065e8d2b5831117b8d69fec1be28f5520cf105/packages/docusaurus/src/ssg/ssgEnv.ts#L11
+ * @license MIT
+ */ function SSGWorkerThreadTaskSize() {
+    return process.env.RSPRESS_SSG_WORKER_THREAD_TASK_SIZE ? Number.parseInt(process.env.RSPRESS_SSG_WORKER_THREAD_TASK_SIZE, 10) : 10;
+}
+function SSGWorkerThreadRecyclerMaxMemory() {
+    return process.env.RSPRESS_SSG_WORKER_THREAD_RECYCLER_MAX_MEMORY ? Number.parseInt(process.env.RSPRESS_SSG_WORKER_THREAD_RECYCLER_MAX_MEMORY, 10) : 1000000000;
+}
+function inferNumberOfThreads({ pageCount, cpuCount, minPagesPerCpu }) {
+    const threadsByWorkload = Math.ceil(pageCount / minPagesPerCpu);
+    return Math.max(1, Math.min(threadsByWorkload, cpuCount));
+}
+function SSGWorkerThreadCount() {
+    return process.env.RSPRESS_SSG_WORKER_THREAD_COUNT ? Number.parseInt(process.env.RSPRESS_SSG_WORKER_THREAD_COUNT, 10) : void 0;
+}
+function getNumberOfThreads(pathnamesLength) {
+    const workerCount = SSGWorkerThreadCount();
+    if (void 0 !== workerCount) return workerCount;
+    const cpuCount = 'function' == typeof node_os.availableParallelism ? node_os.availableParallelism() : node_os.cpus().length;
+    return inferNumberOfThreads({
+        pageCount: pathnamesLength,
+        cpuCount,
+        minPagesPerCpu: 100
+    });
+}
+function SSGConcurrency() {
+    return process.env.RSPRESS_SSG_CONCURRENCY ? Number.parseInt(process.env.RSPRESS_SSG_CONCURRENCY, 10) : 32;
+}
+export { SSGConcurrency, SSGWorkerThreadRecyclerMaxMemory, SSGWorkerThreadTaskSize, getNumberOfThreads };

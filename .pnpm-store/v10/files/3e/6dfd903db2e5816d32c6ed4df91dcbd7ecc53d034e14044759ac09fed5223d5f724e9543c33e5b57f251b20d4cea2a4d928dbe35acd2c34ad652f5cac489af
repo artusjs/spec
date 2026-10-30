@@ -1,0 +1,10 @@
+import type RspackChain from '../../compiled/rspack-chain/types';
+import type { Rspack } from '../types';
+export declare const removeLeadingSlash: (s: string) => string;
+export declare const removeTailingSlash: (s: string) => string;
+export declare const addTrailingSlash: (s: string) => string;
+export declare const isURL: (str: string) => boolean;
+export declare const urlJoin: (base: string, path: string) => string;
+export declare const ensureAssetPrefix: (url: string, assetPrefix?: Rspack.PublicPath) => string;
+export declare const formatPublicPath: (publicPath: string, withSlash?: boolean) => string;
+export declare const getPublicPathFromChain: (chain: RspackChain, withSlash?: boolean) => string;

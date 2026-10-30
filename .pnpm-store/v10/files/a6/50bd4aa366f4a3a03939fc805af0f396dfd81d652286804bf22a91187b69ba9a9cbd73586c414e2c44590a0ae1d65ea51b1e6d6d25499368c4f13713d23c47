@@ -1,0 +1,6 @@
+import { removeLeadingSlash } from "../../7319.js";
+function getPageKey(route) {
+    const cleanRoute = removeLeadingSlash(route);
+    return cleanRoute.replace(/\//g, '_').replace(/\.[^.]+$/, '') || 'index';
+}
+export { getPageKey };

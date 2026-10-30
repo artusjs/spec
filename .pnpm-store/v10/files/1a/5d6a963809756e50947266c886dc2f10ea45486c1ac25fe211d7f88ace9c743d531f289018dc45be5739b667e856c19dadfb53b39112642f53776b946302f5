@@ -1,0 +1,33 @@
+import { createRequire, node_path, package_namespaceObject } from "../8311.js";
+const constants_require = createRequire(import.meta.url);
+const RSPRESS_VERSION = package_namespaceObject.rE;
+const APPEARANCE_KEY = 'rspress-theme-appearance';
+const isProduction = ()=>'production' === process.env.NODE_ENV;
+const importStatementRegex = /import\s+(.*?)\s+from\s+(['"])(.*?)(?:"|');?/gm;
+const inlineThemeScript = `{
+  const saved = localStorage.getItem('${APPEARANCE_KEY}')
+  const preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  const isDark = !saved || saved === 'auto' ? preferDark : saved === 'dark'
+  document.documentElement.classList.toggle('dark', isDark)
+  document.documentElement.classList.toggle('rp-dark', isDark)
+  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light'
+}`.replace(/\n/g, ';').replace(/\s{2,}/g, '');
+const PACKAGE_ROOT = node_path.dirname(constants_require.resolve('@rspress/core/package.json'));
+const DEFAULT_THEME = node_path.join(PACKAGE_ROOT, 'dist/theme');
+const EJECTED_THEME = node_path.join(PACKAGE_ROOT, 'dist/eject-theme');
+const TEMPLATE_PATH = node_path.join(PACKAGE_ROOT, 'index.html');
+const CSR_CLIENT_ENTRY = node_path.join(PACKAGE_ROOT, 'dist', 'runtime', 'csrClientEntry.js');
+const SSR_CLIENT_ENTRY = node_path.join(PACKAGE_ROOT, 'dist', 'runtime', 'ssrClientEntry.js');
+const SSR_SERVER_ENTRY = node_path.join(PACKAGE_ROOT, 'dist', 'runtime', 'ssrServerEntry.js');
+const SSG_MD_SERVER_ENTRY = node_path.join(PACKAGE_ROOT, 'dist', 'runtime', 'ssrMdServerEntry.js');
+const OUTPUT_DIR = 'doc_build';
+const APP_HTML_MARKER = '<!--<?- DOC_CONTENT ?>-->';
+const HEAD_MARKER = '<!--<?- HEAD ?>-->';
+const META_GENERATOR = '<!--<?- GENERATOR ?>-->';
+const DEFAULT_TITLE = 'Rspress';
+const PUBLIC_DIR = 'public';
+const NODE_SSG_BUNDLE_FOLDER = '__ssg__';
+const NODE_SSG_BUNDLE_NAME = 'rspress-ssg-entry.cjs';
+const NODE_SSG_MD_BUNDLE_FOLDER = '__ssg_md__';
+const NODE_SSG_MD_BUNDLE_NAME = 'rspress-ssg-md-entry.cjs';
+export { APP_HTML_MARKER, CSR_CLIENT_ENTRY, DEFAULT_THEME, DEFAULT_TITLE, EJECTED_THEME, HEAD_MARKER, META_GENERATOR, NODE_SSG_BUNDLE_FOLDER, NODE_SSG_BUNDLE_NAME, NODE_SSG_MD_BUNDLE_FOLDER, NODE_SSG_MD_BUNDLE_NAME, OUTPUT_DIR, PACKAGE_ROOT, PUBLIC_DIR, RSPRESS_VERSION, SSG_MD_SERVER_ENTRY, SSR_CLIENT_ENTRY, SSR_SERVER_ENTRY, TEMPLATE_PATH, importStatementRegex, inlineThemeScript, isProduction };

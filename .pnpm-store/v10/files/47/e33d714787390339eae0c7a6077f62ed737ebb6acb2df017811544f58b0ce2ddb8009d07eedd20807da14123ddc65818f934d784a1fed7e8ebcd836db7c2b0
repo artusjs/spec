@@ -1,0 +1,43 @@
+import { Fragment, jsx, jsxs } from "react/jsx-runtime";
+import { getCustomMDXComponent, renderInlineMarkdown } from "@rspress/core/theme";
+import { slug } from "github-slugger";
+import { useMemo } from "react";
+const getHeadingMap = ()=>{
+    const { h1, h2, h3, h4, h5, h6 } = getCustomMDXComponent();
+    return {
+        1: h1,
+        2: h2,
+        3: h3,
+        4: h4,
+        5: h5,
+        6: h6
+    };
+};
+function FallbackHeading({ level, title }) {
+    if (process.env.__SSR_MD__) return /*#__PURE__*/ jsx(Fragment, {
+        children: `${'#'.repeat(level)} ${title}\n\n`
+    });
+    const titleSlug = title && slug(title.trim());
+    const Element = useMemo(()=>{
+        const headingMap = getHeadingMap();
+        return headingMap[level] || headingMap[1];
+    }, [
+        level
+    ]);
+    const A = useMemo(()=>getCustomMDXComponent().a, []);
+    return titleSlug && /*#__PURE__*/ jsxs(Element, {
+        id: titleSlug,
+        children: [
+            /*#__PURE__*/ jsx("span", {
+                ...renderInlineMarkdown(title)
+            }),
+            /*#__PURE__*/ jsx(A, {
+                className: "rp-header-anchor",
+                href: `#${titleSlug}`,
+                "aria-hidden": true,
+                children: "#"
+            })
+        ]
+    });
+}
+export { FallbackHeading };

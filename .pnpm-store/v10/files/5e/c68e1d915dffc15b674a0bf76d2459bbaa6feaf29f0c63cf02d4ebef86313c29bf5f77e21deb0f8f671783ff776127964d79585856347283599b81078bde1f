@@ -1,0 +1,424 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/MetaJson",
+  "definitions": {
+    "MetaJson": {
+      "$ref": "#/definitions/SideMeta"
+    },
+    "SideMeta": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/SideMetaItem"
+      }
+    },
+    "SideMetaItem": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FileSideMeta"
+        },
+        {
+          "$ref": "#/definitions/DirSideMeta"
+        },
+        {
+          "$ref": "#/definitions/DirSectionHeaderSideMeta"
+        },
+        {
+          "$ref": "#/definitions/DividerSideMeta"
+        },
+        {
+          "$ref": "#/definitions/SectionHeaderMeta"
+        },
+        {
+          "$ref": "#/definitions/CustomLinkMeta"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "FileSideMeta": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "file"
+        },
+        "name": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "overviewHeaders": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "context": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "DirSideMeta": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "dir"
+        },
+        "name": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "overviewHeaders": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "context": {
+          "type": "string"
+        },
+        "collapsible": {
+          "type": "boolean"
+        },
+        "collapsed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "DirSectionHeaderSideMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "dir-section-header"
+        },
+        "label": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "overviewHeaders": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "context": {
+          "type": "string"
+        },
+        "collapsible": {
+          "type": "boolean"
+        },
+        "collapsed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "label",
+        "name",
+        "type"
+      ]
+    },
+    "DividerSideMeta": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "divider"
+        },
+        "dashed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "SectionHeaderMeta": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "section-header"
+        },
+        "label": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "label"
+      ],
+      "additionalProperties": false
+    },
+    "CustomLinkMeta": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "custom-link"
+            },
+            "label": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "overviewHeaders": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "context": {
+              "type": "string"
+            },
+            "link": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "label",
+            "link"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "custom-link"
+            },
+            "label": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "overviewHeaders": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "context": {
+              "type": "string"
+            },
+            "link": {
+              "type": "string"
+            },
+            "collapsible": {
+              "type": "boolean"
+            },
+            "collapsed": {
+              "type": "boolean"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "custom-link"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "tag": {
+                        "type": "string"
+                      },
+                      "overviewHeaders": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        }
+                      },
+                      "context": {
+                        "type": "string"
+                      },
+                      "link": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "label",
+                      "link"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "custom-link"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "tag": {
+                        "type": "string"
+                      },
+                      "overviewHeaders": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        }
+                      },
+                      "context": {
+                        "type": "string"
+                      },
+                      "link": {
+                        "type": "string"
+                      },
+                      "collapsible": {
+                        "type": "boolean"
+                      },
+                      "collapsed": {
+                        "type": "boolean"
+                      },
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/definitions/alias-926151818-700-1288-926151818-0-2151"
+                        }
+                      }
+                    },
+                    "required": [
+                      "label",
+                      "items"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          },
+          "required": [
+            "type",
+            "label",
+            "items"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "alias-926151818-700-1288-926151818-0-2151": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "custom-link"
+            },
+            "label": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "overviewHeaders": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "context": {
+              "type": "string"
+            },
+            "link": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "label",
+            "link"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "custom-link"
+            },
+            "label": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "overviewHeaders": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "context": {
+              "type": "string"
+            },
+            "link": {
+              "type": "string"
+            },
+            "collapsible": {
+              "type": "boolean"
+            },
+            "collapsed": {
+              "type": "boolean"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/alias-926151818-700-1288-926151818-0-2151"
+              }
+            }
+          },
+          "required": [
+            "label",
+            "items"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

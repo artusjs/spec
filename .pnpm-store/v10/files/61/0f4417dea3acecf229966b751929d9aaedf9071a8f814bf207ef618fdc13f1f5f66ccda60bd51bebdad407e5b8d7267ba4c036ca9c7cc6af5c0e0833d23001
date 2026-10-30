@@ -1,0 +1,31 @@
+import { createHead, logger, pathToFileURL, picocolors } from "../../7319.js";
+import { hintSSGFailed } from "../logger/hint.js";
+async function renderPage(route, ssrBundlePath) {
+    let render;
+    try {
+        let { default: ssrExports } = await import(pathToFileURL(ssrBundlePath).toString());
+        if (ssrExports instanceof Promise) ssrExports = await ssrExports;
+        render = ssrExports.render;
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(`Failed to load SSG bundle: ${picocolors.yellow(ssrBundlePath)}: ${e.message}`);
+            logger.debug(e);
+            hintSSGFailed();
+        }
+        throw e;
+    }
+    const head = createHead();
+    const { routePath, absolutePath } = route;
+    let appMd = '';
+    if (render) try {
+        ({ appMd } = await render(routePath, head));
+    } catch (e) {
+        if (e instanceof Error) {
+            logger.error(`Page "${picocolors.yellow(routePath)}" SSG-MD rendering failed.
+${absolutePath ? picocolors.gray(`    File: ${absolutePath}\n`) : ''}    ${picocolors.gray(e.toString())}`);
+            throw e;
+        }
+    }
+    return appMd;
+}
+export { renderPage };
