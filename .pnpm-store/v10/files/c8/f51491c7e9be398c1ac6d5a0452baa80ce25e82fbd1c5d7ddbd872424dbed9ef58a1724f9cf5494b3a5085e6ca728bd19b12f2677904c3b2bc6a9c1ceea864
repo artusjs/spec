@@ -1,0 +1,81 @@
+.rp-sidebar-item {
+  cursor: pointer;
+  color: var(--rp-c-text-2);
+  border-radius: 8px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2px;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 24px;
+  transition: color .15s, background-color .15s;
+  display: flex;
+  position: relative;
+}
+
+.rp-sidebar-item:hover, .rp-sidebar-item--pending {
+  color: var(--rp-c-text-1);
+  background-color: var(--rp-c-bg-mute);
+}
+
+.rp-sidebar-item--pending {
+  opacity: .8;
+}
+
+.rp-sidebar-item.rp-link[target="_blank"]:after {
+  content: "↗";
+  margin-left: .2em;
+  margin-right: .1em;
+  font-size: 1em;
+  font-weight: 400;
+  display: inline-block;
+}
+
+.rp-sidebar-item--active {
+  color: var(--rp-c-link);
+  background-color: var(--rp-c-brand-tint);
+  font-weight: 600;
+}
+
+.rp-sidebar-item--active:hover {
+  color: var(--rp-c-link);
+  background-color: var(--rp-c-brand-tint);
+}
+
+.rp-sidebar-item--group-item:before {
+  content: "";
+  background-color: var(--rp-c-divider-light);
+  width: 1px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 12px;
+}
+
+.rp-sidebar-item--group-item.rp-sidebar-item--active .rp-sidebar-item__left:before {
+  content: "";
+  background-color: var(--rp-c-brand);
+  width: 1px;
+  height: calc(50% - 4px);
+  position: absolute;
+  top: calc(25% + 2px);
+  bottom: 0;
+  left: 12px;
+}
+
+.rp-sidebar-item__left {
+  align-items: center;
+  gap: 4px;
+  display: flex;
+}
+
+.rp-sidebar-item__right {
+  align-items: center;
+  display: flex;
+}
+
+.rp-sidebar-item__link {
+  opacity: 1;
+}
+

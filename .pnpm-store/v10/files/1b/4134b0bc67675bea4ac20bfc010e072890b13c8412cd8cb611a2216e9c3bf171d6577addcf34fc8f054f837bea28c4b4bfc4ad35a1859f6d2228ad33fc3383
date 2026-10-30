@@ -1,0 +1,147 @@
+.rp-codeblock {
+  position: relative;
+  margin: 1rem 0;
+  border: var(--rp-code-block-border);
+  box-shadow: var(--rp-code-block-shadow);
+
+  overflow-x: auto;
+  transition: none;
+  border-radius: var(--rp-radius);
+
+  @media (max-width: 640px) {
+    margin: 1.5rem 0;
+    contain: content;
+  }
+}
+
+.rp-codeblock__title {
+  font-family: var(--rp-font-family-mono);
+  padding: 0.75rem 1rem;
+  font-size: var(--rp-code-font-size);
+  background-color: var(--rp-code-title-bg);
+  border-bottom: var(--rp-code-block-border);
+}
+
+.rp-codeblock__content {
+  position: relative;
+  color: var(--rp-code-block-color);
+  background-color: var(--rp-code-block-bg);
+
+  &__scroll-container {
+    overflow-x: auto;
+  }
+
+  & :where(pre) {
+    outline: none; // avoid focus outline https://github.com/web-infra-dev/rspack/issues/11775
+
+    // #region text
+    text-align: left;
+    white-space: pre;
+    word-spacing: normal;
+    word-break: normal;
+    word-wrap: normal;
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    hyphens: none;
+    // #endregion text
+
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    background: transparent;
+  }
+
+  & :where(code) {
+    font-size: var(--rp-code-font-size);
+    font-family: var(--rp-font-family-mono);
+    display: inline-block;
+    padding: 1rem 0;
+    width: fit-content;
+    min-width: 100%;
+    line-height: 1.7;
+  }
+
+  &--wrap-code code {
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+  }
+
+  &--line-numbers code {
+    counter-reset: step;
+    counter-increment: step 0;
+    & .line::before {
+      width: 2ch;
+      content: counter(step);
+      counter-increment: step;
+      margin-right: 1rem;
+      display: inline-block;
+      text-align: right;
+      color: rgba(115, 138, 148, 0.4);
+    }
+    // 100+ for 3 digits
+    &:has(.line:nth-child(100)) .line::before {
+      width: 3ch;
+    }
+  }
+
+  &--scroll {
+    overflow-y: auto;
+  }
+
+  &--fold {
+    overflow: hidden;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: linear-gradient(
+        to bottom,
+        transparent,
+        var(--rp-code-block-bg)
+      );
+      pointer-events: none;
+      z-index: 2;
+    }
+  }
+}
+
+.rp-codeblock__fold-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 4px 0;
+  border: none;
+  background-color: var(--rp-code-block-bg);
+  color: var(--rp-c-text-3);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+  user-select: none;
+  border-radius: 0 0 var(--rp-radius) var(--rp-radius);
+
+  &:hover {
+    color: var(--rp-c-text-1);
+    background-color: var(--rp-code-title-bg);
+  }
+
+  &__icon {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.3s ease;
+  }
+
+  &--expanded &__icon {
+    transform: rotate(180deg);
+  }
+}

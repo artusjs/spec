@@ -1,0 +1,53 @@
+import { addTrailingSlash, DEFAULT_PAGE_EXTENSIONS, addLeadingSlash } from "../../7319.js";
+const getRoutePathParts = (relativePath, lang, version, langs, versions)=>{
+    const [versionPart, langPart, purePath] = splitRoutePathParts(relativePath, lang, version, langs, versions);
+    return [
+        versionPart === version ? '' : versionPart,
+        langPart === lang ? '' : langPart,
+        purePath
+    ];
+};
+const splitRoutePathParts = (relativePath, lang, version, langs, versions)=>{
+    const hasTrailSlash = relativePath.endsWith('/');
+    let versionPart = '';
+    let langPart = '';
+    let purePathPart = '';
+    const parts = relativePath.split('/').filter(Boolean);
+    if (version) {
+        const versionToMatch = parts[0];
+        if (versions.includes(versionToMatch)) versionPart = parts.shift() ?? '';
+    }
+    if (lang) {
+        const langToMatch = parts[0];
+        if (langs.includes(langToMatch)) langPart = parts.shift() ?? '';
+    }
+    purePathPart = parts.join('/');
+    return [
+        versionPart,
+        langPart,
+        hasTrailSlash ? addTrailingSlash(purePathPart) : purePathPart
+    ];
+};
+const normalizeRoutePath = (relativePath, lang, version, langs, versions, extensions = DEFAULT_PAGE_EXTENSIONS)=>{
+    const extensionsWithoutDot = extensions.map((i)=>i.slice(1));
+    const cleanExtensionPattern = new RegExp(`\\.(${extensionsWithoutDot.join('|')})$`, 'i');
+    let routePath = relativePath.replace(cleanExtensionPattern, '').replace(/\.html$/, '');
+    if (routePath.endsWith('/')) routePath = `${routePath}index`;
+    const [versionPart, langPart, purePathPart] = getRoutePathParts(routePath, lang, version, langs, versions);
+    routePath = purePathPart.replace(/\/index$/, '/');
+    if ('index' === routePath) routePath = '';
+    const normalizedRoutePath = addLeadingSlash([
+        ...[
+            versionPart,
+            langPart
+        ].filter(Boolean),
+        routePath
+    ].join('/'));
+    return {
+        pureRoutePath: `/${routePath}`,
+        routePath: normalizedRoutePath,
+        lang: langPart || lang,
+        version: versionPart || version
+    };
+};
+export { getRoutePathParts, normalizeRoutePath, splitRoutePathParts };

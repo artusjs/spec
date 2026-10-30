@@ -1,0 +1,101 @@
+var package_namespaceObject = {
+    rE: "2.0.8"
+};
+async function pMap(iterable, mapper, { concurrency = 1 / 0, stopOnError = true, signal } = {}) {
+    return new Promise((resolve_, reject_)=>{
+        if (void 0 === iterable[Symbol.iterator] && void 0 === iterable[Symbol.asyncIterator]) throw new TypeError(`Expected \`input\` to be either an \`Iterable\` or \`AsyncIterable\`, got (${typeof iterable})`);
+        if ('function' != typeof mapper) throw new TypeError('Mapper function is required');
+        if (!(Number.isSafeInteger(concurrency) && concurrency >= 1 || concurrency === 1 / 0)) throw new TypeError(`Expected \`concurrency\` to be an integer from 1 and up or \`Infinity\`, got \`${concurrency}\` (${typeof concurrency})`);
+        const result = [];
+        const errors = [];
+        const skippedIndexesMap = new Map();
+        let isRejected = false;
+        let isResolved = false;
+        let isIterableDone = false;
+        let resolvingCount = 0;
+        let currentIndex = 0;
+        const iterator = void 0 === iterable[Symbol.iterator] ? iterable[Symbol.asyncIterator]() : iterable[Symbol.iterator]();
+        const signalListener = ()=>{
+            reject(signal.reason);
+        };
+        const cleanup = ()=>{
+            signal?.removeEventListener('abort', signalListener);
+        };
+        const resolve = (value)=>{
+            resolve_(value);
+            cleanup();
+        };
+        const reject = (reason)=>{
+            isRejected = true;
+            isResolved = true;
+            reject_(reason);
+            cleanup();
+        };
+        if (signal) {
+            if (signal.aborted) reject(signal.reason);
+            signal.addEventListener('abort', signalListener, {
+                once: true
+            });
+        }
+        const next = async ()=>{
+            if (isResolved) return;
+            const nextItem = await iterator.next();
+            const index = currentIndex;
+            currentIndex++;
+            if (nextItem.done) {
+                isIterableDone = true;
+                if (0 === resolvingCount && !isResolved) {
+                    if (!stopOnError && errors.length > 0) return void reject(new AggregateError(errors));
+                    isResolved = true;
+                    if (0 === skippedIndexesMap.size) return void resolve(result);
+                    const pureResult = [];
+                    for (const [index, value] of result.entries())if (skippedIndexesMap.get(index) !== pMapSkip) pureResult.push(value);
+                    resolve(pureResult);
+                }
+                return;
+            }
+            resolvingCount++;
+            (async ()=>{
+                try {
+                    const element = await nextItem.value;
+                    if (isResolved) return;
+                    const value = await mapper(element, index);
+                    if (value === pMapSkip) skippedIndexesMap.set(index, value);
+                    result[index] = value;
+                    resolvingCount--;
+                    await next();
+                } catch (error) {
+                    if (stopOnError) reject(error);
+                    else {
+                        errors.push(error);
+                        resolvingCount--;
+                        try {
+                            await next();
+                        } catch (error) {
+                            reject(error);
+                        }
+                    }
+                }
+            })();
+        };
+        (async ()=>{
+            for(let index = 0; index < concurrency; index++){
+                try {
+                    await next();
+                } catch (error) {
+                    reject(error);
+                    break;
+                }
+                if (isIterableDone || isRejected) break;
+            }
+        })();
+    });
+}
+const pMapSkip = Symbol('skip');
+export { createRequire } from "node:module";
+export { default as node_path } from "node:path";
+export { pathToFileURL } from "node:url";
+export { logger } from "@rspress/shared/logger";
+export { createHead, transformHtmlTemplate } from "@unhead/react/server";
+export { default as picocolors } from "picocolors";
+export { pMap, package_namespaceObject };

@@ -1,0 +1,423 @@
+import node_path from "node:path";
+import { getSidebarDataGroup, logger, matchPath, normalizeHref, remarkFileCodeBlock, remarkLink, withBase } from "@rspress/core";
+import remark_mdx from "remark-mdx";
+import remark_parse from "remark-parse";
+import remark_stringify from "remark-stringify";
+import { unified } from "unified";
+import { SKIP, visit } from "unist-util-visit";
+function routePathToMdPath(routePath, base) {
+    let url = routePath;
+    url = normalizeHref(url, false);
+    url = url.replace(/\.html$/, '.md');
+    return withBase(url, base);
+}
+function generateLlmsTxt(pageDataArray, navList, others, llmsTxtOptions, title, description, base) {
+    const lines = [];
+    const { onAfterLlmsTxtGenerate, onLineGenerate, onTitleGenerate } = llmsTxtOptions;
+    if (!onTitleGenerate && !title) logger.warn('No `title` is configured in your Rspress setup. Please set `title` in rspress.config.ts so llms.txt can include an appropriate heading.');
+    const summary = onTitleGenerate ? onTitleGenerate({
+        title,
+        description
+    }) : title ? `# ${title}${description ? `\n\n> ${description}` : ''}` : '';
+    for(let i = 0; i < navList.length; i++){
+        const nav = navList[i];
+        const pages = pageDataArray[i];
+        const { text } = nav;
+        if (0 === pages.length) continue;
+        const title = text;
+        lines.push(`\n## ${title}\n`);
+        for (const page of pages){
+            const { routePath, lang, title, description } = page;
+            if ('/' === routePath || routePath === `/${lang}/`) continue;
+            const line = onLineGenerate ? onLineGenerate(page) : `- [${title}](${routePathToMdPath(routePath, base)})${description ? `: ${description}` : ''}`;
+            lines.push(line);
+        }
+    }
+    let hasOthers = false;
+    const otherLines = [];
+    otherLines.push('\n## Other\n');
+    for (const page of others){
+        const { routePath, lang, title, description } = page;
+        if ('/' === routePath || routePath === `/${lang}/`) continue;
+        const line = onLineGenerate ? onLineGenerate(page) : `- [${title}](${routePathToMdPath(routePath, base)})${description ? `: ${description}` : ''}`;
+        otherLines.push(line);
+        hasOthers = true;
+    }
+    if (hasOthers) lines.push(...otherLines);
+    let llmsTxt;
+    llmsTxt = summary ? lines.length > 0 ? `${summary}\n${lines.join('\n')}` : summary : lines.join('\n').trimStart();
+    return onAfterLlmsTxtGenerate ? onAfterLlmsTxtGenerate(llmsTxt) : llmsTxt;
+}
+function generateLlmsFullTxt(pageDataArray, navList, others, base) {
+    const lines = [];
+    for(let i = 0; i < navList.length; i++){
+        const pages = pageDataArray[i];
+        if (0 !== pages.length) for (const page of pages){
+            lines.push(`---
+url: ${routePathToMdPath(page.routePath, base)}
+---
+`);
+            lines.push(page.mdContent ?? page._flattenContent ?? page.content);
+            lines.push('\n');
+        }
+    }
+    for (const page of others){
+        lines.push(`---
+url: ${routePathToMdPath(page.routePath, base)}
+---
+`);
+        lines.push(page.mdContent ?? page._flattenContent ?? page.content);
+        lines.push('\n');
+    }
+    return lines.join('\n');
+}
+const mdxToMdPlugin = ()=>(tree)=>{
+        visit(tree, 'mdxjsEsm', (node)=>{
+            if (node.data?.estree?.body[0].type === 'ImportDeclaration') {
+                node.value = '';
+                return SKIP;
+            }
+        });
+        visit(tree, 'mdxJsxFlowElement', (node, index, parent)=>{
+            if (parent && void 0 !== index && Array.isArray(parent.children)) {
+                parent.children.splice(index, 1, ...node.children);
+                return index - 1;
+            }
+        });
+        visit(tree, 'mdxJsxTextElement', (node, index, parent)=>{
+            if (parent && void 0 !== index && Array.isArray(parent.children)) {
+                parent.children.splice(index, 1, ...node.children);
+                return index - 1;
+            }
+        });
+    };
+function noopPlugin() {}
+async function normalizeMdFile(content, filepath, routeService, base, mdxToMd, isMd, remarkPlugins) {
+    const compiler = unified().use(remark_parse).use(isMd ? noopPlugin : remark_mdx).use(remarkFileCodeBlock, {
+        filepath
+    }).use(!isMd && mdxToMd ? mdxToMdPlugin : noopPlugin).use(remarkLink, {
+        cleanUrls: '.md',
+        routeService,
+        remarkLinkOptions: {
+            checkDeadLinks: false,
+            autoPrefix: true
+        },
+        __base: base
+    }).use(remarkPlugins).use(remark_stringify);
+    const vfile = await compiler.process({
+        value: content,
+        path: filepath
+    });
+    const result = vfile.toString();
+    if ('' === result.trim()) return '\n';
+    return result;
+}
+function resolveNavForVersion(nav, version, defaultVersion) {
+    return nav.flatMap(({ nav, lang })=>{
+        let navArray;
+        if (Array.isArray(nav)) navArray = nav;
+        else {
+            const navObj = nav;
+            navArray = navObj[version] ?? navObj[defaultVersion] ?? navObj.default ?? [];
+        }
+        return navArray.map((item)=>({
+                ...item,
+                lang
+            }));
+    }).filter((i)=>i.activeMatch || i.link);
+}
+const rsbuildPluginLlms = ({ disableSSGRef, baseRef, pageDataList, routes, titleRef, descriptionRef, langRef, sidebar, routeServiceRef, nav, versionsRef, defaultVersionRef, rspressPluginOptions, index = 0 })=>({
+        name: `rsbuild-plugin-llms-${index}`,
+        async setup (api) {
+            const { llmsTxt = {
+                name: 'llms.txt'
+            }, mdFiles = {
+                mdxToMd: false,
+                remarkPlugins: []
+            }, llmsFullTxt = {
+                name: 'llms-full.txt'
+            }, include, exclude } = rspressPluginOptions;
+            api.onBeforeBuild(async ()=>{
+                const disableSSG = disableSSGRef.current;
+                const versions = versionsRef.current;
+                const defaultVersion = defaultVersionRef.current;
+                const isMultiVersion = versions.length > 0;
+                const newPageDataList = mergeRouteMetaWithPageData(routes, pageDataList, langRef.current, include, exclude);
+                const mdContents = {};
+                await Promise.all([
+                    ...newPageDataList.values()
+                ].map(async (pageData)=>{
+                    const content = pageData._flattenContent ?? pageData.content;
+                    const filepath = pageData._filepath;
+                    const isMD = 'mdx' !== node_path.extname(filepath).slice(1);
+                    let mdContent;
+                    try {
+                        mdContent = await normalizeMdFile(content, filepath, routeServiceRef.current, baseRef.current, 'boolean' != typeof mdFiles ? mdFiles?.mdxToMd ?? false : false, isMD, 'boolean' != typeof mdFiles ? mdFiles?.remarkPlugins ?? [] : []);
+                    } catch (e) {
+                        logger.debug('normalizeMdFile failed', pageData.routePath, e);
+                        mdContent = content;
+                    }
+                    const outFilePath = routePathToMdPath(pageData.routePath, '');
+                    const mdContentStr = mdContent.toString();
+                    mdContents[outFilePath] = mdContentStr;
+                    pageData.mdContent = mdContentStr;
+                }));
+                const versionList = isMultiVersion ? versions : [
+                    ''
+                ];
+                for (const version of versionList){
+                    const navList = resolveNavForVersion(nav, version, defaultVersion);
+                    const versionPages = isMultiVersion ? new Map([
+                        ...newPageDataList.entries()
+                    ].filter(([, pageData])=>pageData.version === version)) : newPageDataList;
+                    const others = [];
+                    const pageArray = new Array(navList.length).fill(0).map(()=>[]);
+                    versionPages.forEach((pageData)=>{
+                        const { routePath, lang } = pageData;
+                        for(let i = 0; i < pageArray.length; i++){
+                            const pageArrayItem = pageArray[i];
+                            const navItem = navList[i];
+                            if (lang === navItem.lang && new RegExp((navItem.activeMatch ?? navItem.link).replace(/\.html$/, '')).test(routePath)) return void pageArrayItem.push(pageData);
+                        }
+                        others.push(pageData);
+                    });
+                    for (const array of pageArray)organizeBySidebar(sidebar, array);
+                    const versionPrefix = isMultiVersion && version !== defaultVersion ? `${version}/` : '';
+                    if (llmsTxt) {
+                        const name = `${versionPrefix}${llmsTxt.name}`;
+                        const llmsTxtContent = generateLlmsTxt(pageArray, navList, others, llmsTxt, titleRef.current, descriptionRef.current, baseRef.current);
+                        api.processAssets({
+                            environments: disableSSG ? [
+                                'web'
+                            ] : [
+                                'node'
+                            ],
+                            stage: 'additional'
+                        }, async ({ compilation, sources })=>{
+                            const source = new sources.RawSource(llmsTxtContent);
+                            compilation.emitAsset(name, source);
+                        });
+                    }
+                    if (llmsFullTxt) {
+                        const name = `${versionPrefix}${llmsFullTxt.name}`;
+                        const llmsFullTxtContent = generateLlmsFullTxt(pageArray, navList, others, baseRef.current);
+                        api.processAssets({
+                            targets: disableSSG ? [
+                                'web'
+                            ] : [
+                                'node'
+                            ],
+                            stage: 'additional'
+                        }, async ({ compilation, sources })=>{
+                            const source = new sources.RawSource(llmsFullTxtContent);
+                            compilation.emitAsset(name, source);
+                        });
+                    }
+                }
+                if (mdFiles) api.processAssets({
+                    environments: disableSSG ? [
+                        'web'
+                    ] : [
+                        'node'
+                    ],
+                    stage: 'additional'
+                }, async ({ compilation, sources })=>{
+                    if (mdFiles) Object.entries(mdContents).forEach(([outFilePath, content])=>{
+                        const source = new sources.RawSource(content);
+                        compilation.emitAsset(`.${outFilePath}`, source);
+                    });
+                });
+            });
+        }
+    });
+function mergeRouteMetaWithPageData(routeMetaList, pageDataList, lang, include, exclude) {
+    const m = new Map(pageDataList.filter((pageData)=>{
+        if (include) return include({
+            page: pageData
+        });
+        if (lang) return pageData.lang === lang;
+        return true;
+    }).filter((pageData)=>{
+        if (exclude) return !exclude({
+            page: pageData
+        });
+        return true;
+    }).map((pageData)=>[
+            pageData.routePath,
+            pageData
+        ]));
+    const mergedPageDataList = new Map();
+    routeMetaList.forEach((routeMeta)=>{
+        const pageData = m.get(routeMeta.routePath);
+        if (pageData) mergedPageDataList.set(routeMeta.routePath, pageData);
+    });
+    return mergedPageDataList;
+}
+function flatSidebar(sidebar) {
+    if (!sidebar) return [];
+    return sidebar.flatMap((i)=>{
+        if ('string' == typeof i) return i;
+        if ('link' in i && 'string' == typeof i.link) return [
+            i.link,
+            ...flatSidebar(i?.items ?? [])
+        ];
+        if ('items' in i && Array.isArray(i.items)) return flatSidebar(i.items);
+    }).filter(Boolean);
+}
+function organizeBySidebar(sidebar, pages) {
+    if (0 === pages.length) return;
+    const pageItem = pages[0];
+    const currSidebar = getSidebarDataGroup(sidebar, pageItem.routePath);
+    if (0 === currSidebar.length) return;
+    const orderList = flatSidebar(currSidebar);
+    const normalizeLink = (p)=>p.replace(/\.html$/, '').replace(/\/index$/, '/');
+    pages.sort((a, b)=>{
+        const aIndex = orderList.findIndex((order)=>matchPath(normalizeLink(order), a.routePath));
+        const bIndex = orderList.findIndex((order)=>matchPath(normalizeLink(order), b.routePath));
+        return (-1 === aIndex ? Number.MAX_SAFE_INTEGER : aIndex) - (-1 === bIndex ? Number.MAX_SAFE_INTEGER : bIndex);
+    });
+}
+function getDefaultOptions(lang, langs) {
+    if (!lang || 0 === langs.length) return {};
+    return langs.map((l)=>{
+        if (l === lang) return {
+            llmsTxt: {
+                name: 'llms.txt'
+            },
+            llmsFullTxt: {
+                name: 'llms-full.txt'
+            }
+        };
+        return {
+            llmsTxt: {
+                name: `${l}/llms.txt`
+            },
+            llmsFullTxt: {
+                name: `${l}/llms-full.txt`
+            },
+            include ({ page }) {
+                return page.lang === l;
+            }
+        };
+    });
+}
+function pluginLlms(options) {
+    const baseRef = {
+        current: ''
+    };
+    const docDirectoryRef = {
+        current: ''
+    };
+    const titleRef = {
+        current: ''
+    };
+    const descriptionRef = {
+        current: ''
+    };
+    const langRef = {
+        current: ''
+    };
+    const pageDataList = [];
+    const routes = [];
+    const sidebar = {};
+    const disableSSGRef = {
+        current: false
+    };
+    const nav = [];
+    const routeServiceRef = {
+        current: void 0
+    };
+    const versionsRef = {
+        current: []
+    };
+    const defaultVersionRef = {
+        current: ''
+    };
+    return {
+        name: '@rspress/plugin-llms',
+        extendPageData (pageData, isProd) {
+            if (isProd) pageDataList.push(pageData);
+        },
+        routeServiceGenerated (routeService, isProd) {
+            if (isProd) routeServiceRef.current = routeService;
+        },
+        routeGenerated (_routes, isProd) {
+            if (isProd) routes.push(..._routes);
+        },
+        config (config) {
+            config.themeConfig = config.themeConfig || {};
+            config.themeConfig.locales = config.themeConfig.locales || config.locales || [];
+            const langs = config.themeConfig.locales.map((locale)=>locale.lang);
+            let mergedOptions;
+            mergedOptions = void 0 === options ? getDefaultOptions(config.lang, langs) : options;
+            if (!config.builderConfig) config.builderConfig = {};
+            if (!config.builderConfig.plugins) config.builderConfig.plugins = [];
+            config.builderConfig.plugins.push(...Array.isArray(mergedOptions) ? mergedOptions.map((item, index)=>rsbuildPluginLlms({
+                    pageDataList,
+                    routes,
+                    titleRef,
+                    descriptionRef,
+                    langRef,
+                    sidebar,
+                    routeServiceRef,
+                    nav,
+                    versionsRef,
+                    defaultVersionRef,
+                    baseRef,
+                    disableSSGRef,
+                    rspressPluginOptions: item,
+                    index
+                })) : [
+                rsbuildPluginLlms({
+                    pageDataList,
+                    routes,
+                    titleRef,
+                    descriptionRef,
+                    langRef,
+                    sidebar,
+                    routeServiceRef,
+                    nav,
+                    versionsRef,
+                    defaultVersionRef,
+                    baseRef,
+                    disableSSGRef,
+                    rspressPluginOptions: mergedOptions
+                })
+            ]);
+            return config;
+        },
+        beforeBuild (config) {
+            disableSSGRef.current = false === config.ssg;
+            const locales = config.themeConfig?.locales;
+            const isMultiLang = locales && locales.length > 0;
+            const sidebars = isMultiLang ? locales.map((i)=>i.sidebar) : [
+                config.themeConfig?.sidebar
+            ];
+            const configSidebar = sidebars.reduce((prev, curr)=>{
+                Object.assign(prev, curr);
+                return prev;
+            }, {});
+            Object.assign(sidebar, configSidebar);
+            const configNav = isMultiLang ? locales.filter((i)=>Boolean(i.nav)).map((i)=>({
+                    nav: i.nav,
+                    lang: i.lang
+                })) : [
+                {
+                    nav: config.themeConfig?.nav,
+                    lang: config.lang ?? ''
+                }
+            ];
+            nav.push(...configNav);
+            titleRef.current = config.title;
+            descriptionRef.current = config.description;
+            langRef.current = config.lang ?? '';
+            baseRef.current = config.base ?? '/';
+            docDirectoryRef.current = config.root ?? 'docs';
+            if (config.multiVersion) {
+                versionsRef.current = config.multiVersion.versions || [];
+                defaultVersionRef.current = config.multiVersion.default || '';
+            }
+        }
+    };
+}
+export { pluginLlms };

@@ -1,0 +1,36 @@
+.rp-source-code {
+  border: 1px solid;
+  border-color: var(--rp-c-divider);
+  color: var(--rp-c-text-2);
+  fill: currentColor;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.rp-source-code:hover {
+  color: var(--rp-c-text-1);
+}
+
+.rp-source-code__link {
+  color: inherit;
+  justify-content: center;
+  align-items: center;
+  padding: 4px 8px;
+  font-size: 12px;
+  text-decoration: none;
+  transition: all .3s;
+  display: flex;
+}
+
+.rp-source-code__icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  display: inline-flex;
+}
+
+.rp-source-code__text {
+  font-weight: 600;
+  line-height: 1.5em;
+}
+

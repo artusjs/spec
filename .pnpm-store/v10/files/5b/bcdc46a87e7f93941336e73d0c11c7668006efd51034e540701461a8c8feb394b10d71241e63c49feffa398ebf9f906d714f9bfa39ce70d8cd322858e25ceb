@@ -1,0 +1,12 @@
+.rp-doc-footer .rp-edit-link {
+  color: var(--rp-c-brand);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all .2s ease-in-out;
+}
+
+.rp-doc-footer .rp-edit-link:hover {
+  color: var(--rp-c-brand-dark);
+}
+

@@ -1,0 +1,56 @@
+import { logger, pluginVirtualModule } from "../../../7319.js";
+import { createPageData } from "./createPageData.js";
+const rsbuildPluginDocVM = async ({ config, userDocRoot, routeService, pluginDriver })=>{
+    const ref = {
+        pageData: null,
+        searchIndex: null,
+        indexHashByGroup: null,
+        filepaths: []
+    };
+    const searchIndexRsbuildPlugin = {
+        name: 'rsbuild-plugin-searchIndex',
+        async setup (api) {
+            api.modifyBundlerChain(async (bundlerChain, { environment })=>{
+                const alias = bundlerChain.resolve.alias.entries();
+                if ('web' === environment.name) {
+                    const now = performance.now();
+                    const { pageData, indexHashByGroup, searchIndex, filepaths } = await createPageData({
+                        config,
+                        alias: alias,
+                        userDocRoot,
+                        routeService,
+                        pluginDriver
+                    });
+                    logger.debug(`createPageData cost: ${performance.now() - now}ms`);
+                    ref.pageData = pageData;
+                    ref.searchIndex = searchIndex;
+                    ref.indexHashByGroup = indexHashByGroup;
+                    ref.filepaths = filepaths;
+                }
+                api.processAssets({
+                    stage: 'report',
+                    environments: [
+                        'web'
+                    ]
+                }, ({ compilation, compiler })=>{
+                    if (!ref.searchIndex) return;
+                    for (const [filename, stringifiedIndex] of Object.entries(ref.searchIndex))compilation.emitAsset(`static/${filename}`, new compiler.webpack.sources.RawSource(stringifiedIndex));
+                });
+            });
+        }
+    };
+    return [
+        searchIndexRsbuildPlugin,
+        pluginVirtualModule({
+            tempDir: '.rspress',
+            virtualModules: {
+                ["virtual-page-data"]: async ({ addDependency })=>{
+                    for (const file of ref.filepaths)addDependency(file);
+                    return `export const pageData = ${JSON.stringify(ref.pageData, null, 2)};
+          export const searchIndexHash = ${JSON.stringify(ref.indexHashByGroup, null, 2)};`;
+                }
+            }
+        })
+    ];
+};
+export { rsbuildPluginDocVM };

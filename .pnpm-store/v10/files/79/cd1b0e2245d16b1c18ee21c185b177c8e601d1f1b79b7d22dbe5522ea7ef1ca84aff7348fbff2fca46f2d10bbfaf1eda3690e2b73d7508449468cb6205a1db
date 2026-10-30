@@ -1,0 +1,94 @@
+import { isExternalUrl, slash, addLeadingSlash, normalizeHref } from "../../../7319.js";
+import { getI18nData } from "../i18n.js";
+import { applyReplaceRules } from "../../utils/applyReplaceRules.js";
+async function normalizeThemeConfig(docConfig) {
+    const { locales: siteLocales, lang, replaceRules = [], multiVersion } = docConfig;
+    const { versions = [] } = multiVersion || {};
+    const hasMultiVersion = versions.length > 0;
+    docConfig.themeConfig = docConfig.themeConfig || {};
+    const { themeConfig } = docConfig;
+    const locales = siteLocales ?? (themeConfig?.locales || []);
+    const i18nTextData = await getI18nData(docConfig);
+    const normalizeLinkPrefix = (link, currentLang)=>{
+        const normalizedLink = slash(link);
+        if (!currentLang || !link || normalizedLink.startsWith(`/${currentLang}`) || isExternalUrl(normalizedLink) || hasMultiVersion) return normalizedLink;
+        return lang === currentLang ? normalizedLink : `/${currentLang}${addLeadingSlash(normalizedLink)}`;
+    };
+    const getI18nText = (key, currentLang)=>{
+        const text = i18nTextData[key]?.[currentLang];
+        return text || key;
+    };
+    const cleanUrls = false;
+    const transformLink = (link, currentLang)=>normalizeHref(normalizeLinkPrefix(link, currentLang), cleanUrls);
+    const textReplace = (text, currentLang)=>applyReplaceRules(getI18nText(text, currentLang), replaceRules);
+    const normalizeSidebar = (sidebar, currentLang)=>{
+        const normalizedSidebar = {};
+        if (!sidebar) return {};
+        const normalizeSidebarItem = (item)=>{
+            if ('object' == typeof item && 'dividerType' in item) return item;
+            if ('object' == typeof item && 'sectionHeaderText' in item) {
+                item.sectionHeaderText = textReplace(item.sectionHeaderText, currentLang);
+                return item;
+            }
+            if ('object' == typeof item && 'items' in item) return {
+                ...item,
+                text: textReplace(item.text, currentLang),
+                ...'link' in item && item.link ? {
+                    link: transformLink(item.link, currentLang)
+                } : {},
+                collapsed: item.collapsed ?? false,
+                collapsible: item.collapsible ?? true,
+                items: item.items.map((subItem)=>normalizeSidebarItem(subItem))
+            };
+            return {
+                ...item,
+                text: textReplace(item.text, currentLang),
+                link: transformLink(item.link, currentLang)
+            };
+        };
+        const normalizeSidebar = (sidebar)=>{
+            Object.keys(sidebar).forEach((key)=>{
+                const value = sidebar[key];
+                normalizedSidebar[key] = value.map(normalizeSidebarItem);
+            });
+        };
+        normalizeSidebar(sidebar);
+        return normalizedSidebar;
+    };
+    const normalizeNav = (nav, currentLang)=>{
+        if (!nav) return [];
+        const transformNavItem = (navItem)=>({
+                ...navItem,
+                ...navItem.text ? {
+                    text: textReplace(navItem.text, currentLang)
+                } : {},
+                ...'link' in navItem ? {
+                    link: transformLink(navItem.link, currentLang)
+                } : {},
+                ...'items' in navItem ? {
+                    items: navItem.items.map((item)=>transformNavItem(item))
+                } : {}
+            });
+        if (Array.isArray(nav)) return nav.map(transformNavItem);
+        return Object.entries(nav).reduce((acc, [key, value])=>{
+            acc[key] = value.map(transformNavItem);
+            return acc;
+        }, {});
+    };
+    if (locales.length) themeConfig.locales = locales.map(({ lang: currentLang, label })=>{
+        const localeInThemeConfig = themeConfig.locales?.find((locale)=>locale.lang === currentLang);
+        return {
+            lang: currentLang,
+            label,
+            ...localeInThemeConfig,
+            sidebar: normalizeSidebar(localeInThemeConfig?.sidebar ?? themeConfig.sidebar, currentLang),
+            nav: normalizeNav(localeInThemeConfig?.nav ?? themeConfig.nav, currentLang)
+        };
+    });
+    else {
+        themeConfig.sidebar = normalizeSidebar(themeConfig?.sidebar, '');
+        themeConfig.nav = normalizeNav(themeConfig?.nav, '');
+    }
+    return themeConfig;
+}
+export { normalizeThemeConfig };

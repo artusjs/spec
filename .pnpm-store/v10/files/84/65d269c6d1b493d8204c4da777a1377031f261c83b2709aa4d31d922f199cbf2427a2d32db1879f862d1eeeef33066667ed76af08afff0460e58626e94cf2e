@@ -1,0 +1,11 @@
+import { node_path } from "../../../7397.js";
+import { getDefaultImportAstNode } from "../../utils/getImportAstNode.js";
+const remarkBuiltin = ({ globalComponents })=>(tree)=>{
+        const demos = globalComponents.map((componentPath)=>{
+            const filename = node_path.parse(componentPath).name;
+            const componentName = filename[0].toUpperCase() + filename.slice(1);
+            return getDefaultImportAstNode(componentName, componentPath);
+        });
+        tree.children.unshift(...demos);
+    };
+export { remarkBuiltin };

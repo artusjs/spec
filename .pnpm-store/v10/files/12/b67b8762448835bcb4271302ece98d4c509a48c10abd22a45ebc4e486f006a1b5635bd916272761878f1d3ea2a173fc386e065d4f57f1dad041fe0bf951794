@@ -1,0 +1,721 @@
+(() => {
+  "use strict";
+  var __webpack_modules__ = {
+    381: (module, __unused_webpack_exports, __nccwpck_require__) => {
+      module.exports = __nccwpck_require__(551)["default"];
+    },
+    551: (__unused_webpack_module, exports, __nccwpck_require__) => {
+      var __webpack_unused_export__;
+      __webpack_unused_export__ = { value: true };
+      exports["default"] = loader;
+      var _nodePath = _interopRequireDefault(__nccwpck_require__(760));
+      var _utils = __nccwpck_require__(754);
+      function _interopRequireDefault(e) {
+        return e && e.__esModule ? e : { default: e };
+      }
+      let hasExplicitDependencyOnPostCSS = false;
+      async function loader(content, sourceMap, meta) {
+        const options = this.getOptions();
+        const callback = this.async();
+        const configOption =
+          typeof options.postcssOptions === "undefined" ||
+          typeof options.postcssOptions.config === "undefined"
+            ? true
+            : options.postcssOptions.config;
+        let implementation;
+        try {
+          implementation = (0, _utils.getPostcssImplementation)(
+            this,
+            options.implementation,
+          );
+        } catch (error) {
+          callback(error);
+          return;
+        }
+        if (!implementation) {
+          callback(
+            new Error(
+              `The Postcss implementation "${options.implementation}" not found`,
+            ),
+          );
+          return;
+        }
+        let loadedConfig;
+        if (configOption) {
+          try {
+            loadedConfig = await (0, _utils.loadConfig)(
+              this,
+              configOption,
+              options.postcssOptions,
+            );
+          } catch (error) {
+            callback(error);
+            return;
+          }
+        }
+        const { plugins, processOptions } = await (0, _utils.getPostcssOptions)(
+          this,
+          loadedConfig,
+          options.postcssOptions,
+        );
+        const useSourceMap =
+          typeof options.sourceMap !== "undefined"
+            ? options.sourceMap
+            : this.sourceMap;
+        if (useSourceMap) {
+          processOptions.map = {
+            inline: false,
+            annotation: false,
+            ...processOptions.map,
+          };
+        }
+        if (sourceMap && processOptions.map) {
+          processOptions.map.prev = (0, _utils.normalizeSourceMap)(
+            sourceMap,
+            this.context,
+          );
+        }
+        let root;
+        if (meta && meta.ast && meta.ast.type === "postcss") {
+          ({ root } = meta.ast);
+        }
+        if (!root && options.execute) {
+          content = (0, _utils.exec)(content, this);
+        }
+        let result;
+        let processor;
+        try {
+          processor = implementation(plugins);
+          result = await processor.process(root || content, processOptions);
+        } catch (error) {
+          if (
+            !hasExplicitDependencyOnPostCSS &&
+            processor &&
+            processor.version &&
+            processor.version.startsWith("7.")
+          ) {
+            const packageJSONDir = (0, _utils.findPackageJSONDir)(
+              process.cwd(),
+              this.fs.statSync,
+            );
+            if (packageJSONDir) {
+              let bufferOfPackageJSON;
+              try {
+                bufferOfPackageJSON = this.fs.readFileSync(
+                  _nodePath.default.resolve(packageJSONDir, "package.json"),
+                  "utf8",
+                );
+              } catch {}
+              if (bufferOfPackageJSON) {
+                let pkg;
+                try {
+                  pkg = JSON.parse(bufferOfPackageJSON);
+                } catch {}
+                if (pkg) {
+                  const { dependencies = {}, devDependencies = {} } = pkg;
+                  if (!dependencies.postcss && !devDependencies.postcss) {
+                    this.emitWarning(
+                      new Error(
+                        "Add postcss as project dependency. postcss is not a peer dependency for postcss-loader. " +
+                          "Use `npm install postcss` or `yarn add postcss`",
+                      ),
+                    );
+                  } else {
+                    hasExplicitDependencyOnPostCSS = true;
+                  }
+                }
+              }
+            }
+          }
+          (0, _utils.reportError)(this, callback, error);
+          return;
+        }
+        for (const warning of result.warnings()) {
+          this.emitWarning((0, _utils.warningFactory)(warning));
+        }
+        for (const message of result.messages) {
+          switch (message.type) {
+            case "dependency":
+              this.addDependency(message.file);
+              break;
+            case "build-dependency":
+              this.addBuildDependency(message.file);
+              break;
+            case "missing-dependency":
+              this.addMissingDependency(message.file);
+              break;
+            case "context-dependency":
+              this.addContextDependency(message.file);
+              break;
+            case "dir-dependency":
+              this.addContextDependency(message.dir);
+              break;
+            case "asset":
+              if (message.content && message.file) {
+                this.emitFile(
+                  message.file,
+                  message.content,
+                  message.sourceMap,
+                  message.info,
+                );
+              }
+          }
+        }
+        let map = result.map ? result.map.toJSON() : undefined;
+        if (map && useSourceMap) {
+          map = (0, _utils.normalizeSourceMapAfterPostcss)(map, this.context);
+        }
+        let ast;
+        try {
+          ast = {
+            type: "postcss",
+            version: result.processor.version,
+            root: result.root,
+          };
+        } catch (error) {
+          (0, _utils.reportError)(this, callback, error);
+          return;
+        }
+        callback(null, result.css, map, { ast });
+      }
+    },
+    754: (module, exports, __nccwpck_require__) => {
+      module = __nccwpck_require__.nmd(module);
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.exec = exec;
+      exports.findPackageJSONDir = findPackageJSONDir;
+      exports.getPostcssImplementation = getPostcssImplementation;
+      exports.getPostcssOptions = getPostcssOptions;
+      exports.loadConfig = loadConfig;
+      exports.normalizeSourceMap = normalizeSourceMap;
+      exports.normalizeSourceMapAfterPostcss = normalizeSourceMapAfterPostcss;
+      exports.reportError = reportError;
+      exports.warningFactory = warningFactory;
+      var _nodeModule = _interopRequireDefault(__nccwpck_require__(995));
+      var _nodePath = _interopRequireDefault(__nccwpck_require__(760));
+      var _nodeUrl = _interopRequireDefault(__nccwpck_require__(136));
+      var _cosmiconfig = {};
+      function _interopRequireDefault(e) {
+        return e && e.__esModule ? e : { default: e };
+      }
+      const parentModule = module;
+      const stat = (inputFileSystem, filePath) =>
+        new Promise((resolve, reject) => {
+          inputFileSystem.stat(filePath, (err, stats) => {
+            if (err) {
+              reject(err);
+            }
+            resolve(stats);
+          });
+        });
+      function exec(code, loaderContext) {
+        const { resource, context } = loaderContext;
+        const module = new _nodeModule.default(resource, parentModule);
+        module.paths = _nodeModule.default._nodeModulePaths(context);
+        module.filename = resource;
+        module._compile(code, resource);
+        return module.exports;
+      }
+      let tsLoader;
+      async function loadConfig(loaderContext, config, postcssOptions) {
+        const searchPath =
+          typeof config === "string"
+            ? _nodePath.default.resolve(config)
+            : _nodePath.default.dirname(loaderContext.resourcePath);
+        let stats;
+        try {
+          stats = await stat(loaderContext.fs, searchPath);
+        } catch {
+          throw new Error(`No PostCSS config found in: ${searchPath}`);
+        }
+        const moduleName = "postcss";
+        const searchPlaces = [
+          "package.json",
+          `${moduleName}.config.js`,
+          `${moduleName}.config.mjs`,
+          `${moduleName}.config.cjs`,
+          `${moduleName}.config.ts`,
+          `${moduleName}.config.mts`,
+          `${moduleName}.config.cts`,
+          `.${moduleName}rc`,
+          `.${moduleName}rc.json`,
+          `.${moduleName}rc.js`,
+          `.${moduleName}rc.mjs`,
+          `.${moduleName}rc.cjs`,
+          `.${moduleName}rc.ts`,
+          `.${moduleName}rc.mts`,
+          `.${moduleName}rc.cts`,
+          `.${moduleName}rc.yaml`,
+          `.${moduleName}rc.yml`,
+          `.config/${moduleName}rc`,
+          `.config/${moduleName}rc.json`,
+          `.config/${moduleName}rc.yaml`,
+          `.config/${moduleName}rc.yml`,
+          `.config/${moduleName}rc.js`,
+          `.config/${moduleName}rc.mjs`,
+          `.config/${moduleName}rc.cjs`,
+          `.config/${moduleName}rc.ts`,
+          `.config/${moduleName}rc.mts`,
+          `.config/${moduleName}rc.cts`,
+        ];
+        const loaders = {
+          ".js": async (...args) => {
+            let result;
+            try {
+              result = _cosmiconfig.defaultLoadersSync[".js"](...args);
+            } catch (error) {
+              let importESM;
+              try {
+                importESM = new Function("id", "return import(id);");
+              } catch {
+                importESM = null;
+              }
+              if (
+                error.code === "ERR_REQUIRE_ESM" &&
+                _nodeUrl.default.pathToFileURL &&
+                importESM
+              ) {
+                const urlForConfig = _nodeUrl.default.pathToFileURL(args[0]);
+                result = await importESM(urlForConfig);
+              } else {
+                throw error;
+              }
+            }
+            if (result.default) {
+              return result.default;
+            }
+            return result;
+          },
+          ".cjs": _cosmiconfig.defaultLoadersSync[".cjs"],
+          ".mjs": async (...args) => {
+            let result;
+            let importESM;
+            try {
+              importESM = new Function("id", "return import(id);");
+            } catch {
+              importESM = null;
+            }
+            if (_nodeUrl.default.pathToFileURL && importESM) {
+              const urlForConfig = _nodeUrl.default.pathToFileURL(args[0]);
+              result = await importESM(urlForConfig);
+            } else {
+              throw new Error("ESM is not supported");
+            }
+            if (result.default) {
+              return result.default;
+            }
+            return result;
+          },
+        };
+        if (!tsLoader) {
+          const opts = { interopDefault: true };
+          const { createJiti } = __nccwpck_require__(966);
+          const jiti = createJiti(__filename, opts);
+          tsLoader = (filepath) => jiti.import(filepath, { default: true });
+        }
+        loaders[".cts"] = tsLoader;
+        loaders[".mts"] = tsLoader;
+        loaders[".ts"] = tsLoader;
+        const explorer = (0, _cosmiconfig.cosmiconfig)(moduleName, {
+          searchStrategy: "global",
+          searchPlaces,
+          loaders,
+        });
+        const result = await (stats.isFile()
+          ? explorer.load(searchPath)
+          : explorer.search(searchPath));
+        if (!result) {
+          return {};
+        }
+        loaderContext.addBuildDependency(result.filepath);
+        loaderContext.addDependency(result.filepath);
+        if (result.isEmpty) {
+          return result;
+        }
+        if (typeof result.config === "function") {
+          const api = {
+            mode: loaderContext.mode,
+            file: loaderContext.resourcePath,
+            webpackLoaderContext: loaderContext,
+            env: loaderContext.mode,
+            options: postcssOptions || {},
+          };
+          return { ...result, config: result.config(api) };
+        }
+        return result;
+      }
+      function loadPlugin(plugin, options, file) {
+        try {
+          let loadedPlugin = require(plugin);
+          if (loadedPlugin.default) {
+            loadedPlugin = loadedPlugin.default;
+          }
+          if (!options || Object.keys(options).length === 0) {
+            return loadedPlugin;
+          }
+          return loadedPlugin(options);
+        } catch (error) {
+          throw new Error(
+            `Loading PostCSS "${plugin}" plugin failed: ${error.message}\n\n(@${file})`,
+            { cause: error },
+          );
+        }
+      }
+      function pluginFactory() {
+        const listOfPlugins = new Map();
+        return (plugins) => {
+          if (typeof plugins === "undefined") {
+            return listOfPlugins;
+          }
+          if (Array.isArray(plugins)) {
+            for (const plugin of plugins) {
+              if (Array.isArray(plugin)) {
+                const [name, options] = plugin;
+                listOfPlugins.set(name, options);
+              } else if (plugin && typeof plugin === "function") {
+                listOfPlugins.set(plugin);
+              } else if (
+                plugin &&
+                Object.keys(plugin).length === 1 &&
+                (typeof plugin[Object.keys(plugin)[0]] === "object" ||
+                  typeof plugin[Object.keys(plugin)[0]] === "boolean") &&
+                plugin[Object.keys(plugin)[0]] !== null
+              ) {
+                const [name] = Object.keys(plugin);
+                const options = plugin[name];
+                if (options === false) {
+                  listOfPlugins.delete(name);
+                } else {
+                  listOfPlugins.set(name, options);
+                }
+              } else if (plugin) {
+                listOfPlugins.set(plugin);
+              }
+            }
+          } else {
+            const objectPlugins = Object.entries(plugins);
+            for (const [name, options] of objectPlugins) {
+              if (options === false) {
+                listOfPlugins.delete(name);
+              } else {
+                listOfPlugins.set(name, options);
+              }
+            }
+          }
+          return listOfPlugins;
+        };
+      }
+      async function tryRequireThenImport(module) {
+        let exports;
+        try {
+          exports = require(module);
+          return exports;
+        } catch (err) {
+          let importESM;
+          try {
+            importESM = new Function("id", "return import(id);");
+          } catch {
+            importESM = null;
+          }
+          if (err.code === "ERR_REQUIRE_ESM" && importESM) {
+            exports = await importESM(module);
+            return exports.default;
+          }
+          throw err;
+        }
+      }
+      async function getPostcssOptions(
+        loaderContext,
+        loadedConfig = {},
+        postcssOptions = {},
+      ) {
+        const file = loaderContext.resourcePath;
+        let normalizedPostcssOptions = postcssOptions;
+        if (typeof normalizedPostcssOptions === "function") {
+          normalizedPostcssOptions = normalizedPostcssOptions(loaderContext);
+        }
+        let plugins = [];
+        try {
+          const factory = pluginFactory();
+          if (loadedConfig.config && loadedConfig.config.plugins) {
+            factory(loadedConfig.config.plugins);
+          }
+          factory(normalizedPostcssOptions.plugins);
+          plugins = [...factory()].map((item) => {
+            const [plugin, options] = item;
+            if (typeof plugin === "string") {
+              return loadPlugin(plugin, options, file);
+            }
+            return plugin;
+          });
+        } catch (error) {
+          loaderContext.emitError(error);
+        }
+        const processOptionsFromConfig = { ...loadedConfig.config };
+        if (processOptionsFromConfig.from) {
+          processOptionsFromConfig.from = _nodePath.default.resolve(
+            _nodePath.default.dirname(loadedConfig.filepath),
+            processOptionsFromConfig.from,
+          );
+        }
+        if (processOptionsFromConfig.to) {
+          processOptionsFromConfig.to = _nodePath.default.resolve(
+            _nodePath.default.dirname(loadedConfig.filepath),
+            processOptionsFromConfig.to,
+          );
+        }
+        const processOptionsFromOptions = { ...normalizedPostcssOptions };
+        if (processOptionsFromOptions.from) {
+          processOptionsFromOptions.from = _nodePath.default.resolve(
+            loaderContext.rootContext,
+            processOptionsFromOptions.from,
+          );
+        }
+        if (processOptionsFromOptions.to) {
+          processOptionsFromOptions.to = _nodePath.default.resolve(
+            loaderContext.rootContext,
+            processOptionsFromOptions.to,
+          );
+        }
+        const { plugins: __plugins, ...optionsFromConfig } =
+          processOptionsFromConfig;
+        const {
+          config: _config,
+          plugins: _plugins,
+          ...optionsFromOptions
+        } = processOptionsFromOptions;
+        const processOptions = {
+          from: file,
+          to: file,
+          map: false,
+          ...optionsFromConfig,
+          ...optionsFromOptions,
+        };
+        if (typeof processOptions.parser === "string") {
+          try {
+            processOptions.parser = await tryRequireThenImport(
+              processOptions.parser,
+            );
+          } catch (error) {
+            loaderContext.emitError(
+              new Error(
+                `Loading PostCSS "${processOptions.parser}" parser failed: ${error.message}\n\n(@${file})`,
+              ),
+            );
+          }
+        }
+        if (typeof processOptions.stringifier === "string") {
+          try {
+            processOptions.stringifier = await tryRequireThenImport(
+              processOptions.stringifier,
+            );
+          } catch (error) {
+            loaderContext.emitError(
+              new Error(
+                `Loading PostCSS "${processOptions.stringifier}" stringifier failed: ${error.message}\n\n(@${file})`,
+              ),
+            );
+          }
+        }
+        if (typeof processOptions.syntax === "string") {
+          try {
+            processOptions.syntax = await tryRequireThenImport(
+              processOptions.syntax,
+            );
+          } catch (error) {
+            loaderContext.emitError(
+              new Error(
+                `Loading PostCSS "${processOptions.syntax}" syntax failed: ${error.message}\n\n(@${file})`,
+              ),
+            );
+          }
+        }
+        if (processOptions.map === true) {
+          processOptions.map = { inline: true };
+        }
+        return { plugins, processOptions };
+      }
+      const IS_NATIVE_WIN32_PATH = /^[a-z]:[/\\]|^\\\\/i;
+      const ABSOLUTE_SCHEME = /^[a-z0-9+\-.]+:/i;
+      function getURLType(source) {
+        if (source[0] === "/") {
+          if (source[1] === "/") {
+            return "scheme-relative";
+          }
+          return "path-absolute";
+        }
+        if (IS_NATIVE_WIN32_PATH.test(source)) {
+          return "path-absolute";
+        }
+        return ABSOLUTE_SCHEME.test(source) ? "absolute" : "path-relative";
+      }
+      function normalizeSourceMap(map, resourceContext) {
+        let newMap = map;
+        if (typeof newMap === "string") {
+          newMap = JSON.parse(newMap);
+        }
+        delete newMap.file;
+        const { sourceRoot } = newMap;
+        delete newMap.sourceRoot;
+        if (newMap.sources) {
+          newMap.sources = newMap.sources.map((source) => {
+            const sourceType = getURLType(source);
+            if (
+              sourceType === "path-relative" ||
+              sourceType === "path-absolute"
+            ) {
+              const absoluteSource =
+                sourceType === "path-relative" && sourceRoot
+                  ? _nodePath.default.resolve(
+                      sourceRoot,
+                      _nodePath.default.normalize(source),
+                    )
+                  : _nodePath.default.normalize(source);
+              return _nodePath.default.relative(
+                resourceContext,
+                absoluteSource,
+              );
+            }
+            return source;
+          });
+        }
+        return newMap;
+      }
+      function normalizeSourceMapAfterPostcss(map, resourceContext) {
+        const newMap = map;
+        delete newMap.file;
+        newMap.sourceRoot = "";
+        newMap.sources = newMap.sources.map((source) => {
+          if (source.indexOf("<") === 0) {
+            return source;
+          }
+          const sourceType = getURLType(source);
+          if (sourceType === "path-relative") {
+            return _nodePath.default.resolve(resourceContext, source);
+          }
+          return source;
+        });
+        return newMap;
+      }
+      function findPackageJSONDir(cwd, statSync) {
+        let dir = cwd;
+        for (;;) {
+          try {
+            if (
+              statSync(_nodePath.default.join(dir, "package.json")).isFile()
+            ) {
+              break;
+            }
+          } catch {}
+          const parent = _nodePath.default.dirname(dir);
+          if (dir === parent) {
+            dir = null;
+            break;
+          }
+          dir = parent;
+        }
+        return dir;
+      }
+      function getPostcssImplementation(loaderContext, implementation) {
+        let resolvedImplementation = implementation;
+        if (!implementation || typeof implementation === "string") {
+          const postcssImplPkg = implementation || "postcss";
+          resolvedImplementation = require(postcssImplPkg);
+        }
+        return resolvedImplementation;
+      }
+      function syntaxErrorFactory(error) {
+        let message = "\nSyntaxError\n\n";
+        if (typeof error.line !== "undefined") {
+          message += `(${error.line}:${error.column}) `;
+        }
+        if (typeof error.plugin !== "undefined") {
+          message += `from "${error.plugin}" plugin: `;
+        }
+        message += error.file ? `${error.file} ` : "<css input> ";
+        message += `${error.reason}`;
+        const code = error.showSourceCode();
+        if (code) {
+          message += `\n\n${code}\n`;
+        }
+        const obj = new Error(message, { cause: error });
+        obj.stack = null;
+        return obj;
+      }
+      function reportError(loaderContext, callback, error) {
+        if (error.file) {
+          loaderContext.addDependency(error.file);
+        }
+        if (error.name === "CssSyntaxError") {
+          callback(syntaxErrorFactory(error));
+        } else {
+          callback(error);
+        }
+      }
+      function warningFactory(warning) {
+        let message = "";
+        if (typeof warning.line !== "undefined") {
+          message += `(${warning.line}:${warning.column}) `;
+        }
+        if (typeof warning.plugin !== "undefined") {
+          message += `from "${warning.plugin}" plugin: `;
+        }
+        message += warning.text;
+        if (warning.node) {
+          message += `\n\nCode:\n  ${warning.node.toString()}\n`;
+        }
+        const obj = new Error(message, { cause: warning });
+        obj.stack = null;
+        return obj;
+      }
+    },
+    966: (module) => {
+      module.exports = require("../jiti");
+    },
+    995: (module) => {
+      module.exports = require("node:module");
+    },
+    760: (module) => {
+      module.exports = require("node:path");
+    },
+    136: (module) => {
+      module.exports = require("node:url");
+    },
+  };
+  var __webpack_module_cache__ = {};
+  function __nccwpck_require__(moduleId) {
+    var cachedModule = __webpack_module_cache__[moduleId];
+    if (cachedModule !== undefined) {
+      return cachedModule.exports;
+    }
+    var module = (__webpack_module_cache__[moduleId] = {
+      id: moduleId,
+      loaded: false,
+      exports: {},
+    });
+    var threw = true;
+    try {
+      __webpack_modules__[moduleId](
+        module,
+        module.exports,
+        __nccwpck_require__,
+      );
+      threw = false;
+    } finally {
+      if (threw) delete __webpack_module_cache__[moduleId];
+    }
+    module.loaded = true;
+    return module.exports;
+  }
+  (() => {
+    __nccwpck_require__.nmd = (module) => {
+      module.paths = [];
+      if (!module.children) module.children = [];
+      return module;
+    };
+  })();
+  if (typeof __nccwpck_require__ !== "undefined")
+    __nccwpck_require__.ab = __dirname + "/";
+  var __webpack_exports__ = __nccwpck_require__(381);
+  module.exports = __webpack_exports__;
+})();

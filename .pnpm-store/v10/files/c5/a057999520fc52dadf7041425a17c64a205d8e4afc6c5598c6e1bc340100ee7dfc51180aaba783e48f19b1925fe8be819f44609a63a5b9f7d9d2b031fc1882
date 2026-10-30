@@ -1,0 +1,53 @@
+{
+  "name": "@rsbuild/plugin-react",
+  "version": "1.4.6",
+  "description": "React plugin for Rsbuild",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/web-infra-dev/rsbuild",
+    "directory": "packages/plugin-react"
+  },
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@rspack/plugin-react-refresh": "^1.6.1",
+    "react-refresh": "^0.18.0"
+  },
+  "devDependencies": {
+    "@rsbuild/core-v1": "npm:@rsbuild/core@^1.7.3",
+    "@rslib/core": "0.20.0",
+    "@types/node": "^24.12.0",
+    "typescript": "^5.9.3",
+    "@rsbuild/core": "2.0.0-beta.8",
+    "@scripts/test-helper": "1.0.0"
+  },
+  "peerDependencies": {
+    "@rsbuild/core": "^1.0.0 || ^2.0.0-0"
+  },
+  "peerDependenciesMeta": {
+    "@rsbuild/core": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build": "rslib build",
+    "dev": "rslib build -w",
+    "bump": "pnpx bumpp --no-tag"
+  }
+}

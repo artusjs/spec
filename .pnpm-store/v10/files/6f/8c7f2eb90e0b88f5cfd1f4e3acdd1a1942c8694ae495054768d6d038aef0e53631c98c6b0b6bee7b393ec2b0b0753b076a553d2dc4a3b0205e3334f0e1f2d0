@@ -1,0 +1,65 @@
+import { node_path } from "../../7319.js";
+import { RouteService } from "./RouteService.js";
+import { normalizePath, slash } from "../utils/normalizePath.js";
+import { getPageKey } from "../utils/getPageKey.js";
+class RoutePage {
+    routeMeta;
+    #docDir;
+    pageIndexInfo;
+    setPageIndexInfo(info) {
+        this.pageIndexInfo = info;
+    }
+    static create(absolutePath, docsDir) {
+        const routeMeta = absolutePathToRouteMeta(absolutePath, docsDir, RouteService.getInstance());
+        return new RoutePage(routeMeta, docsDir);
+    }
+    static createFromExternal(routePath, filepath, docDir) {
+        const routeMeta = RoutePage.generateRouteMeta(routePath, filepath, docDir);
+        return new RoutePage(routeMeta, node_path.dirname(filepath));
+    }
+    constructor(routeMeta, docDir){
+        this.routeMeta = routeMeta;
+        this.#docDir = docDir;
+    }
+    static generateRouteMeta(routePath, filepath, docDir) {
+        const routeService = RouteService.getInstance();
+        const { routePath: normalizedPath, lang, version } = routeService.normalizeRoutePath(routePath);
+        return {
+            routePath: normalizedPath,
+            absolutePath: normalizePath(filepath),
+            relativePath: absolutePathToRelativePath(filepath, docDir),
+            pageName: getPageKey(routePath),
+            lang,
+            version
+        };
+    }
+}
+function absolutePathToRelativePath(absolutePath, docsDir) {
+    return slash(node_path.relative(docsDir, absolutePath));
+}
+function absolutePathToRouteMeta(absolutePath, docsDir, routeService = RouteService.getInstance()) {
+    const relativePath = absolutePathToRelativePath(absolutePath, docsDir);
+    const { lang, routePath, version } = routeService.normalizeRoutePath(relativePath);
+    return {
+        pageName: getPageKey(relativePath),
+        absolutePath,
+        lang,
+        version,
+        routePath,
+        relativePath
+    };
+}
+function absolutePathToRoutePath(absolutePath, docsDir, routeService = RouteService.getInstance()) {
+    return absolutePathToRouteMeta(absolutePath, docsDir, routeService).routePath;
+}
+function absolutePathToRoutePrefix(absolutePath, docsDir) {
+    const relativePath = slash(node_path.relative(docsDir, absolutePath));
+    const routeService = RouteService.getInstance();
+    const [versionPrefix, langPrefix] = routeService.getRoutePathParts(relativePath);
+    return `${versionPrefix ? `/${versionPrefix}` : ''}${langPrefix ? `/${langPrefix}` : ''}`;
+}
+function addRoutePrefix(workDir, docsDir, link) {
+    const routePrefix = absolutePathToRoutePrefix(workDir, docsDir);
+    return `${routePrefix.replace(/\/$/, '')}/${link.replace(/^\//, '')}`;
+}
+export { RoutePage, absolutePathToRelativePath, absolutePathToRoutePath, addRoutePrefix };

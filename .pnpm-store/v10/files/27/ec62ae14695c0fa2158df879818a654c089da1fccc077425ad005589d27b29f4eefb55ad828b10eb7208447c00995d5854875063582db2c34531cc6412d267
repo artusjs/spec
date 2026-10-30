@@ -1,0 +1,24 @@
+import { logger } from "../../../7319.js";
+import { modifyConfigWithAutoNavSide } from "../../auto-nav-sidebar/index.js";
+import { createSiteData } from "./createSiteData.js";
+const siteDataVMPlugin = (context)=>{
+    const { config, pluginDriver } = context;
+    return {
+        ["virtual-site-data"]: async ({ addDependency })=>{
+            const force = !pluginDriver.haveNavSidebarConfig;
+            const metaFileSet = new Set();
+            const mdFileSet = new Set();
+            const now = performance.now();
+            try {
+                await modifyConfigWithAutoNavSide(config, metaFileSet, mdFileSet, force);
+            } finally{
+                for (const metaFile of metaFileSet)addDependency(metaFile);
+                for (const mdFile of mdFileSet)addDependency(mdFile);
+                logger.debug(`modifyConfigWithAutoNavSide - size: ${mdFileSet.size} cost: ${performance.now() - now}ms`);
+            }
+            const { siteData } = await createSiteData(config);
+            return `export default ${JSON.stringify(siteData, null, 2)}`;
+        }
+    };
+};
+export { siteDataVMPlugin };

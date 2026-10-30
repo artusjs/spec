@@ -1,0 +1,30 @@
+import { color } from '../../compiled/rslog';
+import RspackChain from '../../compiled/rspack-chain/types';
+import type { FilenameConfig, NormalizedConfig, NormalizedEnvironmentConfig, RsbuildTarget, Rspack } from '../types';
+export { require } from './vendors';
+export { color, RspackChain };
+export declare const getNodeEnv: () => string;
+export declare const setNodeEnv: (env: string) => void;
+export declare const isFunction: (func: unknown) => func is (...args: any[]) => any;
+export declare const isObject: (obj: unknown) => obj is Record<string, any>;
+export declare const isPlainObject: (obj: unknown) => obj is Record<string, any>;
+export declare const castArray: <T>(arr?: T | T[]) => T[];
+export declare const cloneDeep: <T>(value: T) => T;
+export declare function getFilename(config: NormalizedConfig | NormalizedEnvironmentConfig, type: 'js', isProd: boolean, isServer?: boolean): Rspack.Filename;
+export declare function getFilename(config: NormalizedConfig | NormalizedEnvironmentConfig, type: 'css', isProd: boolean): Rspack.CssFilename;
+export declare function getFilename(config: NormalizedConfig | NormalizedEnvironmentConfig, type: 'html', isProd?: boolean): string;
+export declare function getFilename(config: NormalizedConfig | NormalizedEnvironmentConfig, type: 'wasm', isProd: boolean): Rspack.WebassemblyModuleFilename;
+export declare function getFilename(config: NormalizedConfig | NormalizedEnvironmentConfig, type: Exclude<keyof FilenameConfig, 'js' | 'css'>, isProd: boolean, isServer?: boolean): Rspack.AssetModuleFilename;
+export declare function partition<T>(array: T[], predicate: (value: T) => boolean): [T[], T[]];
+export declare const upperFirst: (str: string) => string;
+export declare const createVirtualModule: (content: string) => string;
+export declare function isWebTarget(target: RsbuildTarget | RsbuildTarget[]): boolean;
+export declare function pick<T, U extends keyof T>(obj: T, keys: readonly U[]): Pick<T, U>;
+export declare const camelCase: (input: string) => string;
+export declare const prettyTime: (seconds: number) => string;
+/**
+ * Check if running in a TTY context
+ */
+export declare const isTTY: (type?: "stdin" | "stdout") => boolean;
+export declare function hash(data: string): Promise<string>;
+export declare const isRspackRuntimeModule: (identifier: string) => boolean;

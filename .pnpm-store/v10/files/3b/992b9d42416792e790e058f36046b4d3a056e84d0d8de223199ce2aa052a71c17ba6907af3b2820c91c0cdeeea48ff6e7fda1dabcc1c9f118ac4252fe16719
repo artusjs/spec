@@ -1,0 +1,18 @@
+{
+  "name": "util-ts-types",
+  "version": "1.0.0",
+  "description": "Essential(!) TypeScript utility types.",
+  "sideEffects": false,
+  "files": [
+    "index.d.ts"
+  ],
+  "devDependencies": {
+    "typescript": "latest"
+  },
+  "types": "./index.d.ts",
+  "author": "linbudu",
+  "license": "MIT",
+  "scripts": {
+    "release": "pnpm publish --access public --no-git-checks && git add . && git commit -m 'release package' && git push"
+  }
+}

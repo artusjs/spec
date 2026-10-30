@@ -1,0 +1,378 @@
+import { Fragment, jsx, jsxs } from "react/jsx-runtime";
+import { useI18n, usePageData } from "@rspress/core/runtime";
+import { IconClose, IconLoading, IconSearch, SvgWrapper, Tab, Tabs, useLinkNavigate } from "@rspress/core/theme";
+import { debounce } from "lodash-es";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import * as __rspack_external_virtual_search_hooks_9d01d01f from "virtual-search-hooks";
+import { PageSearcher } from "./logic/search.js";
+import { RenderType } from "./logic/types.js";
+import { NoSearchResult } from "./NoSearchResult.js";
+import "./SearchPanel.css";
+import { SuggestItem } from "./SuggestItem.js";
+const KEY_CODE = {
+    ARROW_UP: 'ArrowUp',
+    ARROW_DOWN: 'ArrowDown',
+    ENTER: 'Enter',
+    SEARCH: 'KeyK',
+    ESC: 'Escape'
+};
+const useDebounce = (cb)=>{
+    const cbRef = useRef(cb);
+    cbRef.current = cb;
+    const debounced = useCallback(debounce((...args)=>cbRef.current(...args), 150), []);
+    return debounced;
+};
+function SearchPanel({ focused, setFocused }) {
+    const [query, setQuery] = useState('');
+    const [searchResult, setSearchResult] = useState([]);
+    const searchInputRef = useRef(null);
+    const [isSearching, setIsSearching] = useState(false);
+    const [resultTabIndex, setResultTabIndex] = useState(0);
+    const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
+    const pageSearcherRef = useRef(null);
+    const pageSearcherConfigRef = useRef(null);
+    const [initStatus, setInitStatus] = useState('initial');
+    const searchResultRef = useRef(null);
+    const searchResultTabRef = useRef(null);
+    const mousePositionRef = useRef({
+        pageX: null,
+        pageY: null
+    });
+    const [canScroll, setCanScroll] = useState(false);
+    const scrollTo = (offsetTop, offsetHeight)=>{
+        const currentOffsetHeight = searchResultRef.current?.offsetHeight;
+        const currentScrollTop = searchResultRef.current?.scrollTop;
+        if (canScroll && void 0 !== currentOffsetHeight && void 0 !== currentScrollTop) {
+            const scrollDown = offsetTop + offsetHeight - currentOffsetHeight - (1 === searchResult.length ? 50 : -10);
+            if (scrollDown > currentScrollTop) searchResultRef.current?.scrollTo({
+                top: scrollDown
+            });
+            const scrollUp = 1 === searchResult.length ? offsetTop - 70 : offsetTop - 10;
+            if (scrollUp < currentScrollTop) searchResultRef.current?.scrollTo({
+                top: scrollUp
+            });
+        }
+    };
+    const { siteData, page: { lang, version } } = usePageData();
+    const t = useI18n();
+    const navigate = useLinkNavigate();
+    const { search, title: siteTitle } = siteData;
+    const versionedSearch = 'boolean' != typeof search && (search?.versioned ?? true);
+    const DEFAULT_RESULT = [
+        {
+            group: siteTitle,
+            result: [],
+            renderType: RenderType.Default
+        }
+    ];
+    const currentSuggestions = searchResult[resultTabIndex]?.result ?? [];
+    const currentRenderType = searchResult[resultTabIndex]?.renderType ?? RenderType.Default;
+    if (false === search) return null;
+    const createSearcher = ()=>{
+        if (pageSearcherRef.current) return pageSearcherRef.current;
+        const pageSearcherConfig = {
+            currentLang: lang,
+            currentVersion: version
+        };
+        const pageSearcher = new PageSearcher({
+            indexName: siteTitle,
+            ...search,
+            ...pageSearcherConfig
+        });
+        pageSearcherRef.current = pageSearcher;
+        pageSearcherConfigRef.current = pageSearcherConfig;
+        return pageSearcherRef.current;
+    };
+    async function initSearch() {
+        if ('initial' !== initStatus) return;
+        const searcher = createSearcher();
+        setInitStatus('initing');
+        await searcher.init();
+        setInitStatus('inited');
+        const query = searchInputRef.current?.value;
+        if (query) {
+            const matched = await searcher.match(query);
+            setSearchResult(matched || DEFAULT_RESULT);
+            setIsSearching(false);
+        }
+    }
+    const clearSearchState = ()=>{
+        setFocused(false);
+        setResultTabIndex(0);
+        setCurrentSuggestionIndex(0);
+    };
+    useEffect(()=>{
+        const onKeyDown = (e)=>{
+            switch(e.code){
+                case KEY_CODE.SEARCH:
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        setFocused(!focused);
+                    }
+                    break;
+                case KEY_CODE.ARROW_DOWN:
+                    if (e.isComposing) return;
+                    if (focused) {
+                        e.preventDefault();
+                        if (currentSuggestions && currentRenderType === RenderType.Default) {
+                            setCanScroll(true);
+                            setCurrentSuggestionIndex((currentSuggestionIndex + 1) % currentSuggestions.length);
+                        }
+                    }
+                    break;
+                case KEY_CODE.ARROW_UP:
+                    if (e.isComposing) return;
+                    if (focused) {
+                        e.preventDefault();
+                        if (currentRenderType === RenderType.Default) {
+                            const currentSuggestionsLength = currentSuggestions.length;
+                            setCanScroll(true);
+                            setCurrentSuggestionIndex((currentSuggestionIndex - 1 + currentSuggestionsLength) % currentSuggestionsLength);
+                        }
+                    }
+                    break;
+                case KEY_CODE.ENTER:
+                    if (e.isComposing) return;
+                    if (currentSuggestionIndex >= 0 && currentRenderType === RenderType.Default) {
+                        const flatSuggestions = Array.from(normalizeSuggestions(currentSuggestions).values()).flat();
+                        const suggestion = flatSuggestions[currentSuggestionIndex];
+                        navigate(suggestion.link);
+                        clearSearchState();
+                    }
+                    break;
+                case KEY_CODE.ESC:
+                    clearSearchState();
+                    break;
+                default:
+                    break;
+            }
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return ()=>{
+            document.removeEventListener('keydown', onKeyDown);
+        };
+    }, [
+        setCurrentSuggestionIndex,
+        setFocused,
+        focused,
+        resultTabIndex,
+        currentSuggestions,
+        currentSuggestionIndex
+    ]);
+    useEffect(()=>{
+        if (focused) {
+            setSearchResult(DEFAULT_RESULT);
+            initSearch();
+        } else setQuery('');
+    }, [
+        focused
+    ]);
+    useEffect(()=>{
+        if ('requestIdleCallback' in window && !pageSearcherRef.current) window.requestIdleCallback(()=>{
+            const searcher = createSearcher();
+            searcher.fetchSearchIndex();
+        });
+    }, []);
+    useEffect(()=>{
+        const { currentLang, currentVersion } = pageSearcherConfigRef.current ?? {};
+        const isLangChanged = lang !== currentLang;
+        const isVersionChanged = versionedSearch && version !== currentVersion;
+        if (isLangChanged || isVersionChanged) {
+            setInitStatus('initial');
+            pageSearcherRef.current = null;
+            const searcher = createSearcher();
+            searcher.fetchSearchIndex();
+        }
+    }, [
+        lang,
+        version,
+        versionedSearch
+    ]);
+    const handleQueryChangedImpl = async (value)=>{
+        let newQuery = value;
+        setQuery(newQuery);
+        if (newQuery) {
+            const searchResult = [];
+            if ("beforeSearch" in __rspack_external_virtual_search_hooks_9d01d01f) {
+                const key = 'beforeSearch';
+                const transformedQuery = await __rspack_external_virtual_search_hooks_9d01d01f[key](newQuery);
+                if (transformedQuery) newQuery = transformedQuery;
+            }
+            const defaultSearchResult = await pageSearcherRef.current?.match(newQuery);
+            if (defaultSearchResult) searchResult.push(...defaultSearchResult);
+            if ("onSearch" in __rspack_external_virtual_search_hooks_9d01d01f) {
+                const key = 'onSearch';
+                const customSearchResult = await __rspack_external_virtual_search_hooks_9d01d01f[key](newQuery, searchResult);
+                if (customSearchResult) searchResult.push(...customSearchResult.map((item)=>({
+                        renderType: RenderType.Custom,
+                        ...item
+                    })));
+            }
+            if ("afterSearch" in __rspack_external_virtual_search_hooks_9d01d01f) {
+                const key = 'afterSearch';
+                await __rspack_external_virtual_search_hooks_9d01d01f[key](newQuery, searchResult);
+            }
+            const currQuery = searchInputRef.current?.value;
+            if (currQuery === newQuery) {
+                setCurrentSuggestionIndex(0);
+                setSearchResult(searchResult || DEFAULT_RESULT);
+                setIsSearching(false);
+            }
+        }
+    };
+    const handleQueryChange = useDebounce(handleQueryChangedImpl);
+    const normalizeSuggestions = (suggestions)=>suggestions.reduce((groups, item)=>{
+            const group = item.title;
+            if (!groups.has(group)) groups.set(group, []);
+            groups.get(group).push(item);
+            return groups;
+        }, new Map());
+    const renderSearchResult = (result, isSearching)=>{
+        if (1 === result.length) {
+            const currentSearchResult = result[0].result;
+            if (0 === currentSearchResult.length && !isSearching) return /*#__PURE__*/ jsx(NoSearchResult, {
+                query: query
+            });
+            return /*#__PURE__*/ jsx("div", {
+                ref: searchResultTabRef,
+                children: renderSearchResultItem(currentSearchResult, query, isSearching)
+            });
+        }
+        const tabValues = result.map((item)=>item.group);
+        const renderKey = 'render';
+        return /*#__PURE__*/ jsx(Tabs, {
+            values: tabValues,
+            className: "rp-search-panel__tabs",
+            onChange: (index)=>{
+                setResultTabIndex(index);
+                setCurrentSuggestionIndex(0);
+            },
+            keepDOM: false,
+            ref: searchResultTabRef,
+            children: result.map((item)=>/*#__PURE__*/ jsxs(Tab, {
+                    children: [
+                        item.renderType === RenderType.Default && renderSearchResultItem(item.result, query, isSearching),
+                        item.renderType === RenderType.Custom && __rspack_external_virtual_search_hooks_9d01d01f[renderKey](item.result)
+                    ]
+                }, item.group))
+        });
+    };
+    const renderSearchResultItem = (suggestionList, query, isSearching)=>{
+        if (isSearching) return /*#__PURE__*/ jsx("div", {
+            className: "rp-search-panel__loading",
+            children: /*#__PURE__*/ jsx(SvgWrapper, {
+                icon: IconLoading
+            })
+        });
+        if (0 === suggestionList.length && 'inited' === initStatus) return /*#__PURE__*/ jsx(NoSearchResult, {
+            query: query
+        });
+        const normalizedSuggestions = normalizeSuggestions(suggestionList);
+        let accumulateIndex = -1;
+        return /*#__PURE__*/ jsx("ul", {
+            children: Array.from(normalizedSuggestions.keys()).map((group)=>{
+                const groupSuggestions = normalizedSuggestions.get(group) || [];
+                return /*#__PURE__*/ jsx("li", {
+                    children: /*#__PURE__*/ jsx("ul", {
+                        className: "rp-search-panel__group",
+                        children: groupSuggestions.map((suggestion)=>{
+                            accumulateIndex++;
+                            const suggestionIndex = accumulateIndex;
+                            return /*#__PURE__*/ jsx(SuggestItem, {
+                                suggestion: suggestion,
+                                isCurrent: suggestionIndex === currentSuggestionIndex,
+                                setCurrentSuggestionIndex: (event)=>{
+                                    if (mousePositionRef.current.pageX === event.pageX && mousePositionRef.current.pageY === event.pageY) return;
+                                    setCanScroll(false);
+                                    setCurrentSuggestionIndex(suggestionIndex);
+                                },
+                                onMouseMove: (event)=>{
+                                    mousePositionRef.current = {
+                                        pageX: event.pageX,
+                                        pageY: event.pageY
+                                    };
+                                },
+                                closeSearch: ()=>{
+                                    clearSearchState();
+                                },
+                                inCurrentDocIndex: 0 === resultTabIndex,
+                                scrollTo: scrollTo
+                            }, `${suggestion.title}-${suggestionIndex}`);
+                        })
+                    })
+                }, group);
+            })
+        });
+    };
+    return /*#__PURE__*/ jsx(Fragment, {
+        children: focused && /*#__PURE__*/ createPortal(/*#__PURE__*/ jsx("div", {
+            className: "rp-search-panel__mask",
+            onClick: ()=>{
+                clearSearchState();
+            },
+            children: /*#__PURE__*/ jsxs("div", {
+                className: "rp-search-panel__modal",
+                onClick: (e)=>{
+                    setFocused(true);
+                    e.stopPropagation();
+                },
+                children: [
+                    /*#__PURE__*/ jsxs("div", {
+                        className: "rp-search-panel__header",
+                        children: [
+                            /*#__PURE__*/ jsxs("div", {
+                                className: "rp-search-panel__input-form",
+                                children: [
+                                    /*#__PURE__*/ jsx("label", {
+                                        children: /*#__PURE__*/ jsx(SvgWrapper, {
+                                            icon: IconSearch
+                                        })
+                                    }),
+                                    /*#__PURE__*/ jsx("input", {
+                                        className: "rp-search-panel__input",
+                                        ref: searchInputRef,
+                                        placeholder: t('searchPlaceholderText'),
+                                        "aria-label": "SearchPanelInput",
+                                        autoComplete: "off",
+                                        autoFocus: true,
+                                        onChange: (e)=>handleQueryChange(e.target.value)
+                                    }),
+                                    /*#__PURE__*/ jsx("label", {
+                                        children: /*#__PURE__*/ jsx(SvgWrapper, {
+                                            icon: IconClose,
+                                            className: "rp-search-panel__close",
+                                            onClick: (e)=>{
+                                                if (searchInputRef.current) {
+                                                    e.stopPropagation();
+                                                    if (query) {
+                                                        searchInputRef.current.value = '';
+                                                        setQuery('');
+                                                    } else clearSearchState();
+                                                }
+                                            }
+                                        })
+                                    })
+                                ]
+                            }),
+                            /*#__PURE__*/ jsx("h2", {
+                                className: "rp-search-panel__cancel",
+                                onClick: (e)=>{
+                                    e.stopPropagation();
+                                    clearSearchState();
+                                },
+                                children: t('searchPanelCancelText')
+                            })
+                        ]
+                    }),
+                    query && 'inited' === initStatus ? /*#__PURE__*/ jsx("div", {
+                        className: "rp-search-panel__results rp-scrollbar",
+                        ref: searchResultRef,
+                        children: renderSearchResult(searchResult, isSearching)
+                    }) : null
+                ]
+            })
+        }), document.getElementById('__rspress_modal_container'))
+    });
+}
+export { SearchPanel };

@@ -1,0 +1,10 @@
+import { node_os, node_path } from "../../1361.js";
+const isWindows = 'win32' === node_os.platform();
+function slash(p) {
+    return p.replace(/\\/g, '/');
+}
+function normalizePath(id) {
+    return node_path.posix.normalize(isWindows ? slash(id) : id);
+}
+var normalizePath_isWindows = void 0;
+export { normalizePath, normalizePath_isWindows as isWindows, slash };

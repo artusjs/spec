@@ -1,0 +1,37 @@
+import { transformerAddLang, transformerAddLineNumbers, transformerAddTitle, transformerAddFold, createCssVariablesTheme, transformerAddWrapCode } from "../../../7397.js";
+const cssVariablesTheme = createCssVariablesTheme({
+    name: 'css-variables',
+    variablePrefix: '--shiki-',
+    variableDefaults: {},
+    fontStyle: true
+});
+function createRehypeShikiOptions(showLineNumbers, defaultWrapCode, defaultCodeOverflow, options) {
+    const { transformers = [], ...restOptions } = options || {};
+    const newTransformers = [
+        transformerAddTitle(),
+        transformerAddLang(),
+        transformerAddLineNumbers({
+            defaultShowLineNumbers: showLineNumbers
+        }),
+        transformerAddWrapCode({
+            defaultWrapCode
+        }),
+        transformerAddFold({
+            defaultCodeOverflow
+        }),
+        ...transformers
+    ];
+    return {
+        theme: cssVariablesTheme,
+        defaultLanguage: 'txt',
+        lazy: true,
+        langs: [
+            'tsx',
+            'ts',
+            'js'
+        ],
+        ...restOptions,
+        transformers: newTransformers
+    };
+}
+export { createRehypeShikiOptions };

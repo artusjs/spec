@@ -1,0 +1,47 @@
+:root {
+  --rp-banner-background: linear-gradient(279deg, #ff8b00 35.21%, #fb6d5b 63.34%);
+}
+
+.rp-banner {
+  color: #fff;
+  z-index: 999;
+  background: var(--rp-banner-background);
+  justify-content: center;
+  align-items: center;
+  height: 36px;
+  display: flex;
+  position: sticky;
+  top: 0;
+  left: 0;
+}
+
+.rp-banner__link {
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.rp-banner__link:hover {
+  opacity: .9;
+  text-decoration: underline;
+}
+
+.rp-banner__link:active {
+  opacity: .7;
+}
+
+.rp-banner__close {
+  cursor: pointer;
+  box-sizing: border-box;
+  color: inherit;
+  border-radius: 4px;
+  padding: 5px;
+  font-size: 28px;
+  position: absolute;
+  right: 1.5rem;
+}
+
+.rp-banner__close:hover {
+  background-color: #ffffff4d;
+}
+

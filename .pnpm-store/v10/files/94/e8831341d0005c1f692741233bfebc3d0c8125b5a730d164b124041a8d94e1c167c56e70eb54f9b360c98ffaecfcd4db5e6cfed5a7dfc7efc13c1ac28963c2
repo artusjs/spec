@@ -1,0 +1,31 @@
+import { type PageIndexInfo, type RouteMeta, type RspressPlugin, type UserConfig } from '@rspress/shared';
+import type { RouteService } from './route/RouteService.js';
+type RspressPluginHookKeys = 'beforeBuild' | 'config' | 'afterBuild' | 'addPages' | 'addRuntimeModules' | 'routeGenerated' | 'routeServiceGenerated' | 'extendPageData' | 'modifySearchIndexData' | 'i18nSource';
+export declare class PluginDriver {
+    #private;
+    haveNavSidebarConfig: boolean;
+    static create(config: UserConfig, configFilePath: string, isProd: boolean): Promise<PluginDriver>;
+    private constructor();
+    getConfigFilePath(): string;
+    init(): Promise<void>;
+    addPlugin(plugin: RspressPlugin): void;
+    getPlugins(): RspressPlugin[];
+    clearPlugins(): void;
+    removePlugin(pluginName: string): void;
+    private normalizeConfig;
+    modifyConfig(): Promise<UserConfig>;
+    beforeBuild(): Promise<void[]>;
+    afterBuild(): Promise<void[]>;
+    modifySearchIndexData(pages: PageIndexInfo[]): Promise<void[]>;
+    extendPageData(pageData: PageIndexInfo): Promise<void[]>;
+    addPages(): Promise<import("@rspress/shared").AdditionalPage[]>;
+    routeGenerated(routes: RouteMeta[]): Promise<void[]>;
+    routeServiceGenerated(routeService: RouteService): Promise<void[]>;
+    addRuntimeModules(): Promise<Record<string, string>>;
+    i18nSource(defaultSource: Record<string, Record<string, string>>): Promise<Record<string, Record<string, string>>>;
+    globalUIComponents(): (string | [string, object])[];
+    globalStyles(): string[];
+    _runParallelAsyncHook<H extends RspressPluginHookKeys>(hookName: H, ...args: Parameters<Required<RspressPlugin>[H]>): Promise<Awaited<ReturnType<Required<RspressPlugin>[H]>>[]>;
+    _runSerialAsyncHook<H extends RspressPluginHookKeys>(hookName: H, ...args: Parameters<Required<RspressPlugin>[H]>): RspressPlugin;
+}
+export {};

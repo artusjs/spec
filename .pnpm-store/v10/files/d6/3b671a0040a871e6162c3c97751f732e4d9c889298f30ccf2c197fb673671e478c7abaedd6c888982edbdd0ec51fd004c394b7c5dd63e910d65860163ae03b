@@ -1,0 +1,43 @@
+import { DEFAULT_PAGE_EXTENSIONS, node_path } from "../../7319.js";
+import { processLocales, combineWalkResult } from "./locales.js";
+import { walk } from "./walk.js";
+async function runAutoNavSide(config, metaFileSet, mdFileSet) {
+    config.themeConfig = config.themeConfig || {};
+    config.themeConfig.locales = config.themeConfig.locales || config.locales || [];
+    const langs = config.themeConfig.locales.map((locale)=>locale.lang);
+    const hasLocales = langs.length > 0;
+    const versions = config.multiVersion?.versions || [];
+    const { extensions = DEFAULT_PAGE_EXTENSIONS } = config?.route || {};
+    if (hasLocales) {
+        const metaInfo = await processLocales(langs, versions, config.root, extensions, metaFileSet, mdFileSet);
+        return metaInfo;
+    }
+    const walks = versions.length ? await Promise.all(versions.map((version)=>walk(node_path.join(config.root, version), config.root, extensions, metaFileSet, mdFileSet))) : [
+        await walk(config.root, config.root, extensions, metaFileSet, mdFileSet)
+    ];
+    const combined = combineWalkResult(walks, versions);
+    return combined;
+}
+function auto_nav_sidebar_haveNavSidebarConfig(config) {
+    const themeConfig = config.themeConfig || {};
+    const haveNavSidebarConfig = themeConfig.nav || themeConfig.sidebar || themeConfig.locales?.[0]?.nav || themeConfig.locales?.[0]?.sidebar;
+    return Boolean(haveNavSidebarConfig);
+}
+async function modifyConfigWithAutoNavSide(config, metaFileSet = new Set(), mdFileSet = new Set(), force = false) {
+    if (auto_nav_sidebar_haveNavSidebarConfig(config) && !force) return;
+    const autoNavSide = await runAutoNavSide(config, metaFileSet, mdFileSet);
+    if (null === autoNavSide) return;
+    if (Array.isArray(autoNavSide)) {
+        config.themeConfig = config.themeConfig || {};
+        config.themeConfig.locales = config.themeConfig.locales || [];
+        config.themeConfig.locales = config.themeConfig.locales.map((item, index)=>({
+                ...item,
+                ...autoNavSide[index]
+            }));
+        return;
+    }
+    config.themeConfig = config.themeConfig || {};
+    config.themeConfig.nav = autoNavSide.nav;
+    config.themeConfig.sidebar = autoNavSide.sidebar;
+}
+export { auto_nav_sidebar_haveNavSidebarConfig as haveNavSidebarConfig, modifyConfigWithAutoNavSide };

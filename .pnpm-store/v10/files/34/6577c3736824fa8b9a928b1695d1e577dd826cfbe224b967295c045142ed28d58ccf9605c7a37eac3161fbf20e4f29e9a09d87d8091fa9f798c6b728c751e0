@@ -1,0 +1,687 @@
+import { __webpack_require__ } from "./1~rslib-runtime.js";
+import "./552.js";
+__webpack_require__.add({
+    "../../node_modules/.pnpm/rspack-manifest-plugin@5.2.1_@rspack+core@2.0.0-beta.9_@module-federation+runtime-tools@2.3.0_@swc+helpers@0.5.20_/node_modules/rspack-manifest-plugin/dist/helpers.js" (__unused_rspack_module, exports, __webpack_require__) {
+        exports.transformFiles = exports.reduceChunk = exports.reduceAssets = exports.generateManifest = void 0;
+        let node_path_1 = __webpack_require__("node:path?815c");
+        exports.generateManifest = (compilation, files, { generate, seed = {} })=>generate ? generate(seed, files, Array.from(compilation.entrypoints.entries()).reduce((e, [name, entrypoint])=>Object.assign(e, {
+                    [name]: entrypoint.getFiles()
+                }), {}), {
+                compilation
+            }) : files.reduce((manifest, file)=>Object.assign(manifest, {
+                    [file.name]: file.path
+                }), seed), exports.reduceAssets = (files, asset, moduleAssets)=>{
+            let name;
+            return (moduleAssets[asset.name] ? name = moduleAssets[asset.name] : asset.info.sourceFilename && (name = (0, node_path_1.join)((0, node_path_1.dirname)(asset.name), (0, node_path_1.basename)(asset.info.sourceFilename))), name) ? files.concat({
+                isAsset: !0,
+                isChunk: !1,
+                isInitial: !1,
+                isModuleAsset: !0,
+                name,
+                path: asset.name
+            }) : asset.chunks && asset.chunks.length > 0 ? files : files.concat({
+                isAsset: !0,
+                isChunk: !1,
+                isInitial: !1,
+                isModuleAsset: !1,
+                name: asset.name,
+                path: asset.name
+            });
+        }, exports.reduceChunk = (files, chunk, options, auxiliaryFiles)=>(Array.from(chunk.auxiliaryFiles || []).forEach((auxiliaryFile)=>{
+                auxiliaryFiles[auxiliaryFile] = {
+                    isAsset: !0,
+                    isChunk: !1,
+                    isInitial: !1,
+                    isModuleAsset: !0,
+                    name: (0, node_path_1.basename)(auxiliaryFile),
+                    path: auxiliaryFile
+                };
+            }), Array.from(chunk.files).reduce((prev, path)=>{
+                let name = chunk.name ? chunk.name : null;
+                return name = name ? options.useEntryKeys && !path.endsWith('.map') ? name : `${name}.${((fileName, { transformExtensions })=>{
+                    let split = fileName.replace(/\?.*/, '').split('.'), extension = split.pop();
+                    return transformExtensions.test(extension) ? `${split.pop()}.${extension}` : extension;
+                })(path, options)}` : path, prev.concat({
+                    chunk,
+                    isAsset: !1,
+                    isChunk: !0,
+                    isInitial: chunk.isOnlyInitial(),
+                    isModuleAsset: !1,
+                    name,
+                    path
+                });
+            }, files));
+        let standardizeFilePaths = (file)=>{
+            let result = Object.assign({}, file);
+            return result.name = file.name.replace(/\\/g, '/'), result.path = file.path.replace(/\\/g, '/'), result;
+        };
+        exports.transformFiles = (files, options)=>[
+                'filter',
+                'map',
+                'sort'
+            ].filter((fname)=>!!options[fname]).reduce((prev, fname)=>prev[fname](options[fname]), files).map(standardizeFilePaths);
+    },
+    "../../node_modules/.pnpm/rspack-manifest-plugin@5.2.1_@rspack+core@2.0.0-beta.9_@module-federation+runtime-tools@2.3.0_@swc+helpers@0.5.20_/node_modules/rspack-manifest-plugin/dist/hooks.js" (__unused_rspack_module, exports, __webpack_require__) {
+        exports.getCompilerHooks = exports.emitHook = exports.beforeRunHook = void 0;
+        let node_fs_1 = __webpack_require__("node:fs?31c0"), node_path_1 = __webpack_require__("node:path?815c"), lite_tapable_1 = __webpack_require__("../../node_modules/.pnpm/@rspack+lite-tapable@1.1.0/node_modules/@rspack/lite-tapable/dist/index.cjs"), helpers_1 = __webpack_require__("../../node_modules/.pnpm/rspack-manifest-plugin@5.2.1_@rspack+core@2.0.0-beta.9_@module-federation+runtime-tools@2.3.0_@swc+helpers@0.5.20_/node_modules/rspack-manifest-plugin/dist/helpers.js"), compilerHookMap = new WeakMap(), getCompilerHooks = (compiler)=>{
+            let hooks = compilerHookMap.get(compiler);
+            return void 0 === hooks && (hooks = {
+                afterEmit: new lite_tapable_1.SyncWaterfallHook([
+                    'manifest'
+                ]),
+                beforeEmit: new lite_tapable_1.SyncWaterfallHook([
+                    'manifest'
+                ])
+            }, compilerHookMap.set(compiler, hooks)), hooks;
+        };
+        exports.getCompilerHooks = getCompilerHooks, exports.beforeRunHook = ({ emitCountMap, manifestFileName }, _, callback)=>{
+            let emitCount = emitCountMap.get(manifestFileName) || 0;
+            emitCountMap.set(manifestFileName, emitCount + 1), callback && callback();
+        }, exports.emitHook = function emit({ compiler, emitCountMap, manifestAssetId, manifestFileName, moduleAssets, options }, compilation) {
+            let emitCount = emitCountMap.get(manifestFileName) - 1, stats = compilation.getStats().toJson({
+                all: !1,
+                assets: !0,
+                cachedAssets: !0,
+                ids: !0,
+                publicPath: !0
+            }), resolvedPublicPath = null !== options.publicPath ? options.publicPath : stats.publicPath, publicPath = 'auto' === resolvedPublicPath ? '' : resolvedPublicPath, { basePath, removeKeyHash } = options;
+            emitCountMap.set(manifestFileName, emitCount);
+            let auxiliaryFiles = {}, files = Array.from(compilation.chunks).reduce((prev, chunk)=>(0, helpers_1.reduceChunk)(prev, chunk, options, auxiliaryFiles), []);
+            (files = (files = stats.assets.reduce((prev, asset)=>(0, helpers_1.reduceAssets)(prev, asset, moduleAssets), files)).filter(({ name, path })=>!path.includes('hot-update') && void 0 === emitCountMap.get((0, node_path_1.join)(compiler.options.output?.path || '<unknown>', name)))).forEach((file)=>{
+                delete auxiliaryFiles[file.path];
+            }), Object.keys(auxiliaryFiles).forEach((auxiliaryFile)=>{
+                files = files.concat(auxiliaryFiles[auxiliaryFile]);
+            });
+            let integrityMap = {};
+            stats.assets?.forEach((asset)=>{
+                asset.integrity && (integrityMap[asset.name] = asset.integrity);
+            }), files = files.map((file)=>{
+                let normalizePath = (path)=>path.endsWith('/') ? path : `${path}/`, changes = {
+                    name: basePath ? normalizePath(basePath) + file.name : file.name,
+                    path: publicPath ? normalizePath(publicPath) + file.path : file.path
+                };
+                return integrityMap[file.path] && (changes.integrity = integrityMap[file.path]), changes.name = removeKeyHash ? changes.name.replace(removeKeyHash, '') : changes.name, Object.assign(file, changes);
+            }), files = (0, helpers_1.transformFiles)(files, options);
+            let manifest = (0, helpers_1.generateManifest)(compilation, files, options), isLastEmit = 0 === emitCount;
+            if (manifest = getCompilerHooks(compiler).beforeEmit.call(manifest), isLastEmit) {
+                let output = options.serialize(manifest);
+                compilation.emitAsset(manifestAssetId, new compiler.webpack.sources.RawSource(output)), options.writeToFileEmit && ((0, node_fs_1.mkdirSync)((0, node_path_1.dirname)(manifestFileName), {
+                    recursive: !0
+                }), (0, node_fs_1.writeFileSync)(manifestFileName, output));
+            }
+            getCompilerHooks(compiler).afterEmit.call(manifest);
+        };
+    },
+    "../../node_modules/.pnpm/rspack-manifest-plugin@5.2.1_@rspack+core@2.0.0-beta.9_@module-federation+runtime-tools@2.3.0_@swc+helpers@0.5.20_/node_modules/rspack-manifest-plugin/dist/index.js" (__unused_rspack_module, exports, __webpack_require__) {
+        exports.RspackManifestPlugin = void 0;
+        let node_path_1 = __webpack_require__("node:path?815c"), hooks_1 = __webpack_require__("../../node_modules/.pnpm/rspack-manifest-plugin@5.2.1_@rspack+core@2.0.0-beta.9_@module-federation+runtime-tools@2.3.0_@swc+helpers@0.5.20_/node_modules/rspack-manifest-plugin/dist/hooks.js"), emitCountMap = new Map(), defaults = {
+            assetHookStage: 1 / 0,
+            basePath: '',
+            fileName: 'manifest.json',
+            filter: null,
+            generate: void 0,
+            map: null,
+            publicPath: null,
+            removeKeyHash: /([a-f0-9]{16,32}\.?)/gi,
+            seed: void 0,
+            serialize: (manifest)=>JSON.stringify(manifest, null, 2),
+            sort: null,
+            transformExtensions: /^(gz|map)$/i,
+            useEntryKeys: !1,
+            useLegacyEmit: !1,
+            writeToFileEmit: !1
+        };
+        exports.RspackManifestPlugin = class {
+            constructor(opts){
+                this.options = Object.assign({}, defaults, opts);
+            }
+            apply(compiler) {
+                let manifestFileName = (0, node_path_1.resolve)(compiler.options.output?.path || './', this.options.fileName), manifestAssetId = (0, node_path_1.relative)(compiler.options.output?.path || './', manifestFileName), beforeRun = hooks_1.beforeRunHook.bind(this, {
+                    emitCountMap,
+                    manifestFileName
+                }), emit = hooks_1.emitHook.bind(this, {
+                    compiler,
+                    emitCountMap,
+                    manifestAssetId,
+                    manifestFileName,
+                    moduleAssets: {},
+                    options: this.options
+                }), hookOptions = {
+                    name: 'WebpackManifestPlugin',
+                    stage: this.options.assetHookStage
+                };
+                !0 === this.options.useLegacyEmit ? compiler.hooks.emit.tap(hookOptions, emit) : compiler.hooks.thisCompilation.tap(hookOptions, (compilation)=>{
+                    compilation.hooks.processAssets.tap(hookOptions, ()=>emit(compilation));
+                }), compiler.hooks.run.tapAsync(hookOptions, beforeRun), compiler.hooks.watchRun.tapAsync(hookOptions, beforeRun);
+            }
+        };
+    },
+    "../../node_modules/.pnpm/@rspack+lite-tapable@1.1.0/node_modules/@rspack/lite-tapable/dist/index.cjs" (__unused_rspack_module, exports) {
+        var __nested_rspack_require_18_37__ = {};
+        __nested_rspack_require_18_37__.d = (exports1, definition)=>{
+            for(var key in definition)__nested_rspack_require_18_37__.o(definition, key) && !__nested_rspack_require_18_37__.o(exports1, key) && Object.defineProperty(exports1, key, {
+                enumerable: !0,
+                get: definition[key]
+            });
+        }, __nested_rspack_require_18_37__.o = (obj, prop)=>Object.prototype.hasOwnProperty.call(obj, prop), __nested_rspack_require_18_37__.r = (exports1)=>{
+            "u" > typeof Symbol && Symbol.toStringTag && Object.defineProperty(exports1, Symbol.toStringTag, {
+                value: 'Module'
+            }), Object.defineProperty(exports1, '__esModule', {
+                value: !0
+            });
+        };
+        var __nested_rspack_exports__ = {};
+        function _define_property(obj, key, value) {
+            return key in obj ? Object.defineProperty(obj, key, {
+                value: value,
+                enumerable: !0,
+                configurable: !0,
+                writable: !0
+            }) : obj[key] = value, obj;
+        }
+        __nested_rspack_require_18_37__.r(__nested_rspack_exports__), __nested_rspack_require_18_37__.d(__nested_rspack_exports__, {
+            AsyncParallelHook: ()=>AsyncParallelHook,
+            AsyncSeriesBailHook: ()=>AsyncSeriesBailHook,
+            AsyncSeriesHook: ()=>AsyncSeriesHook,
+            AsyncSeriesWaterfallHook: ()=>AsyncSeriesWaterfallHook,
+            HookBase: ()=>HookBase,
+            HookMap: ()=>HookMap,
+            MultiHook: ()=>MultiHook,
+            QueriedHook: ()=>QueriedHook,
+            QueriedHookMap: ()=>QueriedHookMap,
+            SyncBailHook: ()=>SyncBailHook,
+            SyncHook: ()=>SyncHook,
+            SyncWaterfallHook: ()=>SyncWaterfallHook,
+            maxStage: ()=>maxStage,
+            minStage: ()=>minStage,
+            safeStage: ()=>safeStage
+        });
+        class HookBase {
+            intercept(interceptor) {
+                if (this.interceptors.push(Object.assign({}, interceptor)), interceptor.register) for(let i = 0; i < this.taps.length; i++)this.taps[i] = interceptor.register(this.taps[i]);
+            }
+            _runRegisterInterceptors(options) {
+                return this.interceptors.reduce((options, interceptor)=>interceptor.register?.(options) ?? options, options);
+            }
+            _runCallInterceptors(...args) {
+                for (let interceptor of this.interceptors)interceptor.call && interceptor.call(...args);
+            }
+            _runErrorInterceptors(e) {
+                for (let interceptor of this.interceptors)interceptor.error && interceptor.error(e);
+            }
+            _runTapInterceptors(tap) {
+                for (let interceptor of this.interceptors)interceptor.tap && interceptor.tap(tap);
+            }
+            _runDoneInterceptors() {
+                for (let interceptor of this.interceptors)interceptor.done && interceptor.done();
+            }
+            _runResultInterceptors(r) {
+                for (let interceptor of this.interceptors)interceptor.result && interceptor.result(r);
+            }
+            withOptions(options) {
+                let mergeOptions = (opt)=>Object.assign({}, options, 'string' == typeof opt ? {
+                        name: opt
+                    } : opt);
+                return {
+                    name: this.name,
+                    tap: (opt, fn)=>this.tap(mergeOptions(opt), fn),
+                    tapAsync: (opt, fn)=>this.tapAsync(mergeOptions(opt), fn),
+                    tapPromise: (opt, fn)=>this.tapPromise(mergeOptions(opt), fn),
+                    intercept: (interceptor)=>this.intercept(interceptor),
+                    isUsed: ()=>this.isUsed(),
+                    withOptions: (opt)=>this.withOptions(mergeOptions(opt)),
+                    queryStageRange: (stageRange)=>this.queryStageRange(stageRange)
+                };
+            }
+            isUsed() {
+                return this.taps.length > 0 || this.interceptors.length > 0;
+            }
+            queryStageRange(stageRange) {
+                return new QueriedHook(stageRange, this);
+            }
+            callAsyncStageRange(queried) {
+                throw Error('Hook should implement there own _callAsyncStageRange');
+            }
+            callAsync(...args) {
+                return this.callAsyncStageRange(this.queryStageRange(allStageRange), ...args);
+            }
+            promiseStageRange(queried, ...args) {
+                return new Promise((resolve, reject)=>{
+                    this.callAsyncStageRange(queried, ...args, (e, r)=>e ? reject(e) : resolve(r));
+                });
+            }
+            promise(...args) {
+                return this.promiseStageRange(this.queryStageRange(allStageRange), ...args);
+            }
+            tap(options, fn) {
+                this._tap('sync', options, fn);
+            }
+            tapAsync(options, fn) {
+                this._tap('async', options, fn);
+            }
+            tapPromise(options, fn) {
+                this._tap('promise', options, fn);
+            }
+            _tap(type, options, fn) {
+                let normalizedOptions = options;
+                if ('string' == typeof options) normalizedOptions = {
+                    name: options.trim()
+                };
+                else if ('object' != typeof options || null === options) throw Error('Invalid tap options');
+                if ('string' != typeof normalizedOptions.name || '' === normalizedOptions.name) throw Error('Missing name for tap');
+                this._insert(this._runRegisterInterceptors(Object.assign({
+                    type,
+                    fn
+                }, normalizedOptions)));
+            }
+            _insert(item) {
+                let before;
+                'string' == typeof item.before ? before = new Set([
+                    item.before
+                ]) : Array.isArray(item.before) && (before = new Set(item.before));
+                let stage = 0;
+                'number' == typeof item.stage && (stage = item.stage);
+                let i = this.taps.length;
+                for(; i > 0;){
+                    i--;
+                    let x = this.taps[i];
+                    this.taps[i + 1] = x;
+                    let xStage = x.stage || 0;
+                    if (before) {
+                        if (before.has(x.name)) {
+                            before.delete(x.name);
+                            continue;
+                        }
+                        if (before.size > 0) continue;
+                    }
+                    if (!(xStage > stage)) {
+                        i++;
+                        break;
+                    }
+                }
+                this.taps[i] = item;
+            }
+            _prepareArgs(args) {
+                let len = this.args.length;
+                return args.length < len ? (args.length = len, args.fill(void 0, args.length, len)) : (args.length > len && (args.length = len), args);
+            }
+            constructor(args = [], name){
+                _define_property(this, "args", void 0), _define_property(this, "name", void 0), _define_property(this, "taps", void 0), _define_property(this, "interceptors", void 0), this.args = args, this.name = name, this.taps = [], this.interceptors = [];
+            }
+        }
+        let minStage = -1 / 0, maxStage = 1 / 0, allStageRange = [
+            minStage,
+            1 / 0
+        ], i32MAX = 2147483648 - 1, safeStage = (stage)=>stage < -2147483648 ? -2147483648 : stage > i32MAX ? i32MAX : stage;
+        class QueriedHook {
+            isUsed() {
+                return !!(this.tapsInRange.length > 0 || this.stageRange[0] === minStage && this.hook.interceptors.some((i)=>i.call) || this.stageRange[1] === maxStage && this.hook.interceptors.some((i)=>i.done));
+            }
+            call(...args) {
+                if ('function' != typeof this.hook.callStageRange) throw Error('hook is not a SyncHook, call methods only exists on SyncHook');
+                return this.hook.callStageRange(this, ...args);
+            }
+            callAsync(...args) {
+                return this.hook.callAsyncStageRange(this, ...args);
+            }
+            promise(...args) {
+                return this.hook.promiseStageRange(this, ...args);
+            }
+            constructor(stageRange, hook){
+                _define_property(this, "stageRange", void 0), _define_property(this, "hook", void 0), _define_property(this, "tapsInRange", void 0);
+                let tapsInRange = [], [from, to] = stageRange;
+                for (let tap of hook.taps){
+                    let stage = tap.stage ?? 0;
+                    from <= stage && stage < to ? tapsInRange.push(tap) : to === maxStage && stage === maxStage && tapsInRange.push(tap);
+                }
+                this.stageRange = stageRange, this.hook = hook, this.tapsInRange = tapsInRange;
+            }
+        }
+        class SyncHook extends HookBase {
+            callAsyncStageRange(queried, ...args) {
+                let { stageRange: [from, to], tapsInRange } = queried, argsWithoutCb = args.slice(0, args.length - 1), cb = args[args.length - 1], args2 = this._prepareArgs(argsWithoutCb);
+                for (let tap of (from === minStage && this._runCallInterceptors(...args2), tapsInRange)){
+                    this._runTapInterceptors(tap);
+                    try {
+                        tap.fn(...args2);
+                    } catch (e) {
+                        return this._runErrorInterceptors(e), cb(e);
+                    }
+                }
+                to === maxStage && (this._runDoneInterceptors(), cb(null));
+            }
+            call(...args) {
+                return this.callStageRange(this.queryStageRange(allStageRange), ...args);
+            }
+            callStageRange(queried, ...args) {
+                let result, error;
+                if (this.callAsyncStageRange(queried, ...args, (e, r)=>{
+                    error = e, result = r;
+                }), error) throw error;
+                return result;
+            }
+            tapAsync() {
+                throw Error('tapAsync is not supported on a SyncHook');
+            }
+            tapPromise() {
+                throw Error('tapPromise is not supported on a SyncHook');
+            }
+        }
+        class SyncBailHook extends HookBase {
+            callAsyncStageRange(queried, ...args) {
+                let { stageRange: [from, to], tapsInRange } = queried, argsWithoutCb = args.slice(0, args.length - 1), cb = args[args.length - 1], args2 = this._prepareArgs(argsWithoutCb);
+                for (let tap of (from === minStage && this._runCallInterceptors(...args2), tapsInRange)){
+                    let r;
+                    this._runTapInterceptors(tap);
+                    try {
+                        r = tap.fn(...args2);
+                    } catch (e) {
+                        return this._runErrorInterceptors(e), cb(e);
+                    }
+                    if (void 0 !== r) return this._runResultInterceptors(r), cb(null, r);
+                }
+                to === maxStage && (this._runDoneInterceptors(), cb(null));
+            }
+            call(...args) {
+                return this.callStageRange(this.queryStageRange(allStageRange), ...args);
+            }
+            callStageRange(queried, ...args) {
+                let result, error;
+                if (this.callAsyncStageRange(queried, ...args, (e, r)=>{
+                    error = e, result = r;
+                }), error) throw error;
+                return result;
+            }
+            tapAsync() {
+                throw Error('tapAsync is not supported on a SyncBailHook');
+            }
+            tapPromise() {
+                throw Error('tapPromise is not supported on a SyncBailHook');
+            }
+        }
+        class SyncWaterfallHook extends HookBase {
+            callAsyncStageRange(queried, ...args) {
+                let { stageRange: [from, to], tapsInRange } = queried, argsWithoutCb = args.slice(0, args.length - 1), cb = args[args.length - 1], args2 = this._prepareArgs(argsWithoutCb);
+                for (let tap of (from === minStage && this._runCallInterceptors(...args2), tapsInRange)){
+                    this._runTapInterceptors(tap);
+                    try {
+                        let r = tap.fn(...args2);
+                        void 0 !== r && (args2[0] = r);
+                    } catch (e) {
+                        return this._runErrorInterceptors(e), cb(e);
+                    }
+                }
+                to === maxStage && (this._runDoneInterceptors(), cb(null, args2[0]));
+            }
+            call(...args) {
+                return this.callStageRange(this.queryStageRange(allStageRange), ...args);
+            }
+            callStageRange(queried, ...args) {
+                let result, error;
+                if (this.callAsyncStageRange(queried, ...args, (e, r)=>{
+                    error = e, result = r;
+                }), error) throw error;
+                return result;
+            }
+            tapAsync() {
+                throw Error('tapAsync is not supported on a SyncWaterfallHook');
+            }
+            tapPromise() {
+                throw Error('tapPromise is not supported on a SyncWaterfallHook');
+            }
+            constructor(args = [], name){
+                if (args.length < 1) throw Error('Waterfall hooks must have at least one argument');
+                super(args, name);
+            }
+        }
+        class AsyncParallelHook extends HookBase {
+            callAsyncStageRange(queried, ...args) {
+                let { stageRange: [from], tapsInRange } = queried, argsWithoutCb = args.slice(0, args.length - 1), cb = args[args.length - 1], args2 = this._prepareArgs(argsWithoutCb);
+                from === minStage && this._runCallInterceptors(...args2);
+                let done = ()=>{
+                    this._runDoneInterceptors(), cb(null);
+                }, error = (e)=>{
+                    this._runErrorInterceptors(e), cb(e);
+                };
+                if (0 === tapsInRange.length) return done();
+                let counter = tapsInRange.length;
+                for (let tap of tapsInRange){
+                    if (this._runTapInterceptors(tap), 'promise' === tap.type) {
+                        let promise = tap.fn(...args2);
+                        if (!promise || !promise.then) throw Error(`Tap function (tapPromise) did not return promise (returned ${promise})`);
+                        promise.then(()=>{
+                            0 == (counter -= 1) && done();
+                        }, (e)=>{
+                            counter = 0, error(e);
+                        });
+                    } else if ('async' === tap.type) tap.fn(...args2, (e)=>{
+                        e ? (counter = 0, error(e)) : 0 == (counter -= 1) && done();
+                    });
+                    else {
+                        let hasError = !1;
+                        try {
+                            tap.fn(...args2);
+                        } catch (e) {
+                            hasError = !0, counter = 0, error(e);
+                        }
+                        hasError || 0 != --counter || done();
+                    }
+                    if (counter <= 0) return;
+                }
+            }
+        }
+        class AsyncSeriesHook extends HookBase {
+            callAsyncStageRange(queried, ...args) {
+                let { stageRange: [from], tapsInRange } = queried, argsWithoutCb = args.slice(0, args.length - 1), cb = args[args.length - 1], args2 = this._prepareArgs(argsWithoutCb);
+                from === minStage && this._runCallInterceptors(...args2);
+                let done = ()=>{
+                    this._runDoneInterceptors(), cb(null);
+                }, error = (e)=>{
+                    this._runErrorInterceptors(e), cb(e);
+                };
+                if (0 === tapsInRange.length) return done();
+                let index = 0, next = ()=>{
+                    let tap = tapsInRange[index];
+                    if (this._runTapInterceptors(tap), 'promise' === tap.type) {
+                        let promise = tap.fn(...args2);
+                        if (!promise || !promise.then) throw Error(`Tap function (tapPromise) did not return promise (returned ${promise})`);
+                        promise.then(()=>{
+                            (index += 1) === tapsInRange.length ? done() : next();
+                        }, (e)=>{
+                            index = tapsInRange.length, error(e);
+                        });
+                    } else if ('async' === tap.type) tap.fn(...args2, (e)=>{
+                        e ? (index = tapsInRange.length, error(e)) : (index += 1) === tapsInRange.length ? done() : next();
+                    });
+                    else {
+                        let hasError = !1;
+                        try {
+                            tap.fn(...args2);
+                        } catch (e) {
+                            hasError = !0, index = tapsInRange.length, error(e);
+                        }
+                        hasError || ((index += 1) === tapsInRange.length ? done() : next());
+                    }
+                    if (index === tapsInRange.length) return;
+                };
+                next();
+            }
+        }
+        class AsyncSeriesBailHook extends HookBase {
+            callAsyncStageRange(queried, ...args) {
+                let { stageRange: [from], tapsInRange } = queried, argsWithoutCb = args.slice(0, args.length - 1), cb = args[args.length - 1], args2 = this._prepareArgs(argsWithoutCb);
+                from === minStage && this._runCallInterceptors(...args2);
+                let done = ()=>{
+                    this._runDoneInterceptors(), cb(null);
+                }, error = (e)=>{
+                    this._runErrorInterceptors(e), cb(e);
+                }, result = (r)=>{
+                    this._runResultInterceptors(r), cb(null, r);
+                };
+                if (0 === tapsInRange.length) return done();
+                let index = 0, next = ()=>{
+                    let tap = tapsInRange[index];
+                    if (this._runTapInterceptors(tap), 'promise' === tap.type) {
+                        let promise = tap.fn(...args2);
+                        if (!promise || !promise.then) throw Error(`Tap function (tapPromise) did not return promise (returned ${promise})`);
+                        promise.then((r)=>{
+                            index += 1, void 0 !== r ? result(r) : index === tapsInRange.length ? done() : next();
+                        }, (e)=>{
+                            index = tapsInRange.length, error(e);
+                        });
+                    } else if ('async' === tap.type) tap.fn(...args2, (e, r)=>{
+                        e ? (index = tapsInRange.length, error(e)) : (index += 1, void 0 !== r ? result(r) : index === tapsInRange.length ? done() : next());
+                    });
+                    else {
+                        let r, hasError = !1;
+                        try {
+                            r = tap.fn(...args2);
+                        } catch (e) {
+                            hasError = !0, index = tapsInRange.length, error(e);
+                        }
+                        hasError || (index += 1, void 0 !== r ? result(r) : index === tapsInRange.length ? done() : next());
+                    }
+                    if (index === tapsInRange.length) return;
+                };
+                next();
+            }
+        }
+        class AsyncSeriesWaterfallHook extends HookBase {
+            callAsyncStageRange(queried, ...args) {
+                let { stageRange: [from], tapsInRange } = queried, argsWithoutCb = args.slice(0, args.length - 1), cb = args[args.length - 1], args2 = this._prepareArgs(argsWithoutCb);
+                from === minStage && this._runCallInterceptors(...args2);
+                let result = (r)=>{
+                    this._runResultInterceptors(r), cb(null, r);
+                }, error = (e)=>{
+                    this._runErrorInterceptors(e), cb(e);
+                };
+                if (0 === tapsInRange.length) return result(args2[0]);
+                let index = 0, next = ()=>{
+                    let tap = tapsInRange[index];
+                    if (this._runTapInterceptors(tap), 'promise' === tap.type) {
+                        let promise = tap.fn(...args2);
+                        if (!promise || !promise.then) throw Error(`Tap function (tapPromise) did not return promise (returned ${promise})`);
+                        promise.then((r)=>{
+                            index += 1, void 0 !== r && (args2[0] = r), index === tapsInRange.length ? result(args2[0]) : next();
+                        }, (e)=>{
+                            index = tapsInRange.length, error(e);
+                        });
+                    } else if ('async' === tap.type) tap.fn(...args2, (e, r)=>{
+                        e ? (index = tapsInRange.length, error(e)) : (index += 1, void 0 !== r && (args2[0] = r), index === tapsInRange.length ? result(args2[0]) : next());
+                    });
+                    else {
+                        let hasError = !1;
+                        try {
+                            let r = tap.fn(...args2);
+                            void 0 !== r && (args2[0] = r);
+                        } catch (e) {
+                            hasError = !0, index = tapsInRange.length, error(e);
+                        }
+                        hasError || ((index += 1) === tapsInRange.length ? result(args2[0]) : next());
+                    }
+                    if (index === tapsInRange.length) return;
+                };
+                next();
+            }
+            constructor(args = [], name){
+                if (args.length < 1) throw Error('Waterfall hooks must have at least one argument');
+                super(args, name);
+            }
+        }
+        let defaultFactory = (key, hook)=>hook;
+        class HookMap {
+            get(key) {
+                return this._map.get(key);
+            }
+            for(key) {
+                let hook = this.get(key);
+                if (void 0 !== hook) return hook;
+                let newHook = this._factory(key), interceptors = this._interceptors;
+                for(let i = 0; i < interceptors.length; i++){
+                    let factory = interceptors[i].factory;
+                    factory && (newHook = factory(key, newHook));
+                }
+                return this._map.set(key, newHook), newHook;
+            }
+            intercept(interceptor) {
+                this._interceptors.push(Object.assign({
+                    factory: defaultFactory
+                }, interceptor));
+            }
+            isUsed() {
+                for (let key of this._map.keys()){
+                    let hook = this.get(key);
+                    if (hook?.isUsed()) return !0;
+                }
+                return !1;
+            }
+            queryStageRange(stageRange) {
+                return new QueriedHookMap(stageRange, this);
+            }
+            constructor(factory, name){
+                _define_property(this, "_map", new Map()), _define_property(this, "_factory", void 0), _define_property(this, "name", void 0), _define_property(this, "_interceptors", void 0), this.name = name, this._factory = factory, this._interceptors = [];
+            }
+        }
+        class QueriedHookMap {
+            get(key) {
+                return this.hookMap.get(key)?.queryStageRange(this.stageRange);
+            }
+            for(key) {
+                return this.hookMap.for(key).queryStageRange(this.stageRange);
+            }
+            isUsed() {
+                for (let key of this.hookMap._map.keys())if (this.get(key)?.isUsed()) return !0;
+                return !1;
+            }
+            constructor(stageRange, hookMap){
+                _define_property(this, "stageRange", void 0), _define_property(this, "hookMap", void 0), this.stageRange = stageRange, this.hookMap = hookMap;
+            }
+        }
+        class MultiHook {
+            tap(options, fn) {
+                for (let hook of this.hooks)hook.tap(options, fn);
+            }
+            tapAsync(options, fn) {
+                for (let hook of this.hooks)hook.tapAsync(options, fn);
+            }
+            tapPromise(options, fn) {
+                for (let hook of this.hooks)hook.tapPromise(options, fn);
+            }
+            isUsed() {
+                for (let hook of this.hooks)if (hook.isUsed()) return !0;
+                return !1;
+            }
+            intercept(interceptor) {
+                for (let hook of this.hooks)hook.intercept(interceptor);
+            }
+            withOptions(options) {
+                return new MultiHook(this.hooks.map((h)=>h.withOptions(options)), this.name);
+            }
+            constructor(hooks, name){
+                _define_property(this, "hooks", void 0), _define_property(this, "name", void 0), this.hooks = hooks, this.name = name;
+            }
+        }
+        for(var __webpack_i__ in exports.AsyncParallelHook = __nested_rspack_exports__.AsyncParallelHook, exports.AsyncSeriesBailHook = __nested_rspack_exports__.AsyncSeriesBailHook, exports.AsyncSeriesHook = __nested_rspack_exports__.AsyncSeriesHook, exports.AsyncSeriesWaterfallHook = __nested_rspack_exports__.AsyncSeriesWaterfallHook, exports.HookBase = __nested_rspack_exports__.HookBase, exports.HookMap = __nested_rspack_exports__.HookMap, exports.MultiHook = __nested_rspack_exports__.MultiHook, exports.QueriedHook = __nested_rspack_exports__.QueriedHook, exports.QueriedHookMap = __nested_rspack_exports__.QueriedHookMap, exports.SyncBailHook = __nested_rspack_exports__.SyncBailHook, exports.SyncHook = __nested_rspack_exports__.SyncHook, exports.SyncWaterfallHook = __nested_rspack_exports__.SyncWaterfallHook, exports.maxStage = __nested_rspack_exports__.maxStage, exports.minStage = __nested_rspack_exports__.minStage, exports.safeStage = __nested_rspack_exports__.safeStage, __nested_rspack_exports__)-1 === [
+            "AsyncParallelHook",
+            "AsyncSeriesBailHook",
+            "AsyncSeriesHook",
+            "AsyncSeriesWaterfallHook",
+            "HookBase",
+            "HookMap",
+            "MultiHook",
+            "QueriedHook",
+            "QueriedHookMap",
+            "SyncBailHook",
+            "SyncHook",
+            "SyncWaterfallHook",
+            "maxStage",
+            "minStage",
+            "safeStage"
+        ].indexOf(__webpack_i__) && (exports[__webpack_i__] = __nested_rspack_exports__[__webpack_i__]);
+        Object.defineProperty(exports, "__esModule", {
+            value: !0
+        });
+    }
+});
+var RspackManifestPlugin = __webpack_require__("../../node_modules/.pnpm/rspack-manifest-plugin@5.2.1_@rspack+core@2.0.0-beta.9_@module-federation+runtime-tools@2.3.0_@swc+helpers@0.5.20_/node_modules/rspack-manifest-plugin/dist/index.js").RspackManifestPlugin;
+export { RspackManifestPlugin };

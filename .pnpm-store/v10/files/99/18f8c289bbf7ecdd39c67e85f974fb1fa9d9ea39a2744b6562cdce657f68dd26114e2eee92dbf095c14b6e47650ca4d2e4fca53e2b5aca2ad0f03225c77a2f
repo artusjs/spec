@@ -1,0 +1,75 @@
+import type { PageIndexInfo } from '@rspress/core';
+import type { PluggableList } from 'unified';
+import type { RspressPlugin } from '@rspress/core';
+
+/**
+ * @default { name: 'llms-full.txt' }
+ */
+declare interface LlmsFullTxt {
+    name: string;
+}
+
+/**
+ * @default { name: "llms.txt" }
+ */
+export declare interface LlmsTxt {
+    name: string;
+    onTitleGenerate?: (context: {
+        title: string | undefined;
+        description: string | undefined;
+    }) => string;
+    onLineGenerate?: (page: PageIndexInfo) => string;
+    onAfterLlmsTxtGenerate?: (llmsTxtContent: string) => string;
+}
+
+declare interface MdFiles {
+    /**
+     * Whether to convert mdx to md.
+     * @default false
+     */
+    mdxToMd?: boolean;
+    /**
+     * Allow users to customize remarkPlugins and edit the content of generated md files.
+     * @default []
+     */
+    remarkPlugins?: PluggableList;
+}
+
+export declare interface Options {
+    /**
+     * Whether to generate llms.txt.
+     */
+    llmsTxt?: false | LlmsTxt;
+    /**
+     * Whether to generate llms.txt related md files for each route.
+     */
+    mdFiles?: false | MdFiles;
+    /**
+     * Whether to generate llms-full.txt.
+     */
+    llmsFullTxt?: false | LlmsFullTxt;
+    /**
+     * Whether to include some routes from llms.txt.
+     * @default undefined
+     */
+    include?: (context: {
+        page: PageIndexInfo;
+    }) => boolean;
+    /**
+     * Whether to exclude some routes from llms.txt.
+     * exclude will trigger after include
+     * @default undefined
+     */
+    exclude?: (context: {
+        page: PageIndexInfo;
+    }) => boolean;
+}
+
+/**
+ * A plugin for rspress to generate llms.txt, llms-full.txt, md files to let llm understand your website.
+ */
+export declare function pluginLlms(options?: RspressPluginLlmsOptions): RspressPlugin;
+
+declare type RspressPluginLlmsOptions = Options | Options[];
+
+export { }

@@ -1,0 +1,52 @@
+import { visit, extractTextAndId, github_slugger, headingRank } from "../../../7397.js";
+const rehypeHeaderAnchor = ()=>{
+    const slugger = new github_slugger();
+    return (tree)=>{
+        visit(tree, 'element', (node)=>{
+            if (!headingRank(node)) return;
+            if (!node.properties?.id) {
+                const [text, customId] = collectHeaderText(node);
+                node.properties ??= {};
+                node.properties.id = customId || slugger.slug(text.trim());
+            }
+            node.children.unshift(create(node));
+        });
+    };
+};
+const collectHeaderText = (node)=>{
+    let text = '';
+    let id = '';
+    node.children.forEach((child)=>{
+        if ('text' === child.type) {
+            const [textPart, idPart] = extractTextAndId(child.value);
+            child.value = textPart;
+            text += textPart;
+            id = idPart;
+        } else if ('element' === child.type) child.children.forEach((c)=>{
+            if ('text' === c.type) text += c.value;
+        });
+    });
+    return [
+        text,
+        id
+    ];
+};
+function create(node) {
+    return {
+        type: 'element',
+        tagName: 'a',
+        properties: {
+            class: 'rp-header-anchor',
+            ariaHidden: 'true',
+            href: `#${node.properties.id}`
+        },
+        children: [
+            {
+                type: 'text',
+                value: '#'
+            }
+        ]
+    };
+}
+var headerAnchor_collectHeaderText = void 0;
+export { headerAnchor_collectHeaderText as collectHeaderText, rehypeHeaderAnchor };

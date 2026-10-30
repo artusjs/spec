@@ -1,0 +1,79 @@
+import { normalizeHref, logger, withBase } from "../../../7319.js";
+import { extractInfoFromFrontmatterWithAbsolutePath } from "../../auto-nav-sidebar/utils.js";
+function routePathToMdPath(routePath, base) {
+    let url = routePath;
+    url = normalizeHref(url, false);
+    url = url.replace(/\.html$/, '.md');
+    return withBase(url, base);
+}
+async function generateLlmsTxt(routeGroups, others, navList, title, description, base, routeService) {
+    const lines = [];
+    if (!title) logger.warn('No `title` is configured in your Rspress setup. Please set `title` in rspress.config.ts so llms.txt can include an appropriate heading.');
+    const summary = title ? `# ${title}${description ? `\n\n> ${description}` : ''}` : '';
+    async function genH2Part(nav, routes) {
+        const lines = [];
+        const { text } = nav;
+        if (0 === routes.length) return lines;
+        const routeLines = (await Promise.all(routes.map(async (route)=>{
+            const routePage = routeService.getRoutePageByRoutePath(route);
+            const { lang, routePath, absolutePath } = routePage.routeMeta;
+            if ('/' === routePath || routePath === `/${lang}/`) return;
+            const pageInfo = routePage.pageIndexInfo;
+            let title;
+            let description;
+            if (pageInfo) {
+                title = pageInfo.title;
+                description = pageInfo.description;
+            } else {
+                const info = await extractInfoFromFrontmatterWithAbsolutePath(absolutePath, routeService.getDocsDir());
+                title = info.title;
+                description = info.description;
+            }
+            return `- [${title}](${routePathToMdPath(routePath, base)})${description ? `: ${description}` : ''}`;
+        }))).filter((i)=>Boolean(i));
+        if (routeLines.length > 0) {
+            const title = text;
+            lines.push(`\n## ${title}\n`);
+            lines.push(...routeLines);
+        }
+        return lines;
+    }
+    const h2Parts = await Promise.all(navList.map(async (nav, i)=>{
+        const routes = routeGroups[i];
+        const h2Part = await genH2Part(nav, routes);
+        return h2Part;
+    }));
+    lines.push(...h2Parts.flat());
+    const otherLines = await genH2Part({
+        text: 'Others'
+    }, others);
+    lines.push(...otherLines);
+    let llmsTxt;
+    llmsTxt = summary ? lines.length > 0 ? `${summary}\n${lines.join('\n')}` : summary : lines.join('\n').trimStart();
+    return llmsTxt;
+}
+function generateLlmsFullTxt(routeGroups, navList, others, base, mdContents) {
+    const lines = [];
+    for(let i = 0; i < navList.length; i++){
+        const routeGroup = routeGroups[i];
+        if (0 !== routeGroup.length) for (const routePath of routeGroup){
+            lines.push(`---
+url: ${routePathToMdPath(routePath, base)}
+---
+`);
+            lines.push(mdContents.get(routePath) ?? '');
+            lines.push('\n');
+        }
+    }
+    for (const routePath of others){
+        lines.push(`---
+url: ${routePathToMdPath(routePath, base)}
+---
+`);
+        lines.push(mdContents.get(routePath) ?? '');
+        lines.push('\n');
+    }
+    return lines.join('\n');
+}
+var llmsTxt_routePathToMdPath = void 0;
+export { generateLlmsFullTxt, generateLlmsTxt, llmsTxt_routePathToMdPath as routePathToMdPath };

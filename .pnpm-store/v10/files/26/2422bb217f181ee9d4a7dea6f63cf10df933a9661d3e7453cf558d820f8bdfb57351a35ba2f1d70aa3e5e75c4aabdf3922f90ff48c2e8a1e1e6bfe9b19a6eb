@@ -1,0 +1,33 @@
+.rp-llms-button {
+  border: 1px solid var(--rp-c-divider-light);
+  background: var(--rp-c-bg);
+  height: 36px;
+  color: var(--rp-c-text-2);
+  -webkit-user-select: none;
+  user-select: none;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: normal;
+  transition: background .2s, border-color .2s, color .2s, box-shadow .2s, transform .1s, opacity .2s;
+  display: inline-flex;
+}
+
+.rp-llms-button:hover {
+  background: var(--rp-c-bg-soft);
+  border-color: var(--rp-c-divider);
+  color: var(--rp-c-text-1);
+  box-shadow: 0 2px 6px #0000000a;
+}
+
+.rp-llms-button:active {
+  background: var(--rp-c-bg-soft);
+  box-shadow: none;
+}
+
