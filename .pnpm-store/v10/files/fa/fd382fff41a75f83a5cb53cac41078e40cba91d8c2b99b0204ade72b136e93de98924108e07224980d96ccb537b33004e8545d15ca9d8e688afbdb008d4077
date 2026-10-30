@@ -1,0 +1,103 @@
+import { node_path, rehype_external_links, rehype_raw, remark_cjk_friendly, nodeTypes, remark_gfm, rehype, remark_cjk_friendly_gfm_strikethrough } from "../../7397.js";
+import { remarkToc } from "./remarkPlugins/toc.js";
+import { remarkContainerSyntax } from "./remarkPlugins/containerSyntax.js";
+import { remarkFileCodeBlock } from "./remarkPlugins/fileCodeBlock.js";
+import { remarkLink } from "./remarkPlugins/link.js";
+import { remarkImage } from "./remarkPlugins/image.js";
+import { remarkSplitMdx } from "../ssg-md/remarkSplitMdx.js";
+import { remarkBuiltin } from "./remarkPlugins/builtin.js";
+import { rehypeHeaderAnchor } from "./rehypePlugins/headerAnchor.js";
+import { rehypeCodeMeta } from "./rehypePlugins/codeMeta.js";
+import { createRehypeShikiOptions } from "./rehypePlugins/shiki.js";
+async function createMDXOptions(options) {
+    const { docDirectory, config, routeService, filepath, pluginDriver, addDependency, isSsgMd = false } = options;
+    const remarkLinkOptions = config?.markdown?.link;
+    const format = node_path.extname(filepath).slice(1);
+    const { remarkPlugins: remarkPluginsFromConfig = [], rehypePlugins: rehypePluginsFromConfig = [], globalComponents: globalComponentsFromConfig = [], showLineNumbers = false, defaultWrapCode = false, defaultCodeOverflow, shiki, cjkFriendlyEmphasis = true } = config?.markdown || {};
+    const rspressPlugins = pluginDriver?.getPlugins() ?? [];
+    const remarkPluginsFromPlugins = rspressPlugins.flatMap((plugin)=>plugin.markdown?.remarkPlugins || []);
+    const rehypePluginsFromPlugins = rspressPlugins.flatMap((plugin)=>plugin.markdown?.rehypePlugins || []);
+    const globalComponents = [
+        ...rspressPlugins.flatMap((plugin)=>plugin.markdown?.globalComponents || []),
+        ...globalComponentsFromConfig
+    ];
+    return {
+        providerImportSource: '@mdx-js/react',
+        format,
+        remarkPlugins: [
+            remark_gfm,
+            cjkFriendlyEmphasis && remark_cjk_friendly,
+            cjkFriendlyEmphasis && remark_cjk_friendly_gfm_strikethrough,
+            remarkToc,
+            !isSsgMd && remarkContainerSyntax,
+            [
+                remarkFileCodeBlock,
+                {
+                    filepath,
+                    addDependency
+                }
+            ],
+            [
+                remarkLink,
+                isSsgMd ? {
+                    cleanUrls: '.md',
+                    root: docDirectory,
+                    routeService,
+                    remarkLinkOptions: {
+                        checkDeadLinks: false,
+                        autoPrefix: true
+                    },
+                    __base: config?.base
+                } : {
+                    cleanUrls: false,
+                    root: docDirectory,
+                    routeService,
+                    remarkLinkOptions
+                }
+            ],
+            remarkImage,
+            isSsgMd && [
+                remarkSplitMdx,
+                'object' == typeof config?.llms ? config.llms.remarkSplitMdxOptions : void 0
+            ],
+            globalComponents.length && [
+                remarkBuiltin,
+                {
+                    globalComponents
+                }
+            ],
+            ...isSsgMd ? [] : [
+                ...remarkPluginsFromConfig,
+                ...remarkPluginsFromPlugins
+            ]
+        ].filter(Boolean),
+        ...isSsgMd ? {} : {
+            rehypePlugins: [
+                rehypeHeaderAnchor,
+                ...'md' === format ? [
+                    rehypeCodeMeta,
+                    [
+                        rehype_raw,
+                        {
+                            passThrough: nodeTypes
+                        }
+                    ]
+                ] : [],
+                [
+                    rehype,
+                    createRehypeShikiOptions(showLineNumbers, defaultWrapCode, defaultCodeOverflow, shiki)
+                ],
+                [
+                    rehype_external_links,
+                    {
+                        target: '_blank',
+                        rel: 'noopener noreferrer'
+                    }
+                ],
+                ...rehypePluginsFromConfig,
+                ...rehypePluginsFromPlugins
+            ]
+        }
+    };
+}
+export { createMDXOptions };

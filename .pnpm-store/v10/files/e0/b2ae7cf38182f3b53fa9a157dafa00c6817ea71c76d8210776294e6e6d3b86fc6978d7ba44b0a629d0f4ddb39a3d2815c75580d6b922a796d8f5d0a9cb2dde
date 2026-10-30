@@ -1,0 +1,97 @@
+import { normalizeHref, node_path, addLeadingSlash, logger, visit, picocolors, isExternalUrl, isProduction, parseUrl, withBase } from "../../../1965.js";
+import { hintRelativeMarkdownLink } from "../../logger/hint.js";
+import { createError } from "../../utils/error.js";
+function link_checkDeadLinks(checkDeadLinks, internalLinks, file, lint) {
+    const errorInfos = [];
+    const excludes = 'object' == typeof checkDeadLinks ? checkDeadLinks.excludes : void 0;
+    const excludesUrl = Array.isArray(excludes) ? new Set(excludes) : void 0;
+    const excludesFn = 'function' == typeof excludes ? excludes : void 0;
+    let possibleBreakingChange = false;
+    [
+        ...internalLinks.entries()
+    ].forEach(([nodeUrl, link])=>{
+        if (excludesUrl?.has(nodeUrl)) return;
+        if (excludesFn?.(nodeUrl)) return;
+        if (!nodeUrl.startsWith('/') && /^\w/.test(nodeUrl)) possibleBreakingChange = true;
+        errorInfos.push([
+            nodeUrl,
+            link
+        ]);
+    });
+    if (errorInfos.length > 0) {
+        if (possibleBreakingChange) hintRelativeMarkdownLink();
+        const message = `Dead links found${lint ? '' : ` in ${picocolors.cyan(file.path)}`}:
+${errorInfos.map(([nodeUrl, link])=>`  ${picocolors.green(`"[..](${nodeUrl})"`)} ${picocolors.gray(link)}`).join('\n')}`;
+        if (lint) file.message(message);
+        else {
+            logger.error(message);
+            if (isProduction()) throw createError('Dead link found');
+        }
+    }
+}
+function looseMarkdownLink(url, routeService, filePath) {
+    if (!routeService.isInDocsDir(filePath)) return url;
+    const [versionPart, langPart, pureRoute] = routeService.splitRoutePathParts(url);
+    const relativePath = routeService.absolutePathToRelativePath(filePath);
+    const [versionPartCurrFile, langPartCurrFile] = routeService.getRoutePathParts(relativePath);
+    if ('' === versionPart) {
+        if ('' === langPart) return addLeadingSlash(`${[
+            versionPartCurrFile,
+            langPartCurrFile
+        ].filter(Boolean).join('/')}${addLeadingSlash(pureRoute.replace(/^\/*/, ''))}`);
+        return addLeadingSlash(`${[
+            versionPartCurrFile,
+            langPart
+        ].filter(Boolean).join('/')}${addLeadingSlash(pureRoute.replace(/^\/*/, ''))}`);
+    }
+    return url;
+}
+function normalizeLink(nodeUrl, routeService, filePath, cleanUrls, autoPrefix, deadLinks, __base) {
+    if (!nodeUrl) return '';
+    if (nodeUrl.startsWith('#')) return nodeUrl;
+    if (isExternalUrl(nodeUrl)) return nodeUrl;
+    if (!routeService) return nodeUrl;
+    let { url, hash, search } = parseUrl(nodeUrl);
+    if (url.startsWith('/')) {
+        if (autoPrefix) url = looseMarkdownLink(url, routeService, filePath);
+        const { routePath } = routeService.normalizeRoutePath(url);
+        url = routePath;
+    } else {
+        const anotherFileAbsolutePath = node_path.join(node_path.dirname(filePath), url);
+        url = routeService.absolutePathToRoutePath(anotherFileAbsolutePath);
+    }
+    if ('boolean' == typeof cleanUrls) {
+        url = normalizeHref(url, cleanUrls);
+        if (!routeService.isExistRoute(url)) {
+            deadLinks.set(nodeUrl, url);
+            return nodeUrl;
+        }
+    } else {
+        url = normalizeHref(url, false);
+        if (!routeService.isExistRoute(url)) {
+            deadLinks.set(nodeUrl, url);
+            return nodeUrl;
+        }
+        url = url.replace(/\.html$/, cleanUrls);
+    }
+    if (search) url += `?${search}`;
+    if (hash) url += `#${hash}`;
+    if (__base) url = withBase(url, __base);
+    return url;
+}
+const remarkLink = ({ cleanUrls, routeService, remarkLinkOptions, lint, __base })=>(tree, file)=>{
+        const { checkDeadLinks: shouldCheckDeadLinks = true, autoPrefix = true } = remarkLinkOptions ?? {};
+        const deadLinks = new Map();
+        visit(tree, 'link', (node)=>{
+            const { url: nodeUrl } = node;
+            const link = normalizeLink(nodeUrl, routeService, file.path, cleanUrls, autoPrefix, deadLinks, __base);
+            node.url = link;
+        });
+        visit(tree, 'definition', (node)=>{
+            const { url: nodeUrl } = node;
+            const link = normalizeLink(nodeUrl, routeService, file.path, cleanUrls, autoPrefix, deadLinks, __base);
+            node.url = link;
+        });
+        if (shouldCheckDeadLinks && routeService) link_checkDeadLinks(shouldCheckDeadLinks, deadLinks, file, lint);
+    };
+export { remarkLink };

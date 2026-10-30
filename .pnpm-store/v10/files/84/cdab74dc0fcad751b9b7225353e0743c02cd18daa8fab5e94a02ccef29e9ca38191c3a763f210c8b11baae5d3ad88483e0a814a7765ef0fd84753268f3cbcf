@@ -1,0 +1,75 @@
+.shiki span.line {
+  padding: 0 1.25rem;
+  display: inline-block;
+}
+
+.code-line-highlighted {
+  background-color: var(--rp-code-line-highlight-color);
+}
+
+.diff, .code-line-highlighted {
+  width: 100%;
+  padding: 0 20px;
+  transition: background-color .5s;
+  display: inline-block;
+  position: relative;
+}
+
+.diff.add:after {
+  content: "+";
+  color: #4fb74d;
+  position: absolute;
+  top: 0;
+  left: 10px;
+}
+
+.diff.remove:after {
+  content: "-";
+  color: #f47481;
+  position: absolute;
+  top: 0;
+  left: 10px;
+}
+
+.shiki.has-diff code .diff.add {
+  background-color: #10b9811a;
+  padding: 0 20px 0 19px;
+}
+
+.shiki.has-diff code .diff.remove {
+  background-color: #f43f5e1a;
+  padding: 0 20px 0 19px;
+}
+
+.shiki.has-highlighted .line.highlighted {
+  width: 100%;
+  display: inline-block;
+  position: static;
+}
+
+.shiki.has-highlighted .line.highlighted:not(.error):not(.warning) {
+  background-color: #3b82f61a;
+  box-shadow: inset 2px 0 #3b82f6;
+}
+
+.shiki.has-highlighted .line.highlighted.error {
+  background-color: #ed3c501a;
+  box-shadow: inset 2px 0 #ed3c50;
+}
+
+.shiki.has-highlighted .line.highlighted.warning {
+  background-color: #ffc5171a;
+  box-shadow: inset 2px 0 #ffc517;
+}
+
+.shiki.has-focused .line:not(.focused) {
+  filter: blur(.095rem);
+  opacity: .4;
+  transition: filter .35s, opacity .35s;
+}
+
+.shiki.has-focused:hover .line:not(.focused) {
+  filter: blur();
+  opacity: 1;
+}
+

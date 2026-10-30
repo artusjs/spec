@@ -1,0 +1,14 @@
+import { promises } from "../../8885.js";
+async function pathExists(path) {
+    try {
+        await promises.access(path);
+        return true;
+    } catch  {
+        return false;
+    }
+}
+async function readJson(path) {
+    const raw = await promises.readFile(path, 'utf8');
+    return JSON.parse(raw);
+}
+export { pathExists, readJson };

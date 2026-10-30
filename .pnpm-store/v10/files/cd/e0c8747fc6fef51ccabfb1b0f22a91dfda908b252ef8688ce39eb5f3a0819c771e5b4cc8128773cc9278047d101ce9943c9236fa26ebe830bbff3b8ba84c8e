@@ -1,0 +1,10 @@
+import { visit } from "../../../7397.js";
+const rehypeCodeMeta = ()=>(tree)=>{
+        visit(tree, 'element', (node)=>{
+            if ('pre' === node.tagName && node.children[0]?.type === 'element' && 'code' === node.children[0].tagName) {
+                const codeNode = node.children[0];
+                codeNode.properties.metastring = codeNode.data?.meta;
+            }
+        });
+    };
+export { rehypeCodeMeta };

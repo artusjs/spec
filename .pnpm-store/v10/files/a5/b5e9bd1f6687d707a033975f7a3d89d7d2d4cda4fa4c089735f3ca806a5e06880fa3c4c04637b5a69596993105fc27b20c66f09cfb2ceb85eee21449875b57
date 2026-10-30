@@ -1,0 +1,500 @@
+import { __webpack_require__ } from "./1~rslib-runtime.js";
+import "./552.js";
+__webpack_require__.add({
+    "../../node_modules/.pnpm/launch-editor-middleware@2.13.2/node_modules/launch-editor-middleware/index.js" (module, __unused_rspack_exports, __webpack_require__) {
+        let path = __webpack_require__("path?37f5"), launch = __webpack_require__("../../node_modules/.pnpm/launch-editor@2.13.2/node_modules/launch-editor/index.js");
+        module.exports = (specifiedEditor, srcRoot, onErrorCallback)=>('function' == typeof specifiedEditor && (onErrorCallback = specifiedEditor, specifiedEditor = void 0), 'function' == typeof srcRoot && (onErrorCallback = srcRoot, srcRoot = void 0), srcRoot = srcRoot || process.cwd(), function launchEditorMiddleware(req, res) {
+                let url;
+                try {
+                    let fullUrl = req.url.startsWith('http') ? req.url : `http://localhost${req.url}`;
+                    url = new URL(fullUrl);
+                } catch (_err) {
+                    res.statusCode = 500, res.end("launch-editor-middleware: invalid URL.");
+                    return;
+                }
+                let file = url.searchParams.get('file');
+                file ? (launch(file.startsWith('file://') ? file : path.resolve(srcRoot, file), specifiedEditor, onErrorCallback), res.end()) : (res.statusCode = 500, res.end('launch-editor-middleware: required query param "file" is missing.'));
+            });
+    },
+    "../../node_modules/.pnpm/launch-editor@2.13.2/node_modules/launch-editor/editor-info/linux.js" (module) {
+        module.exports = {
+            atom: 'atom',
+            Brackets: 'brackets',
+            'code-insiders': 'code-insiders',
+            code: 'code',
+            vscodium: 'vscodium',
+            codium: 'codium',
+            cursor: 'cursor',
+            trae: 'trae',
+            antigravity: 'antigravity',
+            emacs: 'emacs',
+            gvim: 'gvim',
+            idea: 'idea',
+            'idea.sh': 'idea',
+            phpstorm: 'phpstorm',
+            'phpstorm.sh': 'phpstorm',
+            pycharm: 'pycharm',
+            'pycharm.sh': 'pycharm',
+            rubymine: 'rubymine',
+            'rubymine.sh': 'rubymine',
+            sublime_text: 'subl',
+            vim: 'vim',
+            webstorm: 'webstorm',
+            'webstorm.sh': 'webstorm',
+            goland: 'goland',
+            'goland.sh': 'goland',
+            rider: 'rider',
+            'rider.sh': 'rider',
+            zed: 'zed'
+        };
+    },
+    "../../node_modules/.pnpm/launch-editor@2.13.2/node_modules/launch-editor/editor-info/macos.js" (module) {
+        module.exports = {
+            '/Applications/Atom.app/Contents/MacOS/Atom': 'atom',
+            '/Applications/Atom Beta.app/Contents/MacOS/Atom Beta': '/Applications/Atom Beta.app/Contents/MacOS/Atom Beta',
+            '/Applications/Brackets.app/Contents/MacOS/Brackets': 'brackets',
+            '/Applications/Sublime Text.app/Contents/MacOS/Sublime Text': '/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl',
+            '/Applications/Sublime Text.app/Contents/MacOS/sublime_text': '/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl',
+            '/Applications/Sublime Text 2.app/Contents/MacOS/Sublime Text 2': '/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl',
+            '/Applications/Sublime Text Dev.app/Contents/MacOS/Sublime Text': '/Applications/Sublime Text Dev.app/Contents/SharedSupport/bin/subl',
+            '/Applications/Visual Studio Code.app/Contents/MacOS/Code': 'code',
+            '/Applications/Visual Studio Code.app/Contents/MacOS/Electron': 'code',
+            '/Applications/Visual Studio Code - Insiders.app/Contents/MacOS/Code - Insiders': 'code-insiders',
+            '/Applications/Visual Studio Code - Insiders.app/Contents/MacOS/Electron': 'code-insiders',
+            '/Applications/VSCodium.app/Contents/MacOS/Electron': 'codium',
+            '/Applications/Cursor.app/Contents/MacOS/Cursor': 'cursor',
+            '/Applications/Trae.app/Contents/MacOS/Electron': 'trae',
+            '/Applications/Antigravity.app/Contents/MacOS/Electron': 'antigravity',
+            '/Applications/AppCode.app/Contents/MacOS/appcode': '/Applications/AppCode.app/Contents/MacOS/appcode',
+            '/Applications/CLion.app/Contents/MacOS/clion': '/Applications/CLion.app/Contents/MacOS/clion',
+            '/Applications/IntelliJ IDEA.app/Contents/MacOS/idea': '/Applications/IntelliJ IDEA.app/Contents/MacOS/idea',
+            '/Applications/IntelliJ IDEA Ultimate.app/Contents/MacOS/idea': '/Applications/IntelliJ IDEA Ultimate.app/Contents/MacOS/idea',
+            '/Applications/IntelliJ IDEA Community Edition.app/Contents/MacOS/idea': '/Applications/IntelliJ IDEA Community Edition.app/Contents/MacOS/idea',
+            '/Applications/PhpStorm.app/Contents/MacOS/phpstorm': '/Applications/PhpStorm.app/Contents/MacOS/phpstorm',
+            '/Applications/PyCharm.app/Contents/MacOS/pycharm': '/Applications/PyCharm.app/Contents/MacOS/pycharm',
+            '/Applications/PyCharm CE.app/Contents/MacOS/pycharm': '/Applications/PyCharm CE.app/Contents/MacOS/pycharm',
+            '/Applications/RubyMine.app/Contents/MacOS/rubymine': '/Applications/RubyMine.app/Contents/MacOS/rubymine',
+            '/Applications/WebStorm.app/Contents/MacOS/webstorm': '/Applications/WebStorm.app/Contents/MacOS/webstorm',
+            '/Applications/MacVim.app/Contents/MacOS/MacVim': 'mvim',
+            '/Applications/GoLand.app/Contents/MacOS/goland': '/Applications/GoLand.app/Contents/MacOS/goland',
+            '/Applications/Rider.app/Contents/MacOS/rider': '/Applications/Rider.app/Contents/MacOS/rider',
+            '/Applications/Zed.app/Contents/MacOS/zed': 'zed'
+        };
+    },
+    "../../node_modules/.pnpm/launch-editor@2.13.2/node_modules/launch-editor/editor-info/windows.js" (module) {
+        module.exports = [
+            'Brackets.exe',
+            'Code.exe',
+            'Code - Insiders.exe',
+            'VSCodium.exe',
+            'Cursor.exe',
+            'atom.exe',
+            'sublime_text.exe',
+            'notepad++.exe',
+            'clion.exe',
+            'clion64.exe',
+            'idea.exe',
+            'idea64.exe',
+            'phpstorm.exe',
+            'phpstorm64.exe',
+            'pycharm.exe',
+            'pycharm64.exe',
+            'rubymine.exe',
+            'rubymine64.exe',
+            'webstorm.exe',
+            'webstorm64.exe',
+            'goland.exe',
+            'goland64.exe',
+            'rider.exe',
+            'rider64.exe',
+            'Trae.exe',
+            'zed.exe',
+            'Antigravity.exe'
+        ];
+    },
+    "../../node_modules/.pnpm/launch-editor@2.13.2/node_modules/launch-editor/get-args.js" (module, __unused_rspack_exports, __webpack_require__) {
+        let path = __webpack_require__("path?37f5");
+        module.exports = function getArgumentsForPosition(editor, fileName, lineNumber, columnNumber = 1) {
+            switch(path.basename(editor).replace(/\.(exe|cmd|bat)$/i, '')){
+                case 'atom':
+                case 'Atom':
+                case 'Atom Beta':
+                case 'subl':
+                case 'sublime':
+                case 'sublime_text':
+                case 'wstorm':
+                case 'charm':
+                case 'zed':
+                    return [
+                        `${fileName}:${lineNumber}:${columnNumber}`
+                    ];
+                case 'notepad++':
+                    return [
+                        '-n' + lineNumber,
+                        '-c' + columnNumber,
+                        fileName
+                    ];
+                case 'vim':
+                case 'mvim':
+                    return [
+                        `+call cursor(${lineNumber}, ${columnNumber})`,
+                        fileName
+                    ];
+                case 'joe':
+                case 'gvim':
+                    return [
+                        `+${lineNumber}`,
+                        fileName
+                    ];
+                case 'emacs':
+                case 'emacsclient':
+                    return [
+                        `+${lineNumber}:${columnNumber}`,
+                        fileName
+                    ];
+                case 'rmate':
+                case 'mate':
+                case 'mine':
+                    return [
+                        '--line',
+                        lineNumber,
+                        fileName
+                    ];
+                case 'code':
+                case 'Code':
+                case 'code-insiders':
+                case 'Code - Insiders':
+                case 'codium':
+                case 'trae':
+                case 'antigravity':
+                case 'cursor':
+                case 'vscodium':
+                case 'VSCodium':
+                    return [
+                        '-r',
+                        '-g',
+                        `${fileName}:${lineNumber}:${columnNumber}`
+                    ];
+                case 'appcode':
+                case 'clion':
+                case 'clion64':
+                case 'idea':
+                case 'idea64':
+                case 'phpstorm':
+                case 'phpstorm64':
+                case 'pycharm':
+                case 'pycharm64':
+                case 'rubymine':
+                case 'rubymine64':
+                case 'webstorm':
+                case 'webstorm64':
+                case 'goland':
+                case 'goland64':
+                case 'rider':
+                case 'rider64':
+                    return [
+                        '--line',
+                        lineNumber,
+                        '--column',
+                        columnNumber,
+                        fileName
+                    ];
+            }
+            return process.env.LAUNCH_EDITOR ? [
+                fileName,
+                lineNumber,
+                columnNumber
+            ] : [
+                fileName
+            ];
+        };
+    },
+    "../../node_modules/.pnpm/launch-editor@2.13.2/node_modules/launch-editor/guess.js" (module, __unused_rspack_exports, __webpack_require__) {
+        let path = __webpack_require__("path?37f5"), shellQuote = __webpack_require__("../../node_modules/.pnpm/shell-quote@1.8.3/node_modules/shell-quote/index.js"), childProcess = __webpack_require__("child_process"), COMMON_EDITORS_MACOS = __webpack_require__("../../node_modules/.pnpm/launch-editor@2.13.2/node_modules/launch-editor/editor-info/macos.js"), COMMON_EDITORS_LINUX = __webpack_require__("../../node_modules/.pnpm/launch-editor@2.13.2/node_modules/launch-editor/editor-info/linux.js"), COMMON_EDITORS_WIN = __webpack_require__("../../node_modules/.pnpm/launch-editor@2.13.2/node_modules/launch-editor/editor-info/windows.js");
+        module.exports = function guessEditor(specifiedEditor) {
+            if (specifiedEditor) return shellQuote.parse(specifiedEditor);
+            if (process.env.LAUNCH_EDITOR) return [
+                process.env.LAUNCH_EDITOR
+            ];
+            if (process.versions.webcontainer) return [
+                process.env.EDITOR || 'code'
+            ];
+            try {
+                if ('darwin' === process.platform) {
+                    let output = childProcess.execSync('ps x -o comm=', {
+                        stdio: [
+                            'pipe',
+                            'pipe',
+                            'ignore'
+                        ]
+                    }).toString(), processNames = Object.keys(COMMON_EDITORS_MACOS), processList = output.split('\n');
+                    for(let i = 0; i < processNames.length; i++){
+                        let processName = processNames[i];
+                        if (processList.includes(processName)) return [
+                            COMMON_EDITORS_MACOS[processName]
+                        ];
+                        let processNameWithoutApplications = processName.replace('/Applications', '');
+                        if (-1 !== output.indexOf(processNameWithoutApplications)) {
+                            if (processName !== COMMON_EDITORS_MACOS[processName]) return [
+                                COMMON_EDITORS_MACOS[processName]
+                            ];
+                            let runningProcess = processList.find((procName)=>procName.endsWith(processNameWithoutApplications));
+                            if (void 0 !== runningProcess) return [
+                                runningProcess
+                            ];
+                        }
+                    }
+                } else if ('win32' === process.platform) {
+                    let runningProcesses = childProcess.execSync('powershell -NoProfile -Command "[Console]::OutputEncoding=[Text.Encoding]::UTF8;Get-CimInstance -Query \\"select executablepath from win32_process where executablepath is not null\\" | % { $_.ExecutablePath }"', {
+                        stdio: [
+                            'pipe',
+                            'pipe',
+                            'ignore'
+                        ]
+                    }).toString().split('\r\n');
+                    for(let i = 0; i < runningProcesses.length; i++){
+                        let fullProcessPath = runningProcesses[i].trim(), shortProcessName = path.basename(fullProcessPath);
+                        if (-1 !== COMMON_EDITORS_WIN.indexOf(shortProcessName)) return [
+                            fullProcessPath
+                        ];
+                    }
+                } else if ('linux' === process.platform) {
+                    let output = childProcess.execSync('ps x --no-heading -o comm --sort=comm', {
+                        stdio: [
+                            'pipe',
+                            'pipe',
+                            'ignore'
+                        ]
+                    }).toString(), processNames = Object.keys(COMMON_EDITORS_LINUX);
+                    for(let i = 0; i < processNames.length; i++){
+                        let processName = processNames[i];
+                        if (-1 !== output.indexOf(processName)) return [
+                            COMMON_EDITORS_LINUX[processName]
+                        ];
+                    }
+                }
+            } catch (ignoreError) {}
+            return process.env.VISUAL ? [
+                process.env.VISUAL
+            ] : process.env.EDITOR ? [
+                process.env.EDITOR
+            ] : [
+                null
+            ];
+        };
+    },
+    "../../node_modules/.pnpm/launch-editor@2.13.2/node_modules/launch-editor/index.js" (module, __unused_rspack_exports, __webpack_require__) {
+        let fs = __webpack_require__("fs?cdbd"), os = __webpack_require__("os"), path = __webpack_require__("path?37f5"), colors = __webpack_require__("../../node_modules/.pnpm/picocolors@1.1.1/node_modules/picocolors/picocolors.js"), childProcess = __webpack_require__("child_process"), guessEditor = __webpack_require__("../../node_modules/.pnpm/launch-editor@2.13.2/node_modules/launch-editor/guess.js"), getArgumentsForPosition = __webpack_require__("../../node_modules/.pnpm/launch-editor@2.13.2/node_modules/launch-editor/get-args.js");
+        function wrapErrorCallback(cb) {
+            return (fileName, errorMessage)=>{
+                console.log(), console.log(colors.red('Could not open ' + path.basename(fileName) + ' in the editor.')), errorMessage && ('.' !== errorMessage[errorMessage.length - 1] && (errorMessage += '.'), console.log(colors.red('The editor process exited with an error: ' + errorMessage))), console.log(), cb && cb(fileName, errorMessage);
+            };
+        }
+        function isTerminalEditor(editor) {
+            switch(editor){
+                case 'vim':
+                case 'emacs':
+                case 'nano':
+                    return !0;
+            }
+            return !1;
+        }
+        let positionRE = /:(\d+)(:(\d+))?$/;
+        function parseFile(file) {
+            file.startsWith('file://') && (file = __webpack_require__("url?5f07").fileURLToPath(file));
+            let fileName = file.replace(positionRE, ''), match = file.match(positionRE);
+            return {
+                fileName,
+                lineNumber: match && match[1],
+                columnNumber: match && match[3]
+            };
+        }
+        let _childProcess = null;
+        module.exports = function launchEditor(file, specifiedEditor, onErrorCallback) {
+            let parsed = parseFile(file), { fileName } = parsed, { lineNumber, columnNumber } = parsed;
+            if (!fs.existsSync(fileName)) return;
+            'function' == typeof specifiedEditor && (onErrorCallback = specifiedEditor, specifiedEditor = void 0), onErrorCallback = wrapErrorCallback(onErrorCallback);
+            let [editor, ...args] = guessEditor(specifiedEditor);
+            if (!editor) return void onErrorCallback(fileName, null);
+            if ('linux' === process.platform && fileName.startsWith('/mnt/') && /Microsoft/i.test(os.release()) && (fileName = path.relative('', fileName)), lineNumber) {
+                let extraArgs = getArgumentsForPosition(editor, fileName, lineNumber, columnNumber);
+                args.push.apply(args, extraArgs);
+            } else args.push(fileName);
+            if (_childProcess && isTerminalEditor(editor) && _childProcess.kill('SIGKILL'), 'win32' === process.platform) {
+                function escapeCmdArgs(cmdArgs) {
+                    return cmdArgs.replace(/([&|<>,;=^])/g, '^$1');
+                }
+                function doubleQuoteIfNeeded(str) {
+                    return str.includes('^') ? `^"${str}^"` : str.includes(' ') ? `"${str}"` : str;
+                }
+                let launchCommand = [
+                    editor,
+                    ...args.map(escapeCmdArgs)
+                ].map(doubleQuoteIfNeeded).join(' ');
+                _childProcess = childProcess.exec(launchCommand, {
+                    stdio: 'inherit',
+                    shell: !0
+                });
+            } else _childProcess = childProcess.spawn(editor, args, {
+                stdio: 'inherit'
+            });
+            _childProcess.on('exit', function(errorCode) {
+                _childProcess = null, errorCode && onErrorCallback(fileName, '(code ' + errorCode + ')');
+            }), _childProcess.on('error', function(error) {
+                let { code, message } = error;
+                'ENOENT' === code && (message = `${message} ('${editor}' command does not exist in 'PATH')`), onErrorCallback(fileName, message);
+            });
+        };
+    },
+    "../../node_modules/.pnpm/picocolors@1.1.1/node_modules/picocolors/picocolors.js" (module) {
+        let p = process || {}, argv = p.argv || [], env = p.env || {}, isColorSupported = !(env.NO_COLOR || argv.includes("--no-color")) && (!!env.FORCE_COLOR || argv.includes("--color") || "win32" === p.platform || (p.stdout || {}).isTTY && "dumb" !== env.TERM || !!env.CI), formatter = (open, close, replace = open)=>(input)=>{
+                let string = "" + input, index = string.indexOf(close, open.length);
+                return ~index ? open + replaceClose(string, close, replace, index) + close : open + string + close;
+            }, replaceClose = (string, close, replace, index)=>{
+            let result = "", cursor = 0;
+            do result += string.substring(cursor, index) + replace, cursor = index + close.length, index = string.indexOf(close, cursor);
+            while (~index);
+            return result + string.substring(cursor);
+        }, createColors = (enabled = isColorSupported)=>{
+            let f = enabled ? formatter : ()=>String;
+            return {
+                isColorSupported: enabled,
+                reset: f("\x1b[0m", "\x1b[0m"),
+                bold: f("\x1b[1m", "\x1b[22m", "\x1b[22m\x1b[1m"),
+                dim: f("\x1b[2m", "\x1b[22m", "\x1b[22m\x1b[2m"),
+                italic: f("\x1b[3m", "\x1b[23m"),
+                underline: f("\x1b[4m", "\x1b[24m"),
+                inverse: f("\x1b[7m", "\x1b[27m"),
+                hidden: f("\x1b[8m", "\x1b[28m"),
+                strikethrough: f("\x1b[9m", "\x1b[29m"),
+                black: f("\x1b[30m", "\x1b[39m"),
+                red: f("\x1b[31m", "\x1b[39m"),
+                green: f("\x1b[32m", "\x1b[39m"),
+                yellow: f("\x1b[33m", "\x1b[39m"),
+                blue: f("\x1b[34m", "\x1b[39m"),
+                magenta: f("\x1b[35m", "\x1b[39m"),
+                cyan: f("\x1b[36m", "\x1b[39m"),
+                white: f("\x1b[37m", "\x1b[39m"),
+                gray: f("\x1b[90m", "\x1b[39m"),
+                bgBlack: f("\x1b[40m", "\x1b[49m"),
+                bgRed: f("\x1b[41m", "\x1b[49m"),
+                bgGreen: f("\x1b[42m", "\x1b[49m"),
+                bgYellow: f("\x1b[43m", "\x1b[49m"),
+                bgBlue: f("\x1b[44m", "\x1b[49m"),
+                bgMagenta: f("\x1b[45m", "\x1b[49m"),
+                bgCyan: f("\x1b[46m", "\x1b[49m"),
+                bgWhite: f("\x1b[47m", "\x1b[49m"),
+                blackBright: f("\x1b[90m", "\x1b[39m"),
+                redBright: f("\x1b[91m", "\x1b[39m"),
+                greenBright: f("\x1b[92m", "\x1b[39m"),
+                yellowBright: f("\x1b[93m", "\x1b[39m"),
+                blueBright: f("\x1b[94m", "\x1b[39m"),
+                magentaBright: f("\x1b[95m", "\x1b[39m"),
+                cyanBright: f("\x1b[96m", "\x1b[39m"),
+                whiteBright: f("\x1b[97m", "\x1b[39m"),
+                bgBlackBright: f("\x1b[100m", "\x1b[49m"),
+                bgRedBright: f("\x1b[101m", "\x1b[49m"),
+                bgGreenBright: f("\x1b[102m", "\x1b[49m"),
+                bgYellowBright: f("\x1b[103m", "\x1b[49m"),
+                bgBlueBright: f("\x1b[104m", "\x1b[49m"),
+                bgMagentaBright: f("\x1b[105m", "\x1b[49m"),
+                bgCyanBright: f("\x1b[106m", "\x1b[49m"),
+                bgWhiteBright: f("\x1b[107m", "\x1b[49m")
+            };
+        };
+        module.exports = createColors(), module.exports.createColors = createColors;
+    },
+    "../../node_modules/.pnpm/shell-quote@1.8.3/node_modules/shell-quote/index.js" (__unused_rspack_module, exports, __webpack_require__) {
+        exports.quote = __webpack_require__("../../node_modules/.pnpm/shell-quote@1.8.3/node_modules/shell-quote/quote.js"), exports.parse = __webpack_require__("../../node_modules/.pnpm/shell-quote@1.8.3/node_modules/shell-quote/parse.js");
+    },
+    "../../node_modules/.pnpm/shell-quote@1.8.3/node_modules/shell-quote/parse.js" (module) {
+        for(var CONTROL = "(?:\\|\\||\\&\\&|;;|\\|\\&|\\<\\(|\\<\\<\\<|>>|>\\&|<\\&|[&;()|<>])", controlRE = RegExp('^' + CONTROL + '$'), META = '|&;()<> \\t', hash = /^#$/, TOKEN = '', i = 0; i < 4; i++)TOKEN += (0x100000000 * Math.random()).toString(16);
+        var startsWithToken = RegExp('^' + TOKEN);
+        function matchAll(s, r) {
+            for(var matchObj, origIndex = r.lastIndex, matches = []; matchObj = r.exec(s);)matches.push(matchObj), r.lastIndex === matchObj.index && (r.lastIndex += 1);
+            return r.lastIndex = origIndex, matches;
+        }
+        function getVar(env, pre, key) {
+            var r = 'function' == typeof env ? env(key) : env[key];
+            return (void 0 === r && '' != key ? r = '' : void 0 === r && (r = '$'), 'object' == typeof r) ? pre + TOKEN + JSON.stringify(r) + TOKEN : pre + r;
+        }
+        function parseInternal(string, env, opts) {
+            opts || (opts = {});
+            var BS = opts.escape || '\\', matches = matchAll(string, RegExp([
+                '(' + CONTROL + ')',
+                '(' + ('(\\' + BS + '[\'"' + META + ']|[^\\s\'"' + META) + "])+|\"((\\\\\"|[^\"])*?)\"|'((\\\\'|[^'])*?)')+"
+            ].join('|'), 'g'));
+            if (0 === matches.length) return [];
+            env || (env = {});
+            var commented = !1;
+            return matches.map(function(match) {
+                var i, s = match[0];
+                if (s && !commented) {
+                    if (controlRE.test(s)) return {
+                        op: s
+                    };
+                    var quote = !1, esc = !1, out = '', isGlob = !1;
+                    for(i = 0; i < s.length; i++){
+                        var c = s.charAt(i);
+                        if (isGlob = isGlob || !quote && ('*' === c || '?' === c), esc) out += c, esc = !1;
+                        else if (quote) c === quote ? quote = !1 : "'" == quote ? out += c : c === BS ? (i += 1, '"' === (c = s.charAt(i)) || c === BS || '$' === c ? out += c : out += BS + c) : '$' === c ? out += parseEnvVar() : out += c;
+                        else if ('"' === c || "'" === c) quote = c;
+                        else if (controlRE.test(c)) return {
+                            op: s
+                        };
+                        else if (hash.test(c)) {
+                            commented = !0;
+                            var commentObj = {
+                                comment: string.slice(match.index + i + 1)
+                            };
+                            if (out.length) return [
+                                out,
+                                commentObj
+                            ];
+                            return [
+                                commentObj
+                            ];
+                        } else c === BS ? esc = !0 : '$' === c ? out += parseEnvVar() : out += c;
+                    }
+                    return isGlob ? {
+                        op: 'glob',
+                        pattern: out
+                    } : out;
+                }
+                function parseEnvVar() {
+                    i += 1;
+                    var varend, varname, char = s.charAt(i);
+                    if ('{' === char) {
+                        if (i += 1, '}' === s.charAt(i)) throw Error('Bad substitution: ' + s.slice(i - 2, i + 1));
+                        if ((varend = s.indexOf('}', i)) < 0) throw Error('Bad substitution: ' + s.slice(i));
+                        varname = s.slice(i, varend), i = varend;
+                    } else if (/[*@#?$!_-]/.test(char)) varname = char, i += 1;
+                    else {
+                        var slicedFromI = s.slice(i);
+                        (varend = slicedFromI.match(/[^\w\d_]/)) ? (varname = slicedFromI.slice(0, varend.index), i += varend.index - 1) : (varname = slicedFromI, i = s.length);
+                    }
+                    return getVar(env, '', varname);
+                }
+            }).reduce(function(prev, arg) {
+                return void 0 === arg ? prev : prev.concat(arg);
+            }, []);
+        }
+        module.exports = function parse(s, env, opts) {
+            var mapped = parseInternal(s, env, opts);
+            return 'function' != typeof env ? mapped : mapped.reduce(function(acc, s) {
+                if ('object' == typeof s) return acc.concat(s);
+                var xs = s.split(RegExp('(' + TOKEN + '.*?' + TOKEN + ')', 'g'));
+                return 1 === xs.length ? acc.concat(xs[0]) : acc.concat(xs.filter(Boolean).map(function(x) {
+                    return startsWithToken.test(x) ? JSON.parse(x.split(TOKEN)[1]) : x;
+                }));
+            }, []);
+        };
+    },
+    "../../node_modules/.pnpm/shell-quote@1.8.3/node_modules/shell-quote/quote.js" (module) {
+        module.exports = function quote(xs) {
+            return xs.map(function(s) {
+                return '' === s ? '\'\'' : s && 'object' == typeof s ? s.op.replace(/(.)/g, '\\$1') : /["\s\\]/.test(s) && !/'/.test(s) ? "'" + s.replace(/(['])/g, '\\$1') + "'" : /["'\s]/.test(s) ? '"' + s.replace(/(["\\$`!])/g, '\\$1') + '"' : String(s).replace(/([A-Za-z]:)?([#!"$&'()*,:;<=>?@[\\\]^`{|}])/g, '$1\\$2');
+            }).join(' ');
+        };
+    }
+}), __webpack_require__("../../node_modules/.pnpm/launch-editor-middleware@2.13.2/node_modules/launch-editor-middleware/index.js");

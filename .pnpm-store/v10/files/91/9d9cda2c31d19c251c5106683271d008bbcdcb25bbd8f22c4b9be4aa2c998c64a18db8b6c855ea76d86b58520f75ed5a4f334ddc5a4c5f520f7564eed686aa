@@ -1,0 +1,61 @@
+{
+  "name": "react-render-to-markdown",
+  "version": "19.0.1",
+  "description": "render React components to Markdown strings for SSG-MD",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SoonIter/react-render-to-markdown.git"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "simple-git-hooks": {
+    "pre-commit": "npm run lint:write"
+  },
+  "devDependencies": {
+    "react": "^19",
+    "vitest": "^3.2.4",
+    "@biomejs/biome": "^1.9.4",
+    "@rslib/core": "0.15.1",
+    "rsbuild-plugin-publint": "^0.3.3",
+    "typescript": "^5.9.3",
+    "simple-git-hooks": "^2.13.1",
+    "@types/node": "^24.8.1",
+    "@types/react": "^19",
+    "@types/react-reconciler": "^0.33.0"
+  },
+  "dependencies": {
+    "react-reconciler": "0.33.0"
+  },
+  "peerDependencies": {
+    "react": ">=19"
+  },
+  "keywords": [
+    "react",
+    "markdown",
+    "renderer",
+    "react-reconciler"
+  ],
+  "author": "SoonIter <sooniter@gmail.com>",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "bump": "npx bumpp",
+    "dev": "rslib build -w",
+    "build": "rslib build",
+    "test": "vitest run",
+    "format": "biome format",
+    "lint:write": "biome check --unsafe --write"
+  }
+}

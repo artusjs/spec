@@ -1,0 +1,5 @@
+export { default as node_os } from "node:os";
+export { default as node_path } from "node:path";
+export { extractTextAndId } from "@rspress/shared/node-utils";
+export { default as github_slugger } from "github-slugger";
+export { visitChildren } from "unist-util-visit-children";

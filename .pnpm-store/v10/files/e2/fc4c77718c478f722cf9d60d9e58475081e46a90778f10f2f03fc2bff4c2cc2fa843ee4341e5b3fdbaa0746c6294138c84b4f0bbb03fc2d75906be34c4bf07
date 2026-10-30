@@ -1,0 +1,15 @@
+import { workerData } from "../../9224.js";
+import { createError } from "../utils/error.js";
+import { pMap } from "../../8311.js";
+import { renderPage } from "./renderPage.js";
+const params = workerData?.[1]?.params;
+if (!params) throw createError('SSG Worker Thread workerData params missing');
+const { htmlTemplate: htmlTemplate, head: head, ssrBundlePath: ssrBundlePath } = params;
+const exportWorkerGlueFn = async ({ routes })=>pMap(routes, async (route)=>{
+        const html = await renderPage(route, htmlTemplate, head, ssrBundlePath);
+        return html;
+    }, {
+        concurrency: 10
+    });
+const renderPageWorker = exportWorkerGlueFn;
+export default renderPageWorker;

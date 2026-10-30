@@ -2,9 +2,11 @@ import { defineConfig } from '@rspress/core';
 import { pluginLlms } from '@rspress/plugin-llms';
 import { pluginSitemap } from '@rspress/plugin-sitemap';
 import mermaid from 'rspress-plugin-mermaid';
+import path from 'path';
 
 export default defineConfig({
   root: 'docs',
+  globalStyles: path.join(__dirname, 'docs/theme.css'),
   title: 'Artus',
   description: 'Enterprise Node.js Framework for Web, RPC, Serverless',
   icon: '/logo/nodejs-logo.svg',

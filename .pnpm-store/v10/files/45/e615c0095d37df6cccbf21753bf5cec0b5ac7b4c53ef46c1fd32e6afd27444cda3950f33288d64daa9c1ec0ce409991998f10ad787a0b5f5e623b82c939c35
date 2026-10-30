@@ -1,0 +1,64 @@
+import { visit, node_path, logger, cwd, picocolors, readFile } from "../../../1965.js";
+import { createError } from "../../utils/error.js";
+const ERROR_PREFIX = '[remarkFileCodeBlock]';
+function parseFileFromMeta(meta) {
+    if (!meta) return '';
+    const kvList = meta.split(' ').filter(Boolean);
+    for (const item of kvList){
+        const [k, v = ''] = item.split('=');
+        if ('file' === k && v.length > 0) return v.replace(/["'`]/g, '');
+    }
+    return '';
+}
+const remarkFileCodeBlock = ({ filepath, addDependency })=>async (tree)=>{
+        const promiseList = [];
+        visit(tree, 'code', (node)=>{
+            const { meta, value, lang } = node;
+            const file = parseFileFromMeta(meta ?? '');
+            if (!file) return;
+            const originalMetaForErrorInfo = picocolors.cyan(`\`\`\`${lang} ${meta}`);
+            if (file.startsWith('./') || file.startsWith('../') || file.startsWith('<root>/')) {
+                let resolvedFilePath;
+                resolvedFilePath = file.startsWith('<root>/') ? node_path.join(cwd(), file.slice(7)) : node_path.join(node_path.dirname(filepath), file);
+                if ('' !== value.trim()) {
+                    logger.error(`${ERROR_PREFIX} ${originalMetaForErrorInfo} The content of file code block should be empty.
+
+\`\`\`tsx file="./filename"
+content
+\`\`\`
+
+this usage is not allowed, please use below:
+
+\`\`\`tsx file="./filename"
+\`\`\`
+`);
+                    throw createError(`${ERROR_PREFIX} ${originalMetaForErrorInfo} The content of file code block should be empty.`);
+                }
+                const promise = readFile(resolvedFilePath, 'utf-8').then((fileContent)=>{
+                    addDependency?.(resolvedFilePath);
+                    node.value = fileContent;
+                }).catch((e)=>{
+                    const message = `${ERROR_PREFIX} ${originalMetaForErrorInfo} introduces another file in "${resolvedFilePath}", but the file does not exist.`;
+                    logger.error(message);
+                    e.message = `${message}\n${e.message}`;
+                    throw e;
+                });
+                promiseList.push(promise);
+                return;
+            }
+            logger.error(`${ERROR_PREFIX} ${originalMetaForErrorInfo} syntax error of file code block:
+Please use below:
+
+\`\`\`tsx file="./filename"
+\`\`\`
+
+or
+
+\`\`\`tsx file="<root>/path/to/filename"
+\`\`\`
+`);
+            throw createError(`${ERROR_PREFIX} ${originalMetaForErrorInfo} syntax error of file code block`);
+        });
+        await Promise.all(promiseList);
+    };
+export { remarkFileCodeBlock };

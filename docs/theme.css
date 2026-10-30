@@ -1,0 +1,19 @@
+/* Trae Intelligent Green 主题色定制 */
+:where(:root) {
+  --rp-c-brand: #32f08c;
+  --rp-c-brand-light: #60f2bd;
+  --rp-c-brand-lighter: #a0fde7;
+  --rp-c-brand-dark: #0fdc78;
+  --rp-c-brand-darker: #0aa85c;
+  --rp-c-brand-tint: rgba(50, 240, 140, 0.16);
+}
+
+/* 深色模式下保持一致的品牌绿 */
+html.rp-dark {
+  --rp-c-brand: #32f08c;
+  --rp-c-brand-light: #60f2bd;
+  --rp-c-brand-lighter: rgba(50, 240, 140, 0.25);
+  --rp-c-brand-dark: #0fdc78;
+  --rp-c-brand-darker: #0aa85c;
+  --rp-c-brand-tint: rgba(50, 240, 140, 0.2);
+}

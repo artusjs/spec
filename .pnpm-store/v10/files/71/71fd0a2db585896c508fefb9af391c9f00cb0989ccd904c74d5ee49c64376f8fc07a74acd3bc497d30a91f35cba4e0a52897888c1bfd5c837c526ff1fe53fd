@@ -1,0 +1,56 @@
+@import "./preflight.css" layer(rp-base);
+
+@layer rp-base {
+  h1, h2, h3, h4, h5, h6, li, p {
+    overflow-wrap: break-word;
+  }
+
+  button:focus, button:focus-visible {
+    outline: none;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--rp-banner-height, 0px) + var(--rp-nav-height) +
+      var(--rp-sidebar-menu-height));
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  width: 100%;
+  min-width: 320px;
+  font-family: var(--rp-font-family-base);
+  color: var(--rp-c-text-1);
+  background-color: var(--rp-c-bg);
+  font-synthesis: style;
+  text-rendering: optimizelegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  direction: ltr;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+:root {
+  --rp-font-family-base: "Inter var experimental", "Inter var", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans",
+    "Helvetica Neue", sans-serif;
+  --rp-font-family-mono: Menlo, Monaco, Consolas, "Courier New", monospace;
+  text-autospace: normal;
+}
+
+pre, code, kbd, samp {
+  text-autospace: no-autospace;
+}
+
+:root #nprogress .bar {
+  background: var(--rp-c-brand);
+}
+

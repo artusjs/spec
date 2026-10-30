@@ -1,0 +1,5 @@
+/**
+ * these codes are copied from @shiki/transformers, transformerMetaHighlight
+ * @source https://github.com/shikijs/shiki/blob/f5cf06f55a0b4643d7b02f15ee2c5033be6f1245/packages/transformers/src/transformers/meta-highlight.ts#L56
+ * @license MIT
+ */

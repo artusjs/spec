@@ -1,0 +1,11 @@
+.rp-outline__open-in-wrapper {
+  position: relative;
+}
+
+.rp-outline__open-in-wrapper .rp-llms-view-options__menu {
+  transform-origin: 0 100%;
+  top: auto;
+  bottom: calc(100% + 6px);
+  left: 0;
+}
+

@@ -1,0 +1,253 @@
+import { unified, visit, remark_gfm, remark_mdx, remark_stringify } from "../../7397.js";
+function remarkSplitMdx(options = {}) {
+    return (tree)=>{
+        const newChildren = [];
+        const { importMap, importNodes } = buildImportMap(tree);
+        newChildren.push(...importNodes);
+        for (const node of tree.children){
+            if ('mdxjsEsm' === node.type) continue;
+            if ('mdxFlowExpression' === node.type || 'mdxTextExpression' === node.type) {
+                newChildren.push(node);
+                continue;
+            }
+            if ('mdxJsxFlowElement' === node.type || 'mdxJsxTextElement' === node.type) {
+                newChildren.push(processJsxElement(node, importMap, options));
+                continue;
+            }
+            const hasJsxChildren = node.children?.some((child)=>'mdxJsxFlowElement' === child.type || 'mdxJsxTextElement' === child.type || 'mdxFlowExpression' === child.type || 'mdxTextExpression' === child.type);
+            if (hasJsxChildren) {
+                const processedChildren = processMixedContent(node, node.children || [], importMap, options);
+                newChildren.push({
+                    type: 'mdxJsxFlowElement',
+                    name: null,
+                    attributes: [],
+                    children: processedChildren
+                });
+            } else newChildren.push(buildMdxFlowExpressionFragment(node));
+        }
+        tree.children = newChildren;
+    };
+}
+function processJsxElement(node, importMap, options) {
+    const processedNode = processJsxChildren(node, importMap, options);
+    const componentName = getComponentName(node.name);
+    const isMdxFragment = componentName && importMap.get(componentName)?.endsWith('.mdx');
+    if (isMdxFragment || shouldKeepJsxElement(node.name, importMap, options)) return processedNode;
+    return buildMdxFlowExpressionFragment(processedNode);
+}
+function processJsxChildren(node, importMap, options) {
+    if (!node.children || 0 === node.children.length) return node;
+    const processedChildren = [];
+    let textBuffer = [];
+    const flushTextBuffer = ()=>{
+        if (0 === textBuffer.length) return;
+        const combined = textBuffer.map((child)=>serializeNodeToMarkdown(child)).join('');
+        if (combined) processedChildren.push(createTextExpression(combined));
+        textBuffer = [];
+    };
+    for (const child of node.children)if ('mdxJsxFlowElement' === child.type || 'mdxJsxTextElement' === child.type) {
+        flushTextBuffer();
+        processedChildren.push(processJsxElement(child, importMap, options));
+    } else if ('mdxFlowExpression' === child.type || 'mdxTextExpression' === child.type) {
+        flushTextBuffer();
+        processedChildren.push(child);
+    } else textBuffer.push(child);
+    flushTextBuffer();
+    return {
+        ...node,
+        children: processedChildren
+    };
+}
+function getComponentName(name) {
+    if (!name) return null;
+    if ('string' == typeof name) {
+        const dotIndex = name.indexOf('.');
+        if (dotIndex > 0) return name.substring(0, dotIndex);
+        return name;
+    }
+    if ('object' == typeof name) {
+        if ('mdxJsxMemberExpression' === name.type || 'mdxJsxNamespacedName' === name.type) return getComponentName(name.object);
+    }
+    return null;
+}
+function processMixedContent(parentNode, children, importMap, options) {
+    const result = [];
+    let textBuffer = [];
+    const prefix = 'heading' === parentNode.type ? `${'#'.repeat(parentNode.depth || 1)} ` : '';
+    let prefixAdded = false;
+    const flushTextBuffer = ()=>{
+        if (textBuffer.length > 0) {
+            let combined = textBuffer.join('');
+            if (!prefixAdded && prefix) {
+                combined = prefix + combined;
+                prefixAdded = true;
+            }
+            if (combined) result.push(createTextExpression(combined));
+            textBuffer = [];
+        } else if (!prefixAdded && prefix) {
+            result.push(createTextExpression(prefix.trimEnd()));
+            prefixAdded = true;
+        }
+    };
+    for (const child of children)if ('mdxJsxFlowElement' === child.type || 'mdxJsxTextElement' === child.type) {
+        flushTextBuffer();
+        result.push(processJsxElement(child, importMap, options));
+    } else if ('mdxFlowExpression' === child.type || 'mdxTextExpression' === child.type) {
+        flushTextBuffer();
+        result.push(child);
+    } else if ('text' === child.type) textBuffer.push(child.value || '');
+    else {
+        const serialized = serializeNodeToMarkdown(child);
+        if (serialized) textBuffer.push(serialized);
+    }
+    flushTextBuffer();
+    return result;
+}
+function buildMdxFlowExpressionFragment(node) {
+    const children = node.children;
+    const hasJsxChildren = children?.some((child)=>'mdxJsxFlowElement' === child.type || 'mdxJsxTextElement' === child.type || 'mdxFlowExpression' === child.type || 'mdxTextExpression' === child.type);
+    if (hasJsxChildren && ('mdxJsxFlowElement' === node.type || 'mdxJsxTextElement' === node.type)) return buildMixedContentFragment(node, children);
+    const textContent = serializeNodeToMarkdown(node);
+    const stringified = JSON.stringify(textContent);
+    const fragment = {
+        type: 'mdxFlowExpression',
+        value: stringified,
+        data: {
+            estree: {
+                type: 'Program',
+                body: [
+                    {
+                        type: 'ExpressionStatement',
+                        expression: {
+                            type: 'Literal',
+                            value: textContent,
+                            raw: stringified
+                        }
+                    }
+                ],
+                sourceType: 'module'
+            }
+        }
+    };
+    return fragment;
+}
+function buildMixedContentFragment(node, children) {
+    const result = [];
+    const openingTag = serializeOpeningTag(node);
+    if (openingTag) result.push(createTextExpression(openingTag));
+    for (const child of children){
+        const isJsxOrExpression = 'mdxJsxFlowElement' === child.type || 'mdxJsxTextElement' === child.type || 'mdxFlowExpression' === child.type || 'mdxTextExpression' === child.type;
+        if (isJsxOrExpression) result.push(child);
+        else {
+            const text = serializeNodeToMarkdown(child);
+            if (text) result.push(createTextExpression(text));
+        }
+    }
+    const closingTag = serializeClosingTag(node);
+    if (closingTag) result.push(createTextExpression(closingTag));
+    return {
+        type: 'mdxJsxFlowElement',
+        name: null,
+        attributes: [],
+        children: result
+    };
+}
+function createTextExpression(text) {
+    const stringified = JSON.stringify(text);
+    return {
+        type: 'mdxTextExpression',
+        value: stringified,
+        data: {
+            estree: {
+                type: 'Program',
+                body: [
+                    {
+                        type: 'ExpressionStatement',
+                        expression: {
+                            type: 'Literal',
+                            value: text,
+                            raw: stringified
+                        }
+                    }
+                ],
+                sourceType: 'module'
+            }
+        }
+    };
+}
+function serializeOpeningTag(node) {
+    const name = 'string' == typeof node.name ? node.name : '';
+    if (!name) return '';
+    const attrs = node.attributes?.map((attr)=>{
+        if ('mdxJsxAttribute' !== attr.type) return '';
+        const attrName = attr.name;
+        if (null === attr.value || void 0 === attr.value) return attrName;
+        if ('string' == typeof attr.value) return `${attrName}="${attr.value}"`;
+        if ('mdxJsxAttributeValueExpression' === attr.value.type) return `${attrName}={${attr.value.value || ''}}`;
+        return '';
+    }).filter(Boolean).join(' ');
+    return `<${name}${attrs ? ` ${attrs}` : ''}>`;
+}
+function serializeClosingTag(node) {
+    const name = 'string' == typeof node.name ? node.name : '';
+    if (!name) return '';
+    return `</${name}>`;
+}
+const processor = unified().use(remark_mdx).use(remark_gfm).use(remark_stringify, {
+    bullet: '-',
+    emphasis: '_',
+    fences: true,
+    incrementListMarker: true,
+    handlers: {
+        mdxjsEsm: ()=>''
+    }
+});
+function serializeNodeToMarkdown(node) {
+    const tempRoot = {
+        type: 'root',
+        children: [
+            node
+        ]
+    };
+    const result = processor.stringify(tempRoot);
+    return result;
+}
+function buildImportMap(tree) {
+    const importMap = new Map();
+    const importNodes = new Set();
+    visit(tree, 'mdxjsEsm', (node)=>{
+        const estree = node.data?.estree;
+        if (!estree) return;
+        for (const statement of estree.body){
+            if ('ImportDeclaration' !== statement.type) continue;
+            const source = statement.source.value;
+            for (const specifier of statement.specifiers){
+                const localName = specifier.local?.name;
+                if (localName) {
+                    importMap.set(localName, source);
+                    importNodes.add(node);
+                }
+            }
+        }
+    });
+    return {
+        importMap,
+        importNodes
+    };
+}
+function shouldKeepJsxElement(nameField, importMap, options) {
+    const componentName = getComponentName(nameField);
+    if (!componentName) return true;
+    const { includes, excludes } = options;
+    const importSource = importMap.get(componentName);
+    if (!includes && !excludes) return true;
+    if (excludes) {
+        for (const [excludeSpecifiers, excludeSource] of excludes)if (excludeSpecifiers.includes(componentName) && (!importSource || importSource === excludeSource)) return false;
+    }
+    if (includes) {
+        for (const [includeSpecifiers, includeSource] of includes)if (includeSpecifiers.includes(componentName) && (!importSource || importSource === includeSource)) return true;
+        return false;
+    }
+    return true;
+}
+export { remarkSplitMdx };

@@ -1,0 +1,21 @@
+.rp-no-search-result {
+  flex-direction: column;
+  align-items: center;
+  padding-top: 2rem;
+  padding-bottom: .5rem;
+  display: flex;
+}
+
+.rp-no-search-result__icon {
+  opacity: .8;
+  margin-bottom: 1rem;
+}
+
+.rp-no-search-result__text {
+  margin-bottom: .5rem;
+}
+
+.rp-no-search-result__suggestion {
+  margin: 0;
+}
+

@@ -1,0 +1,27 @@
+.rp-switch-appearance {
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  color: var(--rp-c-text-2);
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  position: relative;
+}
+
+.rp-switch-appearance:hover {
+  color: var(--rp-c-text-1);
+}
+
+.rp-switch-appearance__icon--sun {
+  display: block;
+}
+
+.rp-switch-appearance__icon--moon, .rp-dark .rp-switch-appearance__icon--sun {
+  display: none;
+}
+
+.rp-dark .rp-switch-appearance__icon--moon {
+  display: block;
+}
+

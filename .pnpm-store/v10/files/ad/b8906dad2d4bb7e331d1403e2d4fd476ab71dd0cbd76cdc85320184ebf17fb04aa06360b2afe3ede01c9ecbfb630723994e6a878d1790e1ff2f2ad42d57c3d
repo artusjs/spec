@@ -1,0 +1,65 @@
+:root {
+  --rp-code-button-group-z-index: 10;
+}
+
+.rp-codeblock__content:hover .rp-code-button-group__button {
+  opacity: 1;
+}
+
+.rp-code-button-group {
+  z-index: var(--rp-code-button-group-z-index);
+  gap: 10px;
+  display: flex;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.rp-code-button-group__button {
+  opacity: 0;
+  cursor: pointer;
+  background-color: #0000;
+  justify-content: center;
+  align-items: center;
+  transition: opacity .2s ease-out;
+  display: flex;
+  position: relative;
+}
+
+.rp-code-button-group__icon {
+  opacity: inherit;
+  width: 20px;
+  height: 20px;
+  color: var(--rp-c-text-3);
+  transition: all .2s;
+}
+
+.rp-code-button-group__icon:hover {
+  color: var(--rp-c-text-2);
+}
+
+.rp-code-button-group__icon--wrap {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.rp-code-button-group__icon--wrapped {
+  opacity: 0;
+  color: #00d600;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+}
+
+.rp-code-wrap-button--wrapped .rp-code-button-group__icon--wrap {
+  opacity: 0;
+  transform: scale(.33);
+}
+
+.rp-code-wrap-button--wrapped .rp-code-button-group__icon--wrapped {
+  opacity: 1;
+  transition-delay: 75ms;
+  transform: translate(-50%, -50%) scale(1);
+}
+

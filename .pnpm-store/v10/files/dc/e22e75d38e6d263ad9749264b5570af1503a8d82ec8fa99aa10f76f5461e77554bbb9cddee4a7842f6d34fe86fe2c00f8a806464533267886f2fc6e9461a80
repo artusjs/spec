@@ -1,0 +1,26 @@
+import { node_path } from "../../7319.js";
+import { walk } from "./walk.js";
+function combineWalkResult(walks, versions) {
+    return walks.reduce((acc, cur, curIndex)=>({
+            nav: {
+                ...acc.nav,
+                [versions[curIndex] || 'default']: cur.nav
+            },
+            sidebar: {
+                ...acc.sidebar,
+                ...cur.sidebar
+            }
+        }), {
+        nav: {},
+        sidebar: {}
+    });
+}
+function processLocales(langs, versions, root, extensions, metaFileSet, mdFileSet) {
+    return Promise.all(langs.map(async (lang)=>{
+        const walks = versions.length ? await Promise.all(versions.map((version)=>walk(node_path.join(root, version, lang), root, extensions, metaFileSet, mdFileSet))) : [
+            await walk(node_path.join(root, lang), root, extensions, metaFileSet, mdFileSet)
+        ];
+        return combineWalkResult(walks, versions);
+    }));
+}
+export { combineWalkResult, processLocales };

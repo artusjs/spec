@@ -1,0 +1,26 @@
+/*!
+ * ee-first
+ * Copyright(c) 2014 Jonathan Ong
+ * MIT Licensed
+ */
+
+/*!
+ * on-finished
+ * Copyright(c) 2013 Jonathan Ong
+ * Copyright(c) 2014 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+/**
+ * Autoload Config for PostCSS
+ *
+ * @author Michael Ciniawsky @michael-ciniawsky <michael.ciniawsky@gmail.com>
+ * @license MIT
+ *
+ * @module postcss-load-config
+ * @version 2.1.0
+ *
+ * @requires comsiconfig
+ * @requires ./options
+ * @requires ./plugins
+ */

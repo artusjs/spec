@@ -1,0 +1,92 @@
+import { picocolors, relative, logger, join, readFile } from "../../8885.js";
+import { pathExists } from "../utils/fs.js";
+const THEME_DEFAULT_EXPORT_PATTERN = /export\s+default\s+\{/;
+const THEME_OLD_IMPORT_0 = /from\s+['"]rspress\/theme['"]/;
+const THEME_OLD_IMPORT_1 = /from\s+['"]@rspress\/core\/theme['"]/;
+async function hintThemeBreakingChange(customThemeDir) {
+    const fileList = [
+        'index.ts',
+        'index.tsx',
+        'index.js',
+        'index.mjs'
+    ];
+    let useDefaultExportFilePath = null;
+    for (const file of fileList){
+        const filePath = join(customThemeDir, file);
+        if (await pathExists(filePath)) {
+            const content = await readFile(filePath, {
+                encoding: 'utf-8'
+            });
+            if (THEME_DEFAULT_EXPORT_PATTERN.test(content)) {
+                useDefaultExportFilePath = filePath;
+                break;
+            }
+            if (THEME_OLD_IMPORT_0.test(content) || THEME_OLD_IMPORT_1.test(content)) {
+                useDefaultExportFilePath = filePath;
+                break;
+            }
+        }
+    }
+    if (useDefaultExportFilePath) logger.warn(`[Rspress v2] Breaking Change: The "theme/index.tsx" is now using named export from '@rspress/core/theme-original' instead of default export from 'rspress/theme', please update ${picocolors.greenBright(useDefaultExportFilePath)} (https://github.com/web-infra-dev/rspress/discussions/1891#discussioncomment-12422737).\n`, picocolors.redBright(`
+- import Theme from 'rspress/theme';
+- export default {
+-  ...Theme,
+-  Layout,
+- };
+- export * from 'rspress/theme';`) + picocolors.greenBright(`
++ import { Layout } from '@rspress/core/theme-original';
+
++ export { Layout };
++ export * from '@rspress/core/theme-original';
+`));
+}
+function hintBuilderPluginsBreakingChange(config) {
+    if ('builderPlugins' in config && Array.isArray(config.builderPlugins) && config.builderPlugins.length > 0) {
+        logger.error(`[Rspress v2] The "builderPlugins" option has been renamed to "builderConfig.plugins", please update your config accordingly (https://rspress.rs/api/config/config-build#builderconfigplugins).\n`, `
+export default defineConfig({
+${picocolors.redBright(`  builderPlugins: [
+    pluginFoo()
+  ],`)}
+${picocolors.greenBright(`  builderConfig: {
+    plugins: [
+      pluginFoo()
+    ],
+  },`)}
+});`);
+        process.exit(1);
+    }
+}
+let isSSGFailedLogged = false;
+function hintSSGFailed() {
+    if (isSSGFailedLogged) return;
+    isSSGFailedLogged = true;
+    logger.info("[Rspress v2] `ssg: true` requires the source code to support SSR. If the code is not compatible to SSR, the build process will fail. You can try:\n    1. Fix code to make it SSR-compatible.\n    2. Set `ssg: false` if the code in node_modules may be difficult to fix, but the SSG feature will be lost.");
+}
+function hintSSGFalse() {
+    logger.info('`ssg: false` detected, SSG will be disabled.');
+}
+let reactVersionLogged = false;
+function hintReactVersion() {
+    if (reactVersionLogged) return;
+    reactVersionLogged = true;
+    logger.info('[Rspress v2] Rspress support React 18 and 19, please confirm that both react and react-dom are installed in package.json with the same version. ');
+}
+function hintNavJsonChangeThenPanic(metaJson, metaJsonDir, docsDir) {
+    if (metaJson.some((i)=>{
+        if ('object' == typeof i && 'type' in i && 'custom-link' === i.type) return false;
+        return 'object' == typeof i && ('activeMatch' in i || 'text' in i);
+    })) {
+        const error = new Error('[Rspress v2] Detected that you are still using top level `_meta.json` to configure the nav, but it has been changed to `_nav.json` in Rspress v2. Please rename the top level `_meta.json` to `_nav.json` accordingly.');
+        logger.error(error);
+        const dir = relative(docsDir, metaJsonDir);
+        logger.info(`Please rename "${picocolors.greenBright(join(dir, '_meta.json'))}" to  "${picocolors.greenBright(join(dir, '_nav.json'))}".`);
+        process.exit(1);
+    }
+}
+let isLogged = false;
+function hintRelativeMarkdownLink() {
+    if (isLogged) return;
+    isLogged = true;
+    logger.info('[Rspress v2] Markdown links without "./" prefix are now relative links, e.g: [](guide/getting-started) is equal to [](./guide/getting-started). You can rewrite it to [](/guide/getting-started) to always use absolute links, or use [](./getting-started.md)');
+}
+export { hintBuilderPluginsBreakingChange, hintNavJsonChangeThenPanic, hintReactVersion, hintRelativeMarkdownLink, hintSSGFailed, hintSSGFalse, hintThemeBreakingChange };

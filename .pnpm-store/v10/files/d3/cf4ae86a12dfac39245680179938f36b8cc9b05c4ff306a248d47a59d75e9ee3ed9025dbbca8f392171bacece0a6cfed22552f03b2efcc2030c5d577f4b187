@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/NavJson",
+  "definitions": {
+    "NavJson": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/NavItem"
+      }
+    },
+    "NavItem": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/NavItemWithLink"
+        },
+        {
+          "$ref": "#/definitions/NavItemWithChildren"
+        },
+        {
+          "$ref": "#/definitions/NavItemWithLinkAndChildren"
+        }
+      ]
+    },
+    "NavItemWithLink": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "link": {
+          "type": "string"
+        },
+        "download": {
+          "type": "boolean"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "activeMatch": {
+          "type": "string"
+        },
+        "position": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right"
+          ]
+        },
+        "lang": {
+          "type": "string"
+        },
+        "rel": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "link"
+      ],
+      "additionalProperties": false
+    },
+    "NavItemWithChildren": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NavItem"
+          }
+        },
+        "position": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right"
+          ]
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "additionalProperties": false
+    },
+    "NavItemWithLinkAndChildren": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "link": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NavItem"
+          }
+        },
+        "tag": {
+          "type": "string"
+        },
+        "activeMatch": {
+          "type": "string"
+        },
+        "position": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right"
+          ]
+        },
+        "lang": {
+          "type": "string"
+        },
+        "rel": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "link",
+        "items"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
